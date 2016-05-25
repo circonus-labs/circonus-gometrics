@@ -29,6 +29,11 @@ n2ezaOoRtsQl9dhqEMe8zgL76p9YZ5E69Al0mgiifTteyNjjMuIW
 -----END CERTIFICATE-----`)
 
 func (m *CirconusMetrics) loadCACert() {
+	certSubjects := rootCA.Subjects()
+	if len(certSubjects) > 0 {
+		return
+	}
+
 	cert, err := m.apiGetCert()
 	if err != nil {
 		if m.Debug {

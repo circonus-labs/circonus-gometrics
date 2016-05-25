@@ -140,27 +140,31 @@ func (m *CirconusMetrics) Start() {
 			m.TrapUrl = url
 		}
 		for _ = range time.NewTicker(m.Interval).C {
-			counters, gauges, histograms := m.snapshot()
-			output := make(map[string]interface{})
-			for name, value := range counters {
-				output[name] = map[string]interface{}{
-					"_type":  "n",
-					"_value": value,
-				}
-			}
-			for name, value := range gauges {
-				output[name] = map[string]interface{}{
-					"_type":  "n",
-					"_value": value,
-				}
-			}
-			for name, value := range histograms {
-				output[name] = map[string]interface{}{
-					"_type":  "n",
-					"_value": value.DecStrings(),
-				}
-			}
-			m.submit(output)
+			m.Flush()
 		}
 	}()
+}
+
+func (m *CirconusMetrics) Flush() {
+	counters, gauges, histograms := m.snapshot()
+	output := make(map[string]interface{})
+	for name, value := range counters {
+		output[name] = map[string]interface{}{
+			"_type":  "n",
+			"_value": value,
+		}
+	}
+	for name, value := range gauges {
+		output[name] = map[string]interface{}{
+			"_type":  "n",
+			"_value": value,
+		}
+	}
+	for name, value := range histograms {
+		output[name] = map[string]interface{}{
+			"_type":  "n",
+			"_value": value.DecStrings(),
+		}
+	}
+	m.submit(output)
 }
