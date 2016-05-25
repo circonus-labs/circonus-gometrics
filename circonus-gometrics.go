@@ -220,6 +220,8 @@ var (
 	interval      = 10 * time.Second
 
 	cm, gm, hm sync.Mutex
+
+	client *http.Client
 )
 
 func submit(output map[string]interface{}) {
@@ -313,6 +315,12 @@ func setRootCA(val []byte) {
 	for _, cert := range certs {
 		rootCA.AddCert(cert)
 	}
+
+	tr := &http.Transport{
+		TLSClientConfig:    &tls.Config{RootCAs: rootCA},
+		DisableCompression: true,
+	}
+	client = &http.Client{Transport: tr}
 }
 
 func getCheck(id int) {
@@ -329,11 +337,6 @@ func getCheck(id int) {
 }
 
 func trapCall(payload []byte) (int, error) {
-	tr := &http.Transport{
-		TLSClientConfig:    &tls.Config{RootCAs: rootCA},
-		DisableCompression: true,
-	}
-	client := &http.Client{Transport: tr}
 	req, err := http.NewRequest("POST", submissionUrl, bytes.NewBuffer(payload))
 	if err != nil {
 		return 0, err
@@ -369,7 +372,7 @@ func Start() {
 		if checkId != 0 {
 			getCheck(checkId)
 		}
-		for _ = range time.NewTicker(interval).C {
+		for range time.NewTicker(interval).C {
 			counters, gauges, histograms := snapshot()
 			output := make(map[string]interface{})
 			for name, value := range counters {
