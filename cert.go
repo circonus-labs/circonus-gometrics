@@ -1,5 +1,9 @@
 package circonusgometrics
 
+type CACert struct {
+	Contents string `json:"contents"`
+}
+
 var circonusCA []byte = []byte(`-----BEGIN CERTIFICATE-----
 MIID4zCCA0ygAwIBAgIJAMelf8skwVWPMA0GCSqGSIb3DQEBBQUAMIGoMQswCQYD
 VQQGEwJVUzERMA8GA1UECBMITWFyeWxhbmQxETAPBgNVBAcTCENvbHVtYmlhMRcw
@@ -25,19 +29,15 @@ n2ezaOoRtsQl9dhqEMe8zgL76p9YZ5E69Al0mgiifTteyNjjMuIW
 -----END CERTIFICATE-----`)
 
 func (m *CirconusMetrics) loadCACert() {
-	cert := circonusCA
+	cert, err := m.apiGetCert()
+	if err != nil {
+		if m.Debug {
+			m.Log.Printf("Error fetching ca.crt, using default. %+v\n", err)
+		}
+	}
 
-	caDetails := m.apiCall("/v2/pki/ca.crt")
-	val, ok := caDetails["contents"]
-	if ok {
-		if m.Debug {
-			m.Log.Println("Loaded CA cert from API.")
-		}
-		cert = []byte(val.(string))
-	} else {
-		if m.Debug {
-			m.Log.Println("Error fetching ca.crt, using default.")
-		}
+	if cert == nil {
+		cert = circonusCA
 	}
 
 	rootCA.AppendCertsFromPEM(cert)

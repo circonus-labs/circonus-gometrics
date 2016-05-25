@@ -102,6 +102,7 @@ type CirconusMetrics struct {
 	TrapUrl       string
 	Log           *log.Logger
 	Debug         bool
+	Metrics       []CheckMetric
 }
 
 func NewCirconusMetrics() *CirconusMetrics {
