@@ -1,9 +1,5 @@
 package circonusgometrics
 
-import (
-	"log"
-)
-
 var circonusCA []byte = []byte(`-----BEGIN CERTIFICATE-----
 MIID4zCCA0ygAwIBAgIJAMelf8skwVWPMA0GCSqGSIb3DQEBBQUAMIGoMQswCQYD
 VQQGEwJVUzERMA8GA1UECBMITWFyeWxhbmQxETAPBgNVBAcTCENvbHVtYmlhMRcw
@@ -28,62 +24,21 @@ sYJysziA2raOtRxVRtcxuZSMij2RiJDsLxzIp1H60Xhr8lmf7qF6Y+sZl7V36KZb
 n2ezaOoRtsQl9dhqEMe8zgL76p9YZ5E69Al0mgiifTteyNjjMuIW
 -----END CERTIFICATE-----`)
 
-func loadCACert() {
+func (m *CirconusMetrics) loadCACert() {
 	cert := circonusCA
 
-	caDetails := apiCall("/v2/pki/ca.crt")
+	caDetails := m.apiCall("/v2/pki/ca.crt")
 	val, ok := caDetails["contents"]
 	if ok {
-		cert = val.([]byte)
+		if m.Debug {
+			m.Log.Println("Loaded CA cert from API.")
+		}
+		cert = []byte(val.(string))
 	} else {
-		log.Printf("Error fetching ca.crt, using default\n")
+		if m.Debug {
+			m.Log.Println("Error fetching ca.crt, using default.")
+		}
 	}
 
 	rootCA.AppendCertsFromPEM(cert)
-
-	log.Print("CA cert loaded")
-
 }
-
-/*
-func parsePEMCertificates(pemData []byte) ([]*x509.Certificate, error) {
-	var certs []*x509.Certificate
-	for {
-		var der *pem.Block
-		der, pemData = pem.Decode(pemData)
-		if der == nil {
-			break
-		}
-		if der.Type == "CERTIFICATE" {
-			dcerts, err := x509.ParseCertificates(der.Bytes)
-			if err != nil {
-				return nil, err
-			}
-			certs = append(certs, dcerts...)
-		}
-	}
-	return certs, nil
-}
-func getCertChain() {
-	caDetails := apiCall("/v2/pki/ca.crt")
-	val, ok := caDetails["contents"]
-	if !ok {
-		log.Printf("Error fetching ca.crt\n")
-		setRootCA(circonusCA)
-		return
-	}
-
-	setRootCA([]byte(val.(string)))
-	log.Print("Circonusgometrics fetched CA.")
-}
-
-func setRootCA(val []byte) {
-	certs, err := parsePEMCertificates(val)
-	if err != nil {
-		return
-	}
-	for _, cert := range certs {
-		rootCA.AddCert(cert)
-	}
-}
-*/

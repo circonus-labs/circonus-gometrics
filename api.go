@@ -2,24 +2,28 @@ package circonusgometrics
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
-	"strings"
 )
 
-func apiCall(url string) map[string]interface{} {
+func (m *CirconusMetrics) apiCall(reqPath string) map[string]interface{} {
+	url := fmt.Sprintf("https://%s%s", m.ApiHost, reqPath)
+	if m.Debug {
+		m.Log.Printf("Calling %s", url)
+	}
 	client := &http.Client{}
-	req, err := http.NewRequest("GET", strings.Join([]string{"https://", apiUrl, url}, ""), nil)
+	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
+		m.Log.Printf("%+v", err)
 		return nil
 	}
 	req.Header.Add("Accept", "application/json")
-	req.Header.Add("X-Circonus-Auth-Token", authtoken)
-	req.Header.Add("X-Circonus-App-Name", "circonus-cip")
+	req.Header.Add("X-Circonus-Auth-Token", m.ApiToken)
+	req.Header.Add("X-Circonus-App-Name", m.ApiApp)
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Printf("Error fetching %s: %s\n", url, err)
+		m.Log.Printf("Error fetching %s: %s\n", url, err)
 		return nil
 	}
 	defer resp.Body.Close()
@@ -27,7 +31,7 @@ func apiCall(url string) map[string]interface{} {
 	var response map[string]interface{}
 	json.Unmarshal(body, &response)
 	if resp.StatusCode != 200 {
-		log.Printf("response: %v\n", response)
+		m.Log.Printf("response: %v\n", response)
 		return nil
 	}
 	return response

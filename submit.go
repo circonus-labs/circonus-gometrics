@@ -10,26 +10,26 @@ import (
 	"strconv"
 )
 
-func submit(output map[string]interface{}) {
+func (m *CirconusMetrics) submit(output map[string]interface{}) {
 	str, err := json.Marshal(output)
 	if err == nil {
-		trapCall(str)
+		m.trapCall(str)
 	}
 }
 
-func trapCall(payload []byte) (int, error) {
+func (m *CirconusMetrics) trapCall(payload []byte) (int, error) {
 	tr := &http.Transport{
 		TLSClientConfig:    &tls.Config{RootCAs: rootCA},
 		DisableCompression: true,
 	}
 	client := &http.Client{Transport: tr}
-	req, err := http.NewRequest("POST", submissionUrl, bytes.NewBuffer(payload))
+	req, err := http.NewRequest("POST", m.TrapUrl, bytes.NewBuffer(payload))
 	if err != nil {
 		return 0, err
 	}
 	req.Header.Add("Accept", "application/json")
-	req.Header.Add("X-Circonus-Auth-Token", authtoken)
-	req.Header.Add("X-Circonus-App-Name", "circonus-cip")
+	req.Header.Add("X-Circonus-Auth-Token", m.ApiToken)
+	req.Header.Add("X-Circonus-App-Name", m.ApiApp)
 	resp, err := client.Do(req)
 	if err != nil {
 		return 0, err

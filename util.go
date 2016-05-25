@@ -5,7 +5,7 @@ import (
 )
 
 // Reset removes all existing counters and gauges.
-func Reset() {
+func (m *CirconusMetrics) Reset() {
 	cm.Lock()
 	defer cm.Unlock()
 
@@ -22,7 +22,7 @@ func Reset() {
 }
 
 // snapshot returns a copy of the values of all registered counters and gauges.
-func snapshot() (c map[string]uint64, g map[string]int64, h map[string]*circonusllhist.Histogram) {
+func (m *CirconusMetrics) snapshot() (c map[string]uint64, g map[string]int64, h map[string]*circonusllhist.Histogram) {
 	cm.Lock()
 	defer cm.Unlock()
 

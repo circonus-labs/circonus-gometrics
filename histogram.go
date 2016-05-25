@@ -7,7 +7,7 @@ import (
 )
 
 // NewHistogram returns a new Circonus histogram that accumulates until reported on.
-func NewHistogram(name string) *Histogram {
+func (m *CirconusMetrics) NewHistogram(name string) *Histogram {
 	hm.Lock()
 	defer hm.Unlock()
 
