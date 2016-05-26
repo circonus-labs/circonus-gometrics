@@ -101,9 +101,6 @@ func (m *CirconusMetrics) apiCall(reqMethod string, reqPath string, data []byte)
 	dataReader := bytes.NewReader(data)
 
 	url := fmt.Sprintf("https://%s%s", m.ApiHost, reqPath)
-	if m.Debug {
-		m.Log.Printf("Calling %s", url)
-	}
 
 	req, err := retryablehttp.NewRequest(reqMethod, url, dataReader)
 	if err != nil {

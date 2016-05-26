@@ -29,8 +29,7 @@ n2ezaOoRtsQl9dhqEMe8zgL76p9YZ5E69Al0mgiifTteyNjjMuIW
 -----END CERTIFICATE-----`)
 
 func (m *CirconusMetrics) loadCACert() {
-	certSubjects := rootCA.Subjects()
-	if len(certSubjects) > 0 {
+	if m.cert != nil {
 		return
 	}
 
@@ -45,5 +44,9 @@ func (m *CirconusMetrics) loadCACert() {
 		cert = circonusCA
 	}
 
-	rootCA.AppendCertsFromPEM(cert)
+	m.cert = cert
+	m.certPool.AppendCertsFromPEM(cert)
+
+	// rootCA.AppendCertsFromPEM(cert)
+	// haveCACert = true
 }

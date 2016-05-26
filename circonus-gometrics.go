@@ -55,17 +55,10 @@ var (
 	*/
 	defaultBrokerSelectionMethod = "time" // time, random or first
 
-	// internals
-
-	counters     = make(map[string]uint64)
-	counterFuncs = make(map[string]func() uint64)
-	gauges       = make(map[string]func() int64)
-	histograms   = make(map[string]*Histogram)
-	cm, gm, hm   sync.Mutex
-
 	checkType         = "httptrap"
 	circonusSearchTag = "service:consul"
-	rootCA            = x509.NewCertPool()
+	// rootCA            = x509.NewCertPool()
+	// haveCACert        = false
 	// note, public broker, for inside customers pelase specify a broker group id
 	circonusTrapBroker = 35
 )
@@ -102,30 +95,42 @@ type CirconusMetrics struct {
 	TrapUrl       string
 	Log           *log.Logger
 	Debug         bool
-	Metrics       []CheckMetric
+
+	// internals
+	certPool *x509.CertPool
+	cert     []byte
+	check    Check
+
+	counters map[string]uint64
+	cm       sync.Mutex
+
+	counterFuncs map[string]func() uint64
+	cfm          sync.Mutex
+
+	//gauges map[string]func() int64
+	gauges map[string]int64
+	gm     sync.Mutex
+
+	histograms map[string]*Histogram
+	hm         sync.Mutex
 }
 
 func NewCirconusMetrics() *CirconusMetrics {
 
 	return &CirconusMetrics{
-		ApiHost:  defaultApiHost,
-		ApiApp:   defaultApiApp,
-		Interval: defaultInterval,
-		Log:      log.New(os.Stderr, "", log.LstdFlags),
-		Debug:    false,
+		ApiHost:      defaultApiHost,
+		ApiApp:       defaultApiApp,
+		Interval:     defaultInterval,
+		Log:          log.New(os.Stderr, "", log.LstdFlags),
+		Debug:        false,
+		counterFuncs: make(map[string]func() uint64),
+		counters:     make(map[string]uint64),
+		//		gauges:       make(map[string]func() int64),
+		gauges:     make(map[string]int64),
+		histograms: make(map[string]*Histogram),
+		certPool:   x509.NewCertPool(),
 	}
 
-}
-
-func (m *CirconusMetrics) Test() {
-	m.loadCACert()
-	if m.TrapUrl == "" {
-		url, err := m.getTrapUrl()
-		if err != nil {
-			m.Log.Printf("%+v\n", err)
-		}
-		m.TrapUrl = url
-	}
 }
 
 // Start starts a perdiodic submission process of all metrics collected
@@ -139,6 +144,9 @@ func (m *CirconusMetrics) Start() {
 			}
 			m.TrapUrl = url
 		}
+	}()
+
+	go func() {
 		for _ = range time.NewTicker(m.Interval).C {
 			m.Flush()
 		}
@@ -146,6 +154,14 @@ func (m *CirconusMetrics) Start() {
 }
 
 func (m *CirconusMetrics) Flush() {
+	m.Log.Println("Flushing")
+	if m.TrapUrl == "" {
+		url, err := m.getTrapUrl()
+		if err != nil {
+			m.Log.Printf("%+v\n", err)
+		}
+		m.TrapUrl = url
+	}
 	counters, gauges, histograms := m.snapshot()
 	output := make(map[string]interface{})
 	for name, value := range counters {

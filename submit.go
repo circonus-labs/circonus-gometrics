@@ -19,7 +19,7 @@ func (m *CirconusMetrics) submit(output map[string]interface{}) {
 
 func (m *CirconusMetrics) trapCall(payload []byte) (int, error) {
 	tr := &http.Transport{
-		TLSClientConfig:    &tls.Config{RootCAs: rootCA},
+		TLSClientConfig:    &tls.Config{RootCAs: m.certPool},
 		DisableCompression: true,
 	}
 	client := &http.Client{Transport: tr}
