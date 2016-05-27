@@ -85,8 +85,6 @@ func main() {
     // ensure last bit are flushed (or if it has run for less than interval)
 	metrics.Flush()
 
-	log.Printf("submission url: %s", metrics.TrapUrl)
-
 }
 ```
 
