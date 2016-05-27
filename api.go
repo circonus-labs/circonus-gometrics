@@ -11,7 +11,7 @@ import (
 	"github.com/hashicorp/go-retryablehttp"
 )
 
-func (m *CirconusMetrics) apiGetBrokers() (*[]Broker, error) {
+func (m *CirconusMetrics) apiGetBrokerList() (*[]Broker, error) {
 	response, err := m.apiCall("GET", "/v2/broker", nil)
 	if err != nil {
 		return nil, err
@@ -61,7 +61,7 @@ func (m *CirconusMetrics) apiCreateCheck(checkConfig []byte) (*Check, error) {
 }
 
 func (m *CirconusMetrics) apiCheckSearch() (*Check, error) {
-	searchCriteria := fmt.Sprintf("(active:1)(host:\"%s\")(type:\"%s\")(tags:%s)", m.InstanceId, checkType, circonusSearchTag)
+	searchCriteria := fmt.Sprintf("(active:1)(host:\"%s\")(type:\"%s\")(tags:%s)", m.InstanceId, checkType, m.SearchTag)
 	apiPath := fmt.Sprintf("/v2/check_bundle?search=%s", searchCriteria)
 
 	response, err := m.apiCall("GET", apiPath, nil)
@@ -91,7 +91,7 @@ func (m *CirconusMetrics) apiCheckSearch() (*Check, error) {
 	}
 
 	if numActive > 1 {
-		return nil, fmt.Errorf("multiple possibilities >1 check matches criteria target=%s, type=%s, with tag %s\n", m.InstanceId, checkType, circonusSearchTag)
+		return nil, fmt.Errorf("multiple possibilities >1 check matches criteria target=%s, type=%s, with tag %s\n", m.InstanceId, checkType, m.SearchTag)
 	}
 
 	return &results[checkId], nil
@@ -100,7 +100,15 @@ func (m *CirconusMetrics) apiCheckSearch() (*Check, error) {
 func (m *CirconusMetrics) apiCall(reqMethod string, reqPath string, data []byte) ([]byte, error) {
 	dataReader := bytes.NewReader(data)
 
-	url := fmt.Sprintf("https://%s%s", m.ApiHost, reqPath)
+    // default to SSL
+    proto := "https://"
+    // allow user to override with explict "http://" in ApiHost
+    // if that floats their boat...
+    if m.ApiHost[0:4] == "http" {
+        proto = ""
+    }
+
+	url := fmt.Sprintf("%s%s%s", proto, m.ApiHost, reqPath)
 
 	req, err := retryablehttp.NewRequest(reqMethod, url, dataReader)
 	if err != nil {

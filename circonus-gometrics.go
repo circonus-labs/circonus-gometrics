@@ -28,8 +28,10 @@ package circonusgometrics
 
 import (
 	"crypto/x509"
+	"fmt"
 	"log"
 	"os"
+	"path"
 	"sync"
 	"time"
 )
@@ -39,28 +41,7 @@ var (
 	defaultApiHost  = "api.circonus.com"
 	defaultApiApp   = "circonus-gometrics"
 	defaultInterval = 10 * time.Second
-	/*
-	   if no Broker set by user
-	   1. call api for list of brokers (available to account for which token is valid)
-	   2. iterate list, eliminate any brokers which do not support "httptrap"
-	   3. prioritize, enterprise then others
-	   4. selecting
-	       first, ... first one from the resulting list
-	       random, a random one from the resulting list
-	       time, iterate the list and time connections to each, pick fastest
-
-	   these methods are fundamentally flawed w/re to WHERE the origin is and WHERE the broker is from a networking perspective...
-	   .. consider adding "fastest" and doing conn timings for the brokers in the list selecting the fastest (still flawed from ops/load
-	      perspective but, potentially less-so from a durability of metric collection perspective).
-	*/
-	defaultBrokerSelectionMethod = "time" // time, random or first
-
-	checkType         = "httptrap"
-	circonusSearchTag = "service:consul"
-	// rootCA            = x509.NewCertPool()
-	// haveCACert        = false
-	// note, public broker, for inside customers pelase specify a broker group id
-	circonusTrapBroker = 35
+	checkType       = "httptrap"
 )
 
 // a few words about: "BrokerGroupId"
@@ -84,19 +65,23 @@ var (
 //
 
 type CirconusMetrics struct {
+	SubmissionUrl string
 	ApiToken      string
 	ApiApp        string
 	ApiHost       string
+	InstanceId    string
+	SearchTag     string
 	BrokerGroupId int
 	Tags          []string
-	InstanceId    string
-	Interval      time.Duration
 	CheckSecret   string
-	TrapUrl       string
-	Log           *log.Logger
-	Debug         bool
+
+	Interval time.Duration
+	Log      *log.Logger
+	Debug    bool
 
 	// internals
+	trapUrl string
+
 	certPool *x509.CertPool
 	cert     []byte
 	check    Check
@@ -116,8 +101,15 @@ type CirconusMetrics struct {
 }
 
 func NewCirconusMetrics() *CirconusMetrics {
+	_, an := path.Split(os.Args[0])
+	hn, err := os.Hostname()
+	if err != nil {
+		hn = "unknown"
+	}
 
 	return &CirconusMetrics{
+		InstanceId:   fmt.Sprintf("%s:%s", hn, an),
+		SearchTag:    fmt.Sprintf("service:%s", an),
 		ApiHost:      defaultApiHost,
 		ApiApp:       defaultApiApp,
 		Interval:     defaultInterval,
@@ -137,12 +129,12 @@ func NewCirconusMetrics() *CirconusMetrics {
 func (m *CirconusMetrics) Start() {
 	go func() {
 		m.loadCACert()
-		if m.TrapUrl == "" {
+		if m.trapUrl == "" {
 			url, err := m.getTrapUrl()
 			if err != nil {
 				m.Log.Printf("%+v\n", err)
 			}
-			m.TrapUrl = url
+			m.trapUrl = url
 		}
 	}()
 
@@ -155,12 +147,12 @@ func (m *CirconusMetrics) Start() {
 
 func (m *CirconusMetrics) Flush() {
 	m.Log.Println("Flushing")
-	if m.TrapUrl == "" {
+	if m.trapUrl == "" {
 		url, err := m.getTrapUrl()
 		if err != nil {
 			m.Log.Printf("%+v\n", err)
 		}
-		m.TrapUrl = url
+		m.trapUrl = url
 	}
 	counters, gauges, histograms := m.snapshot()
 	output := make(map[string]interface{})

@@ -44,8 +44,12 @@ type Check struct {
 }
 
 func (m *CirconusMetrics) getTrapUrl() (string, error) {
-	if m.TrapUrl != "" {
-		return m.TrapUrl, nil
+	if m.trapUrl != "" {
+		return m.trapUrl, nil
+	}
+	// one was explicitly set by user
+	if m.SubmissionUrl != "" {
+		return m.SubmissionUrl, nil
 	}
 
 	trapUrl := ""
@@ -94,7 +98,7 @@ func (m *CirconusMetrics) createCheck() (*Check, error) {
 		Notes:       "",
 		Period:      60,
 		Status:      "active",
-		Tags:        append([]string{circonusSearchTag}, m.Tags...),
+		Tags:        append([]string{m.SearchTag}, m.Tags...),
 		Target:      m.InstanceId,
 		Timeout:     10,
 		Type:        checkType,

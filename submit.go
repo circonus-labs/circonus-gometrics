@@ -12,18 +12,27 @@ import (
 
 func (m *CirconusMetrics) submit(output map[string]interface{}) {
 	str, err := json.Marshal(output)
-	if err == nil {
-		m.trapCall(str)
-	}
+	if err != nil {
+        m.Log.Printf("Error marshling output %+v", err)
+        return
+    }
+
+	numStats, err := m.trapCall(str)
+    if err != nil {
+        m.Log.Printf("Error sending metrics to %s %+v\n", m.trapUrl, err)
+    }
+    if m.Debug {
+        m.Log.Printf("%d stats sent to %s\n", numStats, m.trapUrl)
+    }
 }
 
 func (m *CirconusMetrics) trapCall(payload []byte) (int, error) {
 	tr := &http.Transport{
-		TLSClientConfig:    &tls.Config{RootCAs: m.certPool},
+		TLSClientConfig:    &tls.Config{RootCAs: m.certPool}, // add server name from submission_url or lookup of IP in broker list. ServerName: "noit3.dev.circonus.net"},
 		DisableCompression: true,
 	}
 	client := &http.Client{Transport: tr}
-	req, err := http.NewRequest("POST", m.TrapUrl, bytes.NewBuffer(payload))
+	req, err := http.NewRequest("POST", m.trapUrl, bytes.NewBuffer(payload))
 	if err != nil {
 		return 0, err
 	}

@@ -24,7 +24,8 @@ type Broker struct {
 func (m *CirconusMetrics) getBrokerGroupId() int {
 	bgi := m.BrokerGroupId
 	if bgi == 0 {
-		bgi = circonusTrapBroker
+        brokerList := m.apiGetBrokerList()
+		bgi = 35 // temporary
 		// add lookup and leverage selection method unless we can add a method for the account admin to designate a "default" broker (maybe an overall then potentially by check type so that
 		// if POST check_bundle {..., brokers: [], ...} is sent, the default broker for the checktype or the generic dfeault broker would be used)
 	}
