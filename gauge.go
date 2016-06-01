@@ -6,6 +6,10 @@ package circonusgometrics
 // free memory).
 
 func (m *CirconusMetrics) Gauge(metric string, val int64) {
+	m.SetGauge(metric, val)
+}
+
+func (m *CirconusMetrics) SetGauge(metric string, val int64) {
 	m.gm.Lock()
 	defer m.gm.Unlock()
 	m.gauges[metric] = val
@@ -17,31 +21,14 @@ func (m *CirconusMetrics) RemoveGauge(metric string) {
 	delete(m.gauges, metric)
 }
 
-// type Gauge string
-//
-// // Set the gauge's value to the given value.
-// func (g Gauge) Set(value int64) {
-// 	gm.Lock()
-// 	defer gm.Unlock()
-//
-// 	gauges[string(g)] = func() int64 {
-// 		return value
-// 	}
-// }
-//
-// // SetFunc sets the gauge's value to the lazily-called return value of the given
-// // function.
-// func (g Gauge) SetFunc(f func() int64) {
-// 	gm.Lock()
-// 	defer gm.Unlock()
-//
-// 	gauges[string(g)] = f
-// }
-//
-// // Remove removes the given gauge.
-// func (g Gauge) Remove() {
-// 	gm.Lock()
-// 	defer gm.Unlock()
-//
-// 	delete(gauges, string(g))
-// }
+func (m *CirconusMetrics) SetGaugeFunc(metric string, fn func() int64) {
+	m.gfm.Lock()
+	defer m.gfm.Unlock()
+	m.gaugeFuncs[metric] = fn
+}
+
+func (m *CirconusMetrics) RemoveGaugeFunc(metric string) {
+	m.gfm.Lock()
+	defer m.gfm.Unlock()
+	delete(m.gaugeFuncs, metric)
+}

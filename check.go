@@ -182,10 +182,21 @@ func makeSecret() (string, error) {
 func (m *CirconusMetrics) addNewCheckMetrics(newMetrics map[string]*CheckBundleMetric) {
 	newCheckBundle := m.checkBundle
 	numCurrMetrics := len(newCheckBundle.Metrics)
-	newCheckBundle.Metrics = newCheckBundle.Metrics[0 : numCurrMetrics+len(newMetrics)]
+	numNewMetrics := len(newMetrics)
+
+	fmt.Printf("l:%d c:%d\n", len(newCheckBundle.Metrics), cap(newCheckBundle.Metrics))
+
+	if numCurrMetrics+numNewMetrics >= cap(newCheckBundle.Metrics) {
+		nm := make([]CheckBundleMetric, numCurrMetrics+numNewMetrics)
+		copy(nm, newCheckBundle.Metrics)
+		newCheckBundle.Metrics = nm
+	}
+
+	fmt.Printf("l:%d c:%d\n", len(newCheckBundle.Metrics), cap(newCheckBundle.Metrics))
 
 	i := 0
 	for _, metric := range newMetrics {
+		fmt.Printf("\ti:%d\n", numCurrMetrics+i)
 		newCheckBundle.Metrics[numCurrMetrics+i] = *metric
 		i++
 	}

@@ -19,16 +19,16 @@ func (m *CirconusMetrics) Add(metric string, val uint64) {
 	m.counters[metric] += val
 }
 
-func (m *CirconusMetrics) SetFunc(metric string, fn func() uint64) {
-	m.cfm.Lock()
-	defer m.cfm.Unlock()
-	m.counterFuncs[metric] = fn
-}
-
 func (m *CirconusMetrics) RemoveCounter(metric string) {
 	m.cm.Lock()
 	defer m.cm.Unlock()
 	delete(m.counters, metric)
+}
+
+func (m *CirconusMetrics) SetCounterFunc(metric string, fn func() uint64) {
+	m.cfm.Lock()
+	defer m.cfm.Unlock()
+	m.counterFuncs[metric] = fn
 }
 
 func (m *CirconusMetrics) RemoveCounterFunc(metric string) {

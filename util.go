@@ -36,6 +36,9 @@ func (m *CirconusMetrics) snapshot() (c map[string]uint64, g map[string]int64, h
 	m.gm.Lock()
 	defer m.gm.Unlock()
 
+	m.gfm.Lock()
+	defer m.gfm.Unlock()
+
 	m.hm.Lock()
 	defer m.hm.Unlock()
 
@@ -48,14 +51,13 @@ func (m *CirconusMetrics) snapshot() (c map[string]uint64, g map[string]int64, h
 		c[n] = f()
 	}
 
-	// g = make(map[string]int64, len(m.gauges))
-	// for n, f := range m.gauges {
-	// 	g[n] = f()
-	// }
-
-	g = make(map[string]int64, len(m.gauges))
+	g = make(map[string]int64, len(m.gauges)+len(m.gaugeFuncs))
 	for n, v := range m.gauges {
 		g[n] = v
+	}
+
+	for n, f := range m.gaugeFuncs {
+		g[n] = f()
 	}
 
 	h = make(map[string]*circonusllhist.Histogram, len(m.histograms))

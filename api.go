@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"time"
 
 	"github.com/hashicorp/go-retryablehttp"
@@ -36,12 +35,7 @@ func (m *CirconusMetrics) apiCall(reqMethod string, reqPath string, data []byte)
 	client.RetryWaitMin = 10 * time.Millisecond
 	client.RetryWaitMax = 50 * time.Millisecond
 	client.RetryMax = 3
-	// silence the debug messages (if consul or go-metrics offers a standard logging, use that instead)
-	if m.Debug {
-		client.Logger = m.Log //log.New(ioutil.Discard, "", log.LstdFlags)
-	} else {
-		client.Logger = log.New(ioutil.Discard, "", log.LstdFlags)
-	}
+	client.Logger = m.Log
 
 	resp, err := client.Do(req)
 	if err != nil {

@@ -102,6 +102,8 @@ func (m *CirconusMetrics) updateCheckBundle(config *CheckBundle) (*CheckBundle, 
 		return nil, err
 	}
 
+	fmt.Printf("%s\n", string(cfgJson))
+
 	response, err := m.apiCall("PUT", config.Cid, cfgJson)
 	if err != nil {
 		return nil, err

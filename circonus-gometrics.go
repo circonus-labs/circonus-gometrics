@@ -29,6 +29,7 @@ package circonusgometrics
 import (
 	"crypto/x509"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"path"
@@ -97,9 +98,11 @@ type CirconusMetrics struct {
 	counterFuncs map[string]func() uint64
 	cfm          sync.Mutex
 
-	//gauges map[string]func() int64
 	gauges map[string]int64
 	gm     sync.Mutex
+
+	gaugeFuncs map[string]func() int64
+	gfm        sync.Mutex
 
 	histograms map[string]*Histogram
 	hm         sync.Mutex
@@ -118,18 +121,18 @@ func NewCirconusMetrics() *CirconusMetrics {
 		ApiHost:       defaultApiHost,
 		ApiApp:        defaultApiApp,
 		Interval:      defaultInterval,
-		Log:           log.New(os.Stderr, "", log.LstdFlags),
+		Log:           log.New(ioutil.Discard, "", log.LstdFlags),
 		Debug:         false,
 		ready:         false,
 		trapUrl:       "",
 		activeMetrics: make(map[string]bool),
-		counterFuncs:  make(map[string]func() uint64),
 		counters:      make(map[string]uint64),
-		//		gauges:       make(map[string]func() int64),
-		gauges:     make(map[string]int64),
-		histograms: make(map[string]*Histogram),
-		certPool:   x509.NewCertPool(),
-		checkType:  "httptrap",
+		counterFuncs:  make(map[string]func() uint64),
+		gauges:        make(map[string]int64),
+		gaugeFuncs:    make(map[string]func() int64),
+		histograms:    make(map[string]*Histogram),
+		certPool:      x509.NewCertPool(),
+		checkType:     "httptrap",
 	}
 
 }
@@ -137,6 +140,9 @@ func NewCirconusMetrics() *CirconusMetrics {
 // Start starts a perdiodic submission process of all metrics collected
 func (m *CirconusMetrics) Start() {
 	go func() {
+		if m.Debug {
+			m.Log = log.New(os.Stderr, "", log.LstdFlags)
+		}
 		m.loadCACert()
 		if !m.ready {
 			m.initializeTrap()
