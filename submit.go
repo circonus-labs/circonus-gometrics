@@ -10,9 +10,13 @@ import (
 	"strconv"
 )
 
-func (m *CirconusMetrics) submit(output map[string]interface{}) {
+func (m *CirconusMetrics) submit(output map[string]interface{}, newMetrics map[string]*CheckBundleMetric) {
 	m.trapmu.Lock()
 	defer m.trapmu.Unlock()
+
+	if len(newMetrics) > 0 {
+		m.addNewCheckMetrics(newMetrics)
+	}
 
 	str, err := json.Marshal(output)
 	if err != nil {

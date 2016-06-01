@@ -49,17 +49,15 @@ func main() {
     //      of type httptrap,
     //      where the target/host is equal to metrics.InstanceId - see below
     //      and the check has a tag equal to metrics.SearchTag - see below
-    //
-    // if searching does not yield a result, an attempt will be made to create a new check.
 
     // an identifier for the 'group of metrics emitted by this process or service'
 	//metrics.InstanceId = "centos7.gmtest"          // default: 'hostname':'program name'
 
     // a specific tag which, when coupled with the instanceid serves to identify the
     // origin and/or grouping of the metrics
-    //metrics.SearchTag = "service:gometrics"       // default: service:'program name'
+    //metrics.SearchTag = "service:gmtest"          // default: service:'program name'
 
-    // if an applicable check is NOT found, an attempt will be made to automatically create one
+    // if an applicable check is NOT specified or found, an attempt will be made to automatically create one
 
     // "GROUP ID" for a specific broker from the Brokers page in circonus ui
     // metrics.BrokerGroupId = 58938                // default: random enterprise broker
@@ -91,7 +89,7 @@ func main() {
 	metrics.Start()
 
 	for i := 1; i < 60; i++ {
-		metrics.RecordValue("ding", rnd.Float64() * 10)
+		metrics.Timing("ding", rnd.Float64() * 10)
 		metrics.Increment("dong")
 		metrics.Gauge("dang", 10)
 		time.Sleep(1000 * time.Millisecond)

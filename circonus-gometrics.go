@@ -85,10 +85,11 @@ type CirconusMetrics struct {
 	trapCN  string
 	trapmu  sync.Mutex
 
-	certPool    *x509.CertPool
-	cert        []byte
-	checkBundle *CheckBundle
-	checkType   string
+	certPool      *x509.CertPool
+	cert          []byte
+	checkBundle   *CheckBundle
+	activeMetrics map[string]bool
+	checkType     string
 
 	counters map[string]uint64
 	cm       sync.Mutex
@@ -112,17 +113,18 @@ func NewCirconusMetrics() *CirconusMetrics {
 	}
 
 	return &CirconusMetrics{
-		InstanceId:   fmt.Sprintf("%s:%s", hn, an),
-		SearchTag:    fmt.Sprintf("service:%s", an),
-		ApiHost:      defaultApiHost,
-		ApiApp:       defaultApiApp,
-		Interval:     defaultInterval,
-		Log:          log.New(os.Stderr, "", log.LstdFlags),
-		Debug:        false,
-		ready:        false,
-		trapUrl:      "",
-		counterFuncs: make(map[string]func() uint64),
-		counters:     make(map[string]uint64),
+		InstanceId:    fmt.Sprintf("%s:%s", hn, an),
+		SearchTag:     fmt.Sprintf("service:%s", an),
+		ApiHost:       defaultApiHost,
+		ApiApp:        defaultApiApp,
+		Interval:      defaultInterval,
+		Log:           log.New(os.Stderr, "", log.LstdFlags),
+		Debug:         false,
+		ready:         false,
+		trapUrl:       "",
+		activeMetrics: make(map[string]bool),
+		counterFuncs:  make(map[string]func() uint64),
+		counters:      make(map[string]uint64),
 		//		gauges:       make(map[string]func() int64),
 		gauges:     make(map[string]int64),
 		histograms: make(map[string]*Histogram),
@@ -156,6 +158,10 @@ func (m *CirconusMetrics) Flush() {
 			return
 		}
 	}
+
+	// check for new metrics and enable them automatically
+	newMetrics := make(map[string]*CheckBundleMetric)
+
 	counters, gauges, histograms := m.snapshot()
 	output := make(map[string]interface{})
 	for name, value := range counters {
@@ -163,18 +169,42 @@ func (m *CirconusMetrics) Flush() {
 			"_type":  "n",
 			"_value": value,
 		}
+		if _, ok := m.activeMetrics[name]; !ok {
+			newMetrics[name] = &CheckBundleMetric{
+				Name:   name,
+				Type:   "numeric",
+				Status: "active",
+			}
+		}
 	}
+
 	for name, value := range gauges {
 		output[name] = map[string]interface{}{
 			"_type":  "n",
 			"_value": value,
 		}
+		if _, ok := m.activeMetrics[name]; !ok {
+			newMetrics[name] = &CheckBundleMetric{
+				Name:   name,
+				Type:   "numeric",
+				Status: "active",
+			}
+		}
 	}
+
 	for name, value := range histograms {
 		output[name] = map[string]interface{}{
 			"_type":  "n",
 			"_value": value.DecStrings(),
 		}
+		if _, ok := m.activeMetrics[name]; !ok {
+			newMetrics[name] = &CheckBundleMetric{
+				Name:   name,
+				Type:   "histogram",
+				Status: "active",
+			}
+		}
 	}
-	m.submit(output)
+
+	m.submit(output, newMetrics)
 }

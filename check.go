@@ -86,6 +86,13 @@ func (m *CirconusMetrics) initializeTrap() error {
 	// all ready, flush can send metrics
 	m.ready = true
 
+	// inventory actie metrics
+	for _, metric := range checkBundle.Metrics {
+		if metric.Status == "active" {
+			m.activeMetrics[metric.Name] = true
+		}
+	}
+
 	return nil
 }
 
@@ -170,4 +177,27 @@ func makeSecret() (string, error) {
 	}
 	hash.Write(x)
 	return hex.EncodeToString(hash.Sum(nil))[0:16], nil
+}
+
+func (m *CirconusMetrics) addNewCheckMetrics(newMetrics map[string]*CheckBundleMetric) {
+	newCheckBundle := m.checkBundle
+	numCurrMetrics := len(newCheckBundle.Metrics)
+	newCheckBundle.Metrics = newCheckBundle.Metrics[0 : numCurrMetrics+len(newMetrics)]
+
+	i := 0
+	for _, metric := range newMetrics {
+		newCheckBundle.Metrics[numCurrMetrics+i] = *metric
+		i++
+	}
+
+	checkBundle, err := m.updateCheckBundle(newCheckBundle)
+	if err != nil {
+		m.Log.Printf("[ERROR] updating check bundle with new metrics %v", err)
+	}
+
+	for _, metric := range newMetrics {
+		m.activeMetrics[metric.Name] = true
+	}
+
+	m.checkBundle = checkBundle
 }

@@ -23,7 +23,7 @@ type CheckBundleMetric struct {
 type CheckBundle struct {
 	CheckUUIDs         []string            `json:"_check_uuids,omitempty"`
 	Checks             []string            `json:"_checks,omitempty"`
-	CID                string              `json:"_cid,omitempty"`
+	Cid                string              `json:"_cid,omitempty"`
 	Created            int                 `json:"_created,omitempty"`
 	LastModified       int                 `json:"_last_modified,omitempty"`
 	LastModifedBy      string              `json:"_last_modifed_by,omitempty"`
@@ -83,6 +83,26 @@ func (m *CirconusMetrics) createCheckBundle(config CheckBundle) (*CheckBundle, e
 	}
 
 	response, err := m.apiCall("POST", "/v2/check_bundle", cfgJson)
+	if err != nil {
+		return nil, err
+	}
+
+	checkBundle := new(CheckBundle)
+	err = json.Unmarshal(response, checkBundle)
+	if err != nil {
+		return nil, err
+	}
+
+	return checkBundle, nil
+}
+
+func (m *CirconusMetrics) updateCheckBundle(config *CheckBundle) (*CheckBundle, error) {
+	cfgJson, err := json.Marshal(config)
+	if err != nil {
+		return nil, err
+	}
+
+	response, err := m.apiCall("PUT", config.Cid, cfgJson)
 	if err != nil {
 		return nil, err
 	}
