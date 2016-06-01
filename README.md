@@ -27,6 +27,8 @@ func main() {
 
     // from circonus UI tokens page
 	metrics.ApiToken = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx"
+
+    // app name associated with token
     //metrics.ApiApp = ""                           // default: 'circonus-gometrics'
 
     // fqdn of the circonus api server
@@ -36,15 +38,19 @@ func main() {
     //metrics.Interval = 60 * time.seconds          // default: 10 seconds
 
     // submission url for a previously created httptrap check
-    //metrics.SubmissionUrl = "https://..."
+    //metrics.SubmissionUrl = "https://..."         // precedence 1
 
-    // if a submission url is NOT provided, an attempt will be made to find an existing
-    // httptrap check by using the circonus api to search for a check matching the following
-    // criteria:
+    // a specific **check** id (not check bundle id)
+    //metrics.CheckId = 0                           // precedence 2
+
+    // if neither a submission url nor check id are provided, an attempt will be made to find an existing
+    // httptrap check by using the circonus api to search for a check matching the following criteria:
     //      an active check,
     //      of type httptrap,
     //      where the target/host is equal to metrics.InstanceId - see below
     //      and the check has a tag equal to metrics.SearchTag - see below
+    //
+    // if searching does not yield a result, an attempt will be made to create a new check.
 
     // an identifier for the 'group of metrics emitted by this process or service'
 	//metrics.InstanceId = "centos7.gmtest"          // default: 'hostname':'program name'
