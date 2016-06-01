@@ -36,7 +36,7 @@ import (
 	"time"
 )
 
-var (
+const (
 	// a few sensible defaults
 	defaultApiHost  = "api.circonus.com"
 	defaultApiApp   = "circonus-gometrics"
