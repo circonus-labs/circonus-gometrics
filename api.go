@@ -11,102 +11,16 @@ import (
 	"github.com/hashicorp/go-retryablehttp"
 )
 
-func (m *CirconusMetrics) apiGetBrokerList() (*[]Broker, error) {
-	response, err := m.apiCall("GET", "/v2/broker", nil)
-	if err != nil {
-		return nil, err
-	}
-
-	brokerList := new([]Broker)
-	err = json.Unmarshal(response, brokerList)
-	if err != nil {
-		return nil, err
-	}
-
-	return brokerList, nil
-}
-
-func (m *CirconusMetrics) apiGetCert() ([]byte, error) {
-	response, err := m.apiCall("GET", "/v2/pki/ca.crt", nil)
-	if err != nil {
-		return nil, err
-	}
-
-	cadata := new(CACert)
-	err = json.Unmarshal(response, cadata)
-	if err != nil {
-		return nil, err
-	}
-
-	if cadata.Contents == "" {
-		return nil, fmt.Errorf("Unable to find ca cert %+v", cadata)
-	}
-	return []byte(cadata.Contents), nil
-}
-
-func (m *CirconusMetrics) apiCreateCheck(checkConfig []byte) (*Check, error) {
-	response, err := m.apiCall("POST", "/v2/check_bundle", checkConfig)
-	if err != nil {
-		return nil, err
-	}
-
-	check := new(Check)
-	err = json.Unmarshal(response, check)
-	if err != nil {
-		return nil, err
-	}
-
-	return check, nil
-
-}
-
-func (m *CirconusMetrics) apiCheckSearch() (*Check, error) {
-	searchCriteria := fmt.Sprintf("(active:1)(host:\"%s\")(type:\"%s\")(tags:%s)", m.InstanceId, checkType, m.SearchTag)
-	apiPath := fmt.Sprintf("/v2/check_bundle?search=%s", searchCriteria)
-
-	response, err := m.apiCall("GET", apiPath, nil)
-	if err != nil {
-		return nil, fmt.Errorf("API call error %+v", response)
-	}
-
-	var results []Check
-	err = json.Unmarshal(response, &results)
-	if err != nil {
-		return nil, fmt.Errorf("Error parsing JSON response %+v", err)
-	}
-
-	if len(results) == 0 {
-		return nil, nil
-		//return nil, fmt.Errorf("No checks found")
-	}
-
-	numActive := 0
-	checkId := -1
-
-	for idx, check := range results {
-		if check.Status == "active" {
-			numActive++
-			checkId = idx
-		}
-	}
-
-	if numActive > 1 {
-		return nil, fmt.Errorf("multiple possibilities >1 check matches criteria target=%s, type=%s, with tag %s\n", m.InstanceId, checkType, m.SearchTag)
-	}
-
-	return &results[checkId], nil
-}
-
 func (m *CirconusMetrics) apiCall(reqMethod string, reqPath string, data []byte) ([]byte, error) {
 	dataReader := bytes.NewReader(data)
 
-    // default to SSL
-    proto := "https://"
-    // allow user to override with explict "http://" in ApiHost
-    // if that floats their boat...
-    if m.ApiHost[0:4] == "http" {
-        proto = ""
-    }
+	// default to SSL
+	proto := "https://"
+	// allow user to override with explict "http://" in ApiHost
+	// if that floats their boat...
+	if m.ApiHost[0:4] == "http" {
+		proto = ""
+	}
 
 	url := fmt.Sprintf("%s%s%s", proto, m.ApiHost, reqPath)
 

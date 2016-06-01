@@ -11,28 +11,34 @@ import (
 )
 
 func (m *CirconusMetrics) submit(output map[string]interface{}) {
+	m.trapmu.Lock()
+	defer m.trapmu.Unlock()
+
 	str, err := json.Marshal(output)
 	if err != nil {
-        m.Log.Printf("Error marshling output %+v", err)
-        return
-    }
+		m.Log.Printf("Error marshling output %+v", err)
+		return
+	}
 
 	numStats, err := m.trapCall(str)
-    if err != nil {
-        m.Log.Printf("Error sending metrics to %s %+v\n", m.trapUrl, err)
-    }
-    if m.Debug {
-        m.Log.Printf("%d stats sent to %s\n", numStats, m.trapUrl)
-    }
+	if err != nil {
+		m.Log.Printf("Error sending metrics to %s %+v\n", m.trapUrl, err)
+	}
+	if m.Debug {
+		m.Log.Printf("%d stats sent to %s\n", numStats, m.trapUrl)
+	}
 }
 
 func (m *CirconusMetrics) trapCall(payload []byte) (int, error) {
 	tr := &http.Transport{
-		TLSClientConfig:    &tls.Config{RootCAs: m.certPool}, // add server name from submission_url or lookup of IP in broker list. ServerName: "noit3.dev.circonus.net"},
+		TLSClientConfig: &tls.Config{
+			RootCAs:    m.certPool,
+			ServerName: m.trapCN,
+		},
 		DisableCompression: true,
 	}
 	client := &http.Client{Transport: tr}
-	req, err := http.NewRequest("POST", m.trapUrl, bytes.NewBuffer(payload))
+	req, err := http.NewRequest("PUT", m.trapUrl, bytes.NewBuffer(payload))
 	if err != nil {
 		return 0, err
 	}
@@ -45,8 +51,10 @@ func (m *CirconusMetrics) trapCall(payload []byte) (int, error) {
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
+	// error?
 	var response map[string]interface{}
 	json.Unmarshal(body, &response)
+	// error (not able to parse json)
 	if resp.StatusCode != 200 {
 		return 0, errors.New("bad response code: " + strconv.Itoa(resp.StatusCode))
 	}

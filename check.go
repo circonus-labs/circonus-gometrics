@@ -4,76 +4,121 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 )
 
-type CheckConfig struct {
-	AsyncMetrics  bool   `json:"async_metrics"`
-	Secret        string `json:"secret"`
-	SubmissionUrl string `json:"submission_url"`
-}
+// use cases:
+//
+// check [bundle] by submission url
+// check [bundle] by *check* id (note, not check_bundle id)
+// check [bundle] by search
+// create check [bundle]
 
-type CheckMetric struct {
-	Name   string `json:"name"`
-	Type   string `json:"type"`
-	Units  string `json:"units"`
-	Status string `json:"status"`
-}
-
-type Check struct {
-	CheckUUIDs         []string `json:"_check_uuids,omitempty"`
-	Checks             []string `json:"_checks,omitempty"`
-	CID                string   `json:"_cid,omitempty"`
-	Created            int      `json:"_created,omitempty"`
-	LastModified       int      `json:"_last_modified,omitempty"`
-	LastModifedBy      string   `json:"_last_modifed_by,omitempty"`
-	ReverseConnectUrls []string `json:"_reverse_connection_urls,omitempty"`
-	Brokers            []string `json:"brokers"`
-	CheckConfig        `json:"config"`
-	DisplayName        string        `json:"display_name"`
-	Metrics            []CheckMetric `json:"metrics"`
-	MetricLimit        int           `json:"metric_limit"`
-	Notes              string        `json:"notes"`
-	Period             int           `json:"period"`
-	Status             string        `json:"status"`
-	Tags               []string      `json:"tags"`
-	Target             string        `json:"target"`
-	Timeout            int           `json:"timeout"`
-	Type               string        `json:"type"`
-}
-
-func (m *CirconusMetrics) getTrapUrl() (string, error) {
-	if m.trapUrl != "" {
-		return m.trapUrl, nil
+func (m *CirconusMetrics) initializeTrap() error {
+	if m.ready {
+		return nil
 	}
-	// one was explicitly set by user
+
+	m.trapmu.Lock()
+	defer m.trapmu.Unlock()
+
+	var err error
+	var check *Check
+	var checkBundle *CheckBundle
+	var broker *Broker
+
 	if m.SubmissionUrl != "" {
-		return m.SubmissionUrl, nil
-	}
-
-	trapUrl := ""
-
-	check, err := m.apiCheckSearch()
-	if err != nil {
-		m.Log.Fatalf("%+v\n", err)
-	}
-
-	if check == nil {
-		m.Log.Println("call create check")
-		check, err = m.createCheck()
+		check, err = m.fetchCheckBySubmissionUrl(m.SubmissionUrl)
 		if err != nil {
-			m.Log.Fatalf("%+v\n", err)
+			return err
+		}
+	} else if m.CheckId != 0 {
+		check, err = m.fetchCheckById(m.CheckId)
+		if err != nil {
+			return err
+		}
+	} else {
+		searchCriteria := fmt.Sprintf("(active:1)(host:\"%s\")(type:\"%s\")(tags:%s)", m.InstanceId, m.checkType, m.SearchTag)
+		checkBundle, err = m.checkBundleSearch(searchCriteria)
+		if err != nil {
+			return err
+		}
+
+		if checkBundle == nil {
+			// err==nil && checkBundle==nil is "no check bundles matched"
+			// an error *should* be returned for any other invalid scenario
+			checkBundle, broker, err = m.createNewCheck()
+			if err != nil {
+				return err
+			}
 		}
 	}
 
-	trapUrl = check.CheckConfig.SubmissionUrl
+	if checkBundle == nil {
+		if check != nil {
+			checkBundle, err = m.fetchCheckBundleByCid(check.CheckBundleCid)
+			if err != nil {
+				return err
+			}
+		} else {
+			return fmt.Errorf("Unable to determine check bundle")
+		}
+	}
 
-	return trapUrl, nil
+	if broker == nil {
+		broker, err = m.fetchBrokerByCid(checkBundle.Brokers[0])
+		if err != nil {
+			return err
+		}
+	}
+
+	// retain to facilitate metric management (adding new metrics specifically)
+	m.checkBundle = checkBundle
+	// url to which metrics should be PUT
+	m.trapUrl = checkBundle.Config.SubmissionUrl
+	// used when sending as "ServerName" get around certs not having IP SANS
+	// (cert created with server name as CN but IP used in trap url)
+	cn, err := m.getBrokerCN(broker, m.trapUrl)
+	if err != nil {
+		return err
+	}
+	m.trapCN = cn
+	// all ready, flush can send metrics
+	m.ready = true
+
+	return nil
+}
+
+func (m *CirconusMetrics) checkBundleSearch(criteria string) (*CheckBundle, error) {
+	checkBundles, err := m.searchCheckBundles(criteria)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(checkBundles) == 0 {
+		return nil, nil // trigger creation of a new check
+		// return nil, fmt.Errorf("No checks found matching criteria %s", searchCriteria)
+	}
+
+	numActive := 0
+	checkId := -1
+
+	for idx, check := range checkBundles {
+		if check.Status == "active" {
+			numActive++
+			checkId = idx
+		}
+	}
+
+	if numActive > 1 {
+		return nil, fmt.Errorf("Multiple possibilities multiple check bundles match criteria %s\n", criteria)
+	}
+
+	return &checkBundles[checkId], nil
 
 }
 
-func (m *CirconusMetrics) createCheck() (*Check, error) {
+func (m *CirconusMetrics) createNewCheck() (*CheckBundle, *Broker, error) {
 	checkSecret := m.CheckSecret
 	if checkSecret == "" {
 		secret, err := makeSecret()
@@ -83,13 +128,18 @@ func (m *CirconusMetrics) createCheck() (*Check, error) {
 		checkSecret = secret
 	}
 
-	config := &Check{
-		Brokers:     []string{fmt.Sprintf("/broker/%d", m.getBrokerGroupId())},
-		CheckConfig: CheckConfig{AsyncMetrics: true, Secret: checkSecret},
-		DisplayName: fmt.Sprintf("%s /%s", m.InstanceId, checkType),
-		Metrics: []CheckMetric{
-			CheckMetric{
-				Name:   "placeholder",
+	broker, brokerErr := m.getBroker()
+	if brokerErr != nil {
+		return nil, nil, brokerErr
+	}
+
+	config := CheckBundle{
+		Brokers:     []string{broker.Cid},
+		Config:      CheckBundleConfig{AsyncMetrics: true, Secret: checkSecret},
+		DisplayName: fmt.Sprintf("%s /%s", m.InstanceId, m.checkType),
+		Metrics: []CheckBundleMetric{
+			CheckBundleMetric{
+				Name:   "cgmplaceholder",
 				Status: "active",
 				Type:   "numeric",
 			},
@@ -101,22 +151,15 @@ func (m *CirconusMetrics) createCheck() (*Check, error) {
 		Tags:        append([]string{m.SearchTag}, m.Tags...),
 		Target:      m.InstanceId,
 		Timeout:     10,
-		Type:        checkType,
+		Type:        m.checkType,
 	}
 
-	cfgJson, err := json.Marshal(config)
+	checkBundle, err := m.createCheckBundle(config)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	// m.Log.Printf(string(cfgJson))
-
-	check, err := m.apiCreateCheck(cfgJson)
-	if err != nil {
-		return nil, err
-	}
-
-	return check, nil
+	return checkBundle, broker, nil
 }
 
 func makeSecret() (string, error) {

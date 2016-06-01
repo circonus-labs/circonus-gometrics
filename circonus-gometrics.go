@@ -41,7 +41,6 @@ var (
 	defaultApiHost  = "api.circonus.com"
 	defaultApiApp   = "circonus-gometrics"
 	defaultInterval = 10 * time.Second
-	checkType       = "httptrap"
 )
 
 // a few words about: "BrokerGroupId"
@@ -65,8 +64,9 @@ var (
 //
 
 type CirconusMetrics struct {
-	SubmissionUrl string
 	ApiToken      string
+	SubmissionUrl string
+	CheckId       int
 	ApiApp        string
 	ApiHost       string
 	InstanceId    string
@@ -80,11 +80,15 @@ type CirconusMetrics struct {
 	Debug    bool
 
 	// internals
+	ready   bool
 	trapUrl string
+	trapCN  string
+	trapmu  sync.Mutex
 
-	certPool *x509.CertPool
-	cert     []byte
-	check    Check
+	certPool    *x509.CertPool
+	cert        []byte
+	checkBundle *CheckBundle
+	checkType   string
 
 	counters map[string]uint64
 	cm       sync.Mutex
@@ -115,12 +119,15 @@ func NewCirconusMetrics() *CirconusMetrics {
 		Interval:     defaultInterval,
 		Log:          log.New(os.Stderr, "", log.LstdFlags),
 		Debug:        false,
+		ready:        false,
+		trapUrl:      "",
 		counterFuncs: make(map[string]func() uint64),
 		counters:     make(map[string]uint64),
 		//		gauges:       make(map[string]func() int64),
 		gauges:     make(map[string]int64),
 		histograms: make(map[string]*Histogram),
 		certPool:   x509.NewCertPool(),
+		checkType:  "httptrap",
 	}
 
 }
@@ -129,12 +136,8 @@ func NewCirconusMetrics() *CirconusMetrics {
 func (m *CirconusMetrics) Start() {
 	go func() {
 		m.loadCACert()
-		if m.trapUrl == "" {
-			url, err := m.getTrapUrl()
-			if err != nil {
-				m.Log.Printf("%+v\n", err)
-			}
-			m.trapUrl = url
+		if !m.ready {
+			m.initializeTrap()
 		}
 	}()
 
@@ -147,12 +150,11 @@ func (m *CirconusMetrics) Start() {
 
 func (m *CirconusMetrics) Flush() {
 	m.Log.Println("Flushing")
-	if m.trapUrl == "" {
-		url, err := m.getTrapUrl()
-		if err != nil {
-			m.Log.Printf("%+v\n", err)
+	if !m.ready {
+		if err := m.initializeTrap(); err != nil {
+			m.Log.Println("Unable to initialize check, NOT flushing metrics.")
+			return
 		}
-		m.trapUrl = url
 	}
 	counters, gauges, histograms := m.snapshot()
 	output := make(map[string]interface{})

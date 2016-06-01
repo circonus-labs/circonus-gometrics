@@ -58,6 +58,15 @@ func main() {
     // "GROUP ID" for a specific broker from the Brokers page in circonus ui
     // metrics.BrokerGroupId = 58938                // default: random enterprise broker
 
+    // used to select a broker with the same tag (e.g. can be used to dictate that a broker
+    // serving a specific location should be used. "dc:sfo", "location:new_york", "zone:us-west")
+    // if more than one broker has the tag, one will be selected randomly from the resulting list
+    // metrics.BrokerSelectTag = ""                 // default: not used
+
+    // if no BrokerGroupId or BrokerSelectTag is specified a broker will be selected randomly
+    // from the list of brokers available to the api token. enterprise brokers take precedence
+    // viable brokers are "active" and have the "httptrap" module enabled.
+
     // additional tags to add to an automatically created check (array of strings)
     // metrics.Tags = []string{"category:tag", "category:tag"} // default: none
 

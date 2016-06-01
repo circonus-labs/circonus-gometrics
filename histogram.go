@@ -22,14 +22,7 @@ func (m *CirconusMetrics) RecordValue(metric string, val float64) {
 }
 
 func (m *CirconusMetrics) SetHistogramValue(metric string, val float64) {
-	m.hm.Lock()
-	if _, ok := m.histograms[metric]; !ok {
-		m.histograms[metric] = &Histogram{
-			name: metric,
-			hist: circonusllhist.New(),
-		}
-	}
-	m.hm.Unlock()
+	m.NewHistogram(metric)
 
 	m.histograms[metric].rw.Lock()
 	defer m.histograms[metric].rw.Unlock()
@@ -37,10 +30,41 @@ func (m *CirconusMetrics) SetHistogramValue(metric string, val float64) {
 	m.histograms[metric].hist.RecordValue(val)
 }
 
+func (m *CirconusMetrics) NewHistogram(metric string) *Histogram {
+	m.hm.Lock()
+	defer m.hm.Unlock()
+
+	if hist, ok := m.histograms[metric]; ok {
+		return hist
+	}
+
+	hist := &Histogram{
+		name: metric,
+		hist: circonusllhist.New(),
+	}
+
+	m.histograms[metric] = hist
+
+	return hist
+}
+
 func (m *CirconusMetrics) RemoveHistogram(metric string) {
 	m.hm.Lock()
 	defer m.hm.Unlock()
 	delete(m.histograms, metric)
+}
+
+// Name returns the name of the histogram
+func (h *Histogram) Name() string {
+	return h.name
+}
+
+// RecordValue records the given value
+func (h *Histogram) RecordValue(v float64) {
+	h.rw.Lock()
+	defer h.rw.Unlock()
+
+	h.hist.RecordValue(v)
 }
 
 // // NewHistogram returns a new Circonus histogram that accumulates until reported on.

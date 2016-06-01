@@ -1,7 +1,50 @@
 package circonusgometrics
 
+import (
+	"encoding/json"
+	"fmt"
+)
+
 type CACert struct {
 	Contents string `json:"contents"`
+}
+
+func (m *CirconusMetrics) loadCACert() {
+	if m.cert != nil {
+		return
+	}
+
+	cert, err := m.fetchCert()
+	if err != nil {
+		if m.Debug {
+			m.Log.Printf("Error fetching ca.crt, using default. %+v\n", err)
+		}
+	}
+
+	if cert == nil {
+		cert = circonusCA
+	}
+
+	m.cert = cert
+	m.certPool.AppendCertsFromPEM(cert)
+}
+
+func (m *CirconusMetrics) fetchCert() ([]byte, error) {
+	response, err := m.apiCall("GET", "/v2/pki/ca.crt", nil)
+	if err != nil {
+		return nil, err
+	}
+
+	cadata := new(CACert)
+	err = json.Unmarshal(response, cadata)
+	if err != nil {
+		return nil, err
+	}
+
+	if cadata.Contents == "" {
+		return nil, fmt.Errorf("Unable to find ca cert %+v", cadata)
+	}
+	return []byte(cadata.Contents), nil
 }
 
 var circonusCA []byte = []byte(`-----BEGIN CERTIFICATE-----
@@ -27,26 +70,3 @@ BQUAA4GBAAHBtl15BwbSyq0dMEBpEdQYhHianU/rvOMe57digBmox7ZkPEbB/baE
 sYJysziA2raOtRxVRtcxuZSMij2RiJDsLxzIp1H60Xhr8lmf7qF6Y+sZl7V36KZb
 n2ezaOoRtsQl9dhqEMe8zgL76p9YZ5E69Al0mgiifTteyNjjMuIW
 -----END CERTIFICATE-----`)
-
-func (m *CirconusMetrics) loadCACert() {
-	if m.cert != nil {
-		return
-	}
-
-	cert, err := m.apiGetCert()
-	if err != nil {
-		if m.Debug {
-			m.Log.Printf("Error fetching ca.crt, using default. %+v\n", err)
-		}
-	}
-
-	if cert == nil {
-		cert = circonusCA
-	}
-
-	m.cert = cert
-	m.certPool.AppendCertsFromPEM(cert)
-
-	// rootCA.AppendCertsFromPEM(cert)
-	// haveCACert = true
-}
