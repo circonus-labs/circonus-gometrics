@@ -15,12 +15,20 @@ import (
 // create check [bundle]
 
 func (m *CirconusMetrics) initializeTrap() error {
+	m.trapmu.Lock()
+	defer m.trapmu.Unlock()
+
 	if m.ready {
 		return nil
 	}
 
-	m.trapmu.Lock()
-	defer m.trapmu.Unlock()
+	// short-circuit for non-ssl submission urls
+	if m.SubmissionUrl != "" && m.SubmissionUrl[0:5] == "http:" {
+		m.trapUrl = m.SubmissionUrl
+		m.trapSSL = false
+		m.ready = true
+		return nil
+	}
 
 	var err error
 	var check *Check
@@ -74,8 +82,18 @@ func (m *CirconusMetrics) initializeTrap() error {
 
 	// retain to facilitate metric management (adding new metrics specifically)
 	m.checkBundle = checkBundle
+
 	// url to which metrics should be PUT
 	m.trapUrl = checkBundle.Config.SubmissionUrl
+
+	// mark for SSL
+	if m.trapUrl[0:6] == "https:" {
+		m.trapSSL = true
+	}
+
+	// load the CA certificate for the broker hosting the submission url
+	m.loadCACert()
+
 	// used when sending as "ServerName" get around certs not having IP SANS
 	// (cert created with server name as CN but IP used in trap url)
 	cn, err := m.getBrokerCN(broker, m.trapUrl)
@@ -180,6 +198,11 @@ func makeSecret() (string, error) {
 }
 
 func (m *CirconusMetrics) addNewCheckMetrics(newMetrics map[string]*CheckBundleMetric) {
+	// only manage metrics checkBundle has been populated
+	if m.checkBundle == nil {
+		return
+	}
+
 	newCheckBundle := m.checkBundle
 	numCurrMetrics := len(newCheckBundle.Metrics)
 	numNewMetrics := len(newMetrics)

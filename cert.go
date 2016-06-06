@@ -14,6 +14,11 @@ func (m *CirconusMetrics) loadCACert() {
 		return
 	}
 
+	if !m.trapSSL {
+		// ssl not needed
+		return
+	}
+
 	cert, err := m.fetchCert()
 	if err != nil {
 		if m.Debug {

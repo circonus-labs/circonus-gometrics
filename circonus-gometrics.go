@@ -84,6 +84,7 @@ type CirconusMetrics struct {
 	ready   bool
 	trapUrl string
 	trapCN  string
+	trapSSL bool
 	trapmu  sync.Mutex
 
 	certPool      *x509.CertPool
@@ -143,7 +144,7 @@ func (m *CirconusMetrics) Start() {
 		if m.Debug {
 			m.Log = log.New(os.Stderr, "", log.LstdFlags)
 		}
-		m.loadCACert()
+		//m.loadCACert()
 		if !m.ready {
 			m.initializeTrap()
 		}
