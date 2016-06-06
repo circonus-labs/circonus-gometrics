@@ -6,14 +6,16 @@ import (
 	"encoding/json"
 	"errors"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"strconv"
+	"time"
+
+	"github.com/hashicorp/go-retryablehttp"
 )
 
 func (m *CirconusMetrics) submit(output map[string]interface{}, newMetrics map[string]*CheckBundleMetric) {
-	m.trapmu.Lock()
-	defer m.trapmu.Unlock()
-
+	// short-circuit, don't manage metrics if there is no check bundle
 	if len(newMetrics) > 0 {
 		m.addNewCheckMetrics(newMetrics)
 	}
@@ -26,7 +28,7 @@ func (m *CirconusMetrics) submit(output map[string]interface{}, newMetrics map[s
 
 	numStats, err := m.trapCall(str)
 	if err != nil {
-		m.Log.Printf("Error sending metrics to %s %+v\n", m.trapUrl, err)
+		m.Log.Printf("[ERROR] %+v\n", err)
 	}
 	if m.Debug {
 		m.Log.Printf("%d stats sent to %s\n", numStats, m.trapUrl)
@@ -34,31 +36,70 @@ func (m *CirconusMetrics) submit(output map[string]interface{}, newMetrics map[s
 }
 
 func (m *CirconusMetrics) trapCall(payload []byte) (int, error) {
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{
-			RootCAs:    m.certPool,
-			ServerName: m.trapCN,
-		},
-		DisableCompression: true,
-	}
-	client := &http.Client{Transport: tr}
-	req, err := http.NewRequest("PUT", m.trapUrl, bytes.NewBuffer(payload))
+	m.trapmu.Lock()
+	trapUrl := m.trapUrl
+	m.trapmu.Unlock()
+
+	dataReader := bytes.NewReader(payload)
+
+	req, err := retryablehttp.NewRequest("PUT", trapUrl, dataReader)
 	if err != nil {
 		return 0, err
 	}
 	req.Header.Add("Accept", "application/json")
-	req.Header.Add("X-Circonus-Auth-Token", m.ApiToken)
-	req.Header.Add("X-Circonus-App-Name", m.ApiApp)
+
+	client := retryablehttp.NewClient()
+	if m.trapSSL {
+		client.HTTPClient.Transport = &http.Transport{
+			Proxy: http.ProxyFromEnvironment,
+			Dial: (&net.Dialer{
+				Timeout:   30 * time.Second,
+				KeepAlive: 30 * time.Second,
+			}).Dial,
+			TLSHandshakeTimeout: 10 * time.Second,
+			TLSClientConfig: &tls.Config{
+				RootCAs:    m.certPool,
+				ServerName: m.trapCN,
+			},
+			DisableKeepAlives:   true,
+			MaxIdleConnsPerHost: -1,
+			DisableCompression:  true,
+		}
+	} else {
+		client.HTTPClient.Transport = &http.Transport{
+			Proxy: http.ProxyFromEnvironment,
+			Dial: (&net.Dialer{
+				Timeout:   30 * time.Second,
+				KeepAlive: 30 * time.Second,
+			}).Dial,
+			TLSHandshakeTimeout: 10 * time.Second,
+			DisableKeepAlives:   true,
+			MaxIdleConnsPerHost: -1,
+			DisableCompression:  true,
+		}
+	}
+	client.RetryWaitMin = 10 * time.Millisecond
+	client.RetryWaitMax = 50 * time.Millisecond
+	client.RetryMax = 3
+	client.Logger = m.Log
+
 	resp, err := client.Do(req)
 	if err != nil {
 		return 0, err
 	}
+
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
-	// error?
+	if err != nil {
+		m.Log.Printf("[ERROR] reading body, proceeding. %s\n", err)
+	}
+
 	var response map[string]interface{}
-	json.Unmarshal(body, &response)
-	// error (not able to parse json)
+	err = json.Unmarshal(body, &response)
+	if err != nil {
+		m.Log.Printf("[ERROR] parsing body, proceeding. %s\n", err)
+	}
+
 	if resp.StatusCode != 200 {
 		return 0, errors.New("bad response code: " + strconv.Itoa(resp.StatusCode))
 	}
