@@ -1,5 +1,57 @@
 package circonusgometrics
 
+import (
+	"encoding/json"
+	"fmt"
+)
+
+type CACert struct {
+	Contents string `json:"contents"`
+}
+
+func (m *CirconusMetrics) loadCACert() {
+	if m.cert != nil {
+		return
+	}
+
+	if !m.trapSSL {
+		// ssl not needed
+		return
+	}
+
+	cert, err := m.fetchCert()
+	if err != nil {
+		if m.Debug {
+			m.Log.Printf("Error fetching ca.crt, using default. %+v\n", err)
+		}
+	}
+
+	if cert == nil {
+		cert = circonusCA
+	}
+
+	m.cert = cert
+	m.certPool.AppendCertsFromPEM(cert)
+}
+
+func (m *CirconusMetrics) fetchCert() ([]byte, error) {
+	response, err := m.apiCall("GET", "/v2/pki/ca.crt", nil)
+	if err != nil {
+		return nil, err
+	}
+
+	cadata := new(CACert)
+	err = json.Unmarshal(response, cadata)
+	if err != nil {
+		return nil, err
+	}
+
+	if cadata.Contents == "" {
+		return nil, fmt.Errorf("Unable to find ca cert %+v", cadata)
+	}
+	return []byte(cadata.Contents), nil
+}
+
 var circonusCA []byte = []byte(`-----BEGIN CERTIFICATE-----
 MIID4zCCA0ygAwIBAgIJAMelf8skwVWPMA0GCSqGSIb3DQEBBQUAMIGoMQswCQYD
 VQQGEwJVUzERMA8GA1UECBMITWFyeWxhbmQxETAPBgNVBAcTCENvbHVtYmlhMRcw
