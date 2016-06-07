@@ -15,13 +15,16 @@ func (m *CirconusMetrics) Reset() {
 	m.gm.Lock()
 	defer m.gm.Unlock()
 
+	m.gfm.Lock()
+	defer m.gfm.Unlock()
+
 	m.hm.Lock()
 	defer m.hm.Unlock()
 
 	m.counters = make(map[string]uint64)
 	m.counterFuncs = make(map[string]func() uint64)
-	//	m.gauges = make(map[string]func() int64)
 	m.gauges = make(map[string]int64)
+	m.gaugeFuncs = make(map[string]func() int64)
 	m.histograms = make(map[string]*Histogram)
 }
 

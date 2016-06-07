@@ -109,6 +109,7 @@ type CirconusMetrics struct {
 	hm         sync.Mutex
 }
 
+// return new CirconusMetrics instance
 func NewCirconusMetrics() *CirconusMetrics {
 	_, an := path.Split(os.Args[0])
 	hn, err := os.Hostname()
@@ -138,7 +139,10 @@ func NewCirconusMetrics() *CirconusMetrics {
 
 }
 
-// Start starts a perdiodic submission process of all metrics collected
+// Start initializes the CirconusMetrics instance based on
+// configuration settings and sets the httptrap check url to
+// which metrics should be sent. It then starts a perdiodic
+// submission process of all metrics collected.
 func (m *CirconusMetrics) Start() error {
 	if m.Debug {
 		m.Log = log.New(os.Stderr, "", log.LstdFlags)
@@ -158,6 +162,7 @@ func (m *CirconusMetrics) Start() error {
 	return nil
 }
 
+// Flush metrics kicks off the process of sending metrics to Circonus
 func (m *CirconusMetrics) Flush() {
 	m.Log.Println("Flushing")
 	if !m.ready {

@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -85,6 +86,7 @@ func (m *CirconusMetrics) trapCall(payload []byte) (int, error) {
 
 	resp, err := client.Do(req)
 	if err != nil {
+		fmt.Printf("client.Do error %#v", err)
 		return 0, err
 	}
 

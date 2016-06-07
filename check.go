@@ -7,13 +7,13 @@ import (
 	"fmt"
 )
 
+// Initialize CirconusMetrics instance. Attempt to find a check otherwise create one.
 // use cases:
 //
 // check [bundle] by submission url
 // check [bundle] by *check* id (note, not check_bundle id)
 // check [bundle] by search
 // create check [bundle]
-
 func (m *CirconusMetrics) initializeTrap() error {
 	m.trapmu.Lock()
 	defer m.trapmu.Unlock()
@@ -114,6 +114,7 @@ func (m *CirconusMetrics) initializeTrap() error {
 	return nil
 }
 
+// Search for a check bundle given a predetermined set of criteria
 func (m *CirconusMetrics) checkBundleSearch(criteria string) (*CheckBundle, error) {
 	checkBundles, err := m.searchCheckBundles(criteria)
 	if err != nil {
@@ -122,7 +123,6 @@ func (m *CirconusMetrics) checkBundleSearch(criteria string) (*CheckBundle, erro
 
 	if len(checkBundles) == 0 {
 		return nil, nil // trigger creation of a new check
-		// return nil, fmt.Errorf("No checks found matching criteria %s", searchCriteria)
 	}
 
 	numActive := 0
@@ -140,9 +140,9 @@ func (m *CirconusMetrics) checkBundleSearch(criteria string) (*CheckBundle, erro
 	}
 
 	return &checkBundles[checkId], nil
-
 }
 
+// Create a new check to receive metrics
 func (m *CirconusMetrics) createNewCheck() (*CheckBundle, *Broker, error) {
 	checkSecret := m.CheckSecret
 	if checkSecret == "" {
@@ -187,6 +187,7 @@ func (m *CirconusMetrics) createNewCheck() (*CheckBundle, *Broker, error) {
 	return checkBundle, broker, nil
 }
 
+// Create a dynamic secret to use with a new check
 func makeSecret() (string, error) {
 	hash := sha256.New()
 	x := make([]byte, 2048)
@@ -197,8 +198,9 @@ func makeSecret() (string, error) {
 	return hex.EncodeToString(hash.Sum(nil))[0:16], nil
 }
 
+// Add new metrics to an existing check
 func (m *CirconusMetrics) addNewCheckMetrics(newMetrics map[string]*CheckBundleMetric) {
-	// only manage metrics checkBundle has been populated
+	// only manage metrics if checkBundle has been populated
 	if m.checkBundle == nil {
 		return
 	}

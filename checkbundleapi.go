@@ -42,11 +42,13 @@ type CheckBundle struct {
 	Type               string              `json:"type"`
 }
 
+// Use Circonus API to retrieve a check bundle by ID
 func (m *CirconusMetrics) fetchCheckBundleById(id int) (*CheckBundle, error) {
 	cid := fmt.Sprintf("/check_bundle/%d", id)
 	return m.fetchCheckBundleByCid(cid)
 }
 
+// Use Circonus API to retrieve a check bundle by CID
 func (m *CirconusMetrics) fetchCheckBundleByCid(cid string) (*CheckBundle, error) {
 	result, err := m.apiCall("GET", cid, nil)
 	if err != nil {
@@ -59,6 +61,7 @@ func (m *CirconusMetrics) fetchCheckBundleByCid(cid string) (*CheckBundle, error
 	return checkBundle, nil
 }
 
+// Use Circonus API to search for a check bundle
 func (m *CirconusMetrics) searchCheckBundles(searchCriteria string) ([]CheckBundle, error) {
 	apiPath := fmt.Sprintf("/v2/check_bundle?search=%s", searchCriteria)
 
@@ -76,6 +79,7 @@ func (m *CirconusMetrics) searchCheckBundles(searchCriteria string) ([]CheckBund
 	return results, nil
 }
 
+// Use Circonus API to create a check bundle
 func (m *CirconusMetrics) createCheckBundle(config CheckBundle) (*CheckBundle, error) {
 	cfgJson, err := json.Marshal(config)
 	if err != nil {
@@ -96,6 +100,7 @@ func (m *CirconusMetrics) createCheckBundle(config CheckBundle) (*CheckBundle, e
 	return checkBundle, nil
 }
 
+// Use Circonus API to update a check bundle
 func (m *CirconusMetrics) updateCheckBundle(config *CheckBundle) (*CheckBundle, error) {
 	cfgJson, err := json.Marshal(config)
 	if err != nil {

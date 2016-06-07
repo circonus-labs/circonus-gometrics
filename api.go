@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/go-retryablehttp"
 )
 
+// Call Circonus API
 func (m *CirconusMetrics) apiCall(reqMethod string, reqPath string, data []byte) ([]byte, error) {
 	dataReader := bytes.NewReader(data)
 
