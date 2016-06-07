@@ -139,31 +139,32 @@ func NewCirconusMetrics() *CirconusMetrics {
 }
 
 // Start starts a perdiodic submission process of all metrics collected
-func (m *CirconusMetrics) Start() {
-	go func() {
-		if m.Debug {
-			m.Log = log.New(os.Stderr, "", log.LstdFlags)
+func (m *CirconusMetrics) Start() error {
+	if m.Debug {
+		m.Log = log.New(os.Stderr, "", log.LstdFlags)
+	}
+	if !m.ready {
+		if err := m.initializeTrap(); err != nil {
+			return err
 		}
-		//m.loadCACert()
-		if !m.ready {
-			m.initializeTrap()
-		}
-	}()
+	}
 
 	go func() {
 		for _ = range time.NewTicker(m.Interval).C {
 			m.Flush()
 		}
 	}()
+
+	return nil
 }
 
 func (m *CirconusMetrics) Flush() {
 	m.Log.Println("Flushing")
 	if !m.ready {
 		if err := m.initializeTrap(); err != nil {
-			m.Log.Println("Unable to initialize check, NOT flushing metrics.")
-			return
+			m.Log.Printf("Unable to initialize check, NOT flushing metrics. %s\n", err)
 		}
+		return
 	}
 
 	// check for new metrics and enable them automatically
