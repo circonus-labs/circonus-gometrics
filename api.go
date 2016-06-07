@@ -15,8 +15,7 @@ func (m *CirconusMetrics) apiCall(reqMethod string, reqPath string, data []byte)
 
 	// default to SSL
 	proto := "https://"
-	// allow user to override with explict "http://" in ApiHost
-	// if that floats their boat...
+	// allow override with explict "http://" in ApiHost
 	if m.ApiHost[0:4] == "http" {
 		proto = ""
 	}
@@ -25,7 +24,7 @@ func (m *CirconusMetrics) apiCall(reqMethod string, reqPath string, data []byte)
 
 	req, err := retryablehttp.NewRequest(reqMethod, url, dataReader)
 	if err != nil {
-		return nil, fmt.Errorf("Error making API request to %s %+v", url, err)
+		return nil, fmt.Errorf("Error creating API request: %s %+v", url, err)
 	}
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("X-Circonus-Auth-Token", m.ApiToken)
@@ -39,7 +38,7 @@ func (m *CirconusMetrics) apiCall(reqMethod string, reqPath string, data []byte)
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("Error fetching %s: %s\n", url, err)
+		return nil, err
 	}
 
 	defer resp.Body.Close()
