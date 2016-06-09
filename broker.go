@@ -113,6 +113,10 @@ func (m *CirconusMetrics) selectBroker() (*Broker, error) {
 	validBrokerKeys := reflect.ValueOf(validBrokers).MapKeys()
 	selectedBroker := validBrokers[validBrokerKeys[rand.Intn(len(validBrokerKeys))].String()]
 
+	if m.Debug {
+		m.Log.Printf("[DEBUG] Selected broker '%s'\n", selectedBroker.Name)
+	}
+
 	return &selectedBroker, nil
 
 }
@@ -139,11 +143,17 @@ func (m *CirconusMetrics) isValidBroker(broker *Broker) bool {
 
 		// broker must be active
 		if detail.Status != "active" {
+			if m.Debug {
+				m.Log.Printf("[DEBUG] Broker '%s' is not active.\n", broker.Name)
+			}
 			continue
 		}
 
 		// broker must have module loaded for the check type to be used
 		if !m.brokerSupportsCheckType(m.checkType, &detail) {
+			if m.Debug {
+				m.Log.Printf("[DEBUG] Broker '%s' does not support '%s' checks.\n", broker.Name, m.checkType)
+			}
 			continue
 		}
 
@@ -151,16 +161,26 @@ func (m *CirconusMetrics) isValidBroker(broker *Broker) bool {
 		conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", detail.IP, brokerPort), m.MaxBrokerResponseTime)
 		if err != nil {
 			if detail.CN != "trap.noit.circonus.net" {
+				if m.Debug {
+					m.Log.Printf("[DEBUG] Broker '%s' unable to connect, %v\n", broker.Name, err)
+				}
 				continue // not able to reach the broker (or respone slow enough for it to be considered not usable)
 			}
 			// if circonus trap broker, try port 443
 			brokerPort = 443
-			conn, err = net.DialTimeout("tcp", fmt.Sprintf("%s:%d", detail.IP, brokerPort), m.MaxBrokerResponseTime)
+			conn, err = net.DialTimeout("tcp", fmt.Sprintf("%s:%d", detail.CN, brokerPort), m.MaxBrokerResponseTime)
 			if err != nil {
+				if m.Debug {
+					m.Log.Printf("[DEBUG] Broker '%s' unable to connect %v\n", broker.Name, err)
+				}
 				continue // not able to reach the broker on 443 either (or respone slow enough for it to be considered not usable)
 			}
 		}
 		conn.Close()
+
+		if m.Debug {
+			m.Log.Printf("[DEBUG] Broker '%s' is valid\n", broker.Name)
+		}
 
 		valid = true
 		break
