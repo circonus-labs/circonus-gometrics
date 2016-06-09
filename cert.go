@@ -9,6 +9,7 @@ type CACert struct {
 	Contents string `json:"contents"`
 }
 
+// Load the CA cert for the broker designated by the submission url
 func (m *CirconusMetrics) loadCACert() {
 	if m.cert != nil {
 		return
@@ -34,6 +35,7 @@ func (m *CirconusMetrics) loadCACert() {
 	m.certPool.AppendCertsFromPEM(cert)
 }
 
+// Use the Circonus API to retrieve the CA certificate
 func (m *CirconusMetrics) fetchCert() ([]byte, error) {
 	response, err := m.apiCall("GET", "/v2/pki/ca.crt", nil)
 	if err != nil {
@@ -52,6 +54,7 @@ func (m *CirconusMetrics) fetchCert() ([]byte, error) {
 	return []byte(cadata.Contents), nil
 }
 
+// Default Circonus CA certificate
 var circonusCA []byte = []byte(`-----BEGIN CERTIFICATE-----
 MIID4zCCA0ygAwIBAgIJAMelf8skwVWPMA0GCSqGSIb3DQEBBQUAMIGoMQswCQYD
 VQQGEwJVUzERMA8GA1UECBMITWFyeWxhbmQxETAPBgNVBAcTCENvbHVtYmlhMRcw

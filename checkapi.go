@@ -24,11 +24,13 @@ type Check struct {
 	Details        CheckDetails `json:"_details"`
 }
 
+// Use Circonus API to retrieve a check by ID
 func (m *CirconusMetrics) fetchCheckById(id int) (*Check, error) {
 	cid := fmt.Sprintf("/check/%d", id)
 	return m.fetchCheckByCid(cid)
 }
 
+// Use Circonus API to retrieve a check by CID
 func (m *CirconusMetrics) fetchCheckByCid(cid string) (*Check, error) {
 	result, err := m.apiCall("GET", cid, nil)
 	if err != nil {
@@ -41,6 +43,7 @@ func (m *CirconusMetrics) fetchCheckByCid(cid string) (*Check, error) {
 	return check, nil
 }
 
+// Use Circonus API to retrieve a check by submission url
 func (m *CirconusMetrics) fetchCheckBySubmissionUrl(submissionUrl string) (*Check, error) {
 
 	u, err := url.Parse(submissionUrl)

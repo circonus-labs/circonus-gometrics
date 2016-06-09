@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io/ioutil"
+	"log"
 	"net"
 	"net/http"
 	"strconv"
@@ -15,7 +16,6 @@ import (
 )
 
 func (m *CirconusMetrics) submit(output map[string]interface{}, newMetrics map[string]*CheckBundleMetric) {
-	// short-circuit, don't manage metrics if there is no check bundle
 	if len(newMetrics) > 0 {
 		m.addNewCheckMetrics(newMetrics)
 	}
@@ -29,10 +29,10 @@ func (m *CirconusMetrics) submit(output map[string]interface{}, newMetrics map[s
 	numStats, err := m.trapCall(str)
 	if err != nil {
 		m.Log.Printf("[ERROR] %+v\n", err)
+		return
 	}
-	if m.Debug {
-		m.Log.Printf("%d stats sent to %s\n", numStats, m.trapUrl)
-	}
+
+	m.Log.Printf("%d stats sent to %s\n", numStats, m.trapUrl)
 }
 
 func (m *CirconusMetrics) trapCall(payload []byte) (int, error) {
@@ -83,8 +83,21 @@ func (m *CirconusMetrics) trapCall(payload []byte) (int, error) {
 	client.RetryMax = 3
 	client.Logger = m.Log
 
+	attempts := -1
+	client.RequestLogHook = func(logger *log.Logger, req *http.Request, retryNumber int) {
+		attempts = retryNumber
+	}
+
 	resp, err := client.Do(req)
 	if err != nil {
+		if attempts == client.RetryMax {
+			if time.Since(m.trapLastUpdate) >= m.MaxSubmissionUrlAge {
+				m.trapmu.Lock()
+				defer m.trapmu.Unlock()
+				m.ready = false
+				m.trapUrl = ""
+			}
+		}
 		return 0, err
 	}
 

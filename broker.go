@@ -14,6 +14,7 @@ func init() {
 	rand.Seed(time.Now().UnixNano())
 }
 
+// Get Broker to use when creating a check
 func (m *CirconusMetrics) getBroker() (*Broker, error) {
 	if m.BrokerGroupId != 0 {
 		broker, err := m.fetchBrokerById(m.BrokerGroupId)
@@ -32,6 +33,7 @@ func (m *CirconusMetrics) getBroker() (*Broker, error) {
 	return broker, nil
 }
 
+// Get CN of Broker associated with submission_url to satisfy no IP SANS in certs
 func (m *CirconusMetrics) getBrokerCN(broker *Broker, submissionUrl string) (string, error) {
 	u, err := url.Parse(submissionUrl)
 	if err != nil {
@@ -62,6 +64,8 @@ func (m *CirconusMetrics) getBrokerCN(broker *Broker, submissionUrl string) (str
 
 }
 
+// Select a broker for use when creating a check, if a specific broker
+// was not specified.
 func (m *CirconusMetrics) selectBroker() (*Broker, error) {
 	brokerList, err := m.fetchBrokerList()
 	if err != nil {
@@ -95,6 +99,7 @@ func (m *CirconusMetrics) selectBroker() (*Broker, error) {
 
 }
 
+// Verify broker supports the check type to be used
 func (m *CirconusMetrics) brokerSupportsCheckType(checkType string, details *BrokerDetail) bool {
 
 	for _, module := range details.Modules {
@@ -107,6 +112,7 @@ func (m *CirconusMetrics) brokerSupportsCheckType(checkType string, details *Bro
 
 }
 
+// Is the broker valid (active and supports check type)
 func (m *CirconusMetrics) isValidBroker(broker *Broker) bool {
 	valid := false
 	for _, detail := range broker.Details {
