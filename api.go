@@ -63,7 +63,7 @@ func (m *CirconusMetrics) apiCall(reqMethod string, reqPath string, data []byte)
 	}
 
 	if resp.StatusCode != 200 {
-		m.Log.Printf("%+v\n", string(body))
+		m.Log.Printf("response code:%v\n%+v\n", resp.StatusCode, string(body))
 
 		var response map[string]interface{}
 		json.Unmarshal(body, &response)

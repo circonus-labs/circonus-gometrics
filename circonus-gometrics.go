@@ -158,7 +158,9 @@ func (m *CirconusMetrics) Start() {
 }
 
 func (m *CirconusMetrics) Flush() {
-	m.Log.Println("Flushing")
+	if m.Debug {
+		m.Log.Println("Flushing")
+	}
 	if !m.ready {
 		if err := m.initializeTrap(); err != nil {
 			m.Log.Println("Unable to initialize check, NOT flushing metrics.")
