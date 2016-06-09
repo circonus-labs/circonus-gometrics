@@ -140,7 +140,6 @@ func NewCirconusMetrics() *CirconusMetrics {
 		Interval:              defaultInterval,
 		MaxSubmissionUrlAge:   defaultMaxSubmissionUrlAge,
 		MaxBrokerResponseTime: defaultBrokerMaxResponseTime,
-		Log:           log.New(ioutil.Discard, "", log.LstdFlags),
 		Debug:         false,
 		ready:         false,
 		trapUrl:       "",
@@ -156,14 +155,27 @@ func NewCirconusMetrics() *CirconusMetrics {
 
 }
 
+// ensure logging is initialized
+func (m *CirconusMetrics) initializeLogging() {
+	if m.Log == nil { // was not explicitly set by user
+		// note: this is only done once.
+		// after a Start or Flush call - changing Debug will
+		// NOT toggle logging
+		if m.Debug {
+			m.Log = log.New(os.Stderr, "", log.LstdFlags)
+		} else {
+			m.Log = log.New(ioutil.Discard, "", log.LstdFlags)
+		}
+	}
+}
+
 // Start initializes the CirconusMetrics instance based on
 // configuration settings and sets the httptrap check url to
 // which metrics should be sent. It then starts a perdiodic
 // submission process of all metrics collected.
 func (m *CirconusMetrics) Start() error {
-	if m.Debug {
-		m.Log = log.New(os.Stderr, "", log.LstdFlags)
-	}
+	m.initializeLogging()
+
 	if !m.ready {
 		if err := m.initializeTrap(); err != nil {
 			return err
@@ -187,6 +199,8 @@ func (m *CirconusMetrics) Flush() {
 	m.flushmu.Lock()
 	m.flushing = true
 	m.flushmu.Unlock()
+
+	m.initializeLogging()
 
 	if !m.ready {
 		if err := m.initializeTrap(); err != nil {
