@@ -10,14 +10,14 @@ import (
 	"time"
 )
 
+// Call Circonus API
 func (m *CirconusMetrics) apiCall(reqMethod string, reqPath string, data []byte) ([]byte, error) {
 	dataReader := bytes.NewReader(data)
 
 	// default to SSL
 	proto := "https://"
-	// allow user to override with explict "http://" in ApiHost
-	// if that floats their boat...
-	if m.ApiHost[0:4] == "http" {
+	// allow override with explict "http://" in ApiHost
+	if m.ApiHost[0:5] == "http:" {
 		proto = ""
 	}
 
@@ -25,7 +25,7 @@ func (m *CirconusMetrics) apiCall(reqMethod string, reqPath string, data []byte)
 
 	req, err := retryablehttp.NewRequest(reqMethod, url, dataReader)
 	if err != nil {
-		return nil, fmt.Errorf("Error making API request to %s %+v", url, err)
+		return nil, fmt.Errorf("[ERROR] creating API request: %s %+v", url, err)
 	}
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("X-Circonus-Auth-Token", m.ApiToken)
@@ -52,25 +52,27 @@ func (m *CirconusMetrics) apiCall(reqMethod string, reqPath string, data []byte)
 			if m.Debug {
 				m.Log.Printf("[DEBUG] %v\n", string(body))
 			}
-			return nil, fmt.Errorf("Error: %s", string(body))
+			return nil, fmt.Errorf("[ERROR] %s", string(body))
 		}
-		return nil, fmt.Errorf("Error fetching %s: %s", url, err)
+		return nil, fmt.Errorf("[ERROR] fetching %s: %s", url, err)
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("Error reading body %+v", err)
+		return nil, fmt.Errorf("[ERROR] reading body %+v", err)
 	}
 
 	if resp.StatusCode != 200 {
-		m.Log.Printf("response code:%v\n%+v\n", resp.StatusCode, string(body))
+		if m.Debug {
+			m.Log.Printf("[DEBUG] Response code:%v\n%+v\n", resp.StatusCode, string(body))
+		}
 
 		var response map[string]interface{}
 		json.Unmarshal(body, &response)
 		if err != nil {
-			return nil, fmt.Errorf("Error parsing JSON response %+v", err)
+			return nil, fmt.Errorf("[ERROR] parsing JSON response %+v", err)
 		}
-		return nil, fmt.Errorf("Error API response code %+v", response)
+		return nil, fmt.Errorf("[ERROR] API response code %+v", response)
 	}
 
 	return body, nil

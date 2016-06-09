@@ -39,9 +39,11 @@ import (
 
 const (
 	// a few sensible defaults
-	defaultApiHost  = "api.circonus.com"
-	defaultApiApp   = "circonus-gometrics"
-	defaultInterval = 10 * time.Second
+	defaultApiHost               = "api.circonus.com"
+	defaultApiApp                = "circonus-gometrics"
+	defaultInterval              = 10 * time.Second
+	defaultMaxSubmissionUrlAge   = 60 * time.Second
+	defaultBrokerMaxResponseTime = 500 * time.Millisecond
 )
 
 // a few words about: "BrokerGroupId"
@@ -77,15 +79,28 @@ type CirconusMetrics struct {
 	CheckSecret   string
 
 	Interval time.Duration
-	Log      *log.Logger
-	Debug    bool
+	// if the submission url returns errors
+	// this gates the amount of time to keep the current
+	// submission url before attempting to retrieve it
+	// again from the api
+	MaxSubmissionUrlAge time.Duration
+	// for a broker to be considered valid it must
+	// respond to a connection attempt within this amount of time
+	MaxBrokerResponseTime time.Duration
+
+	Log   *log.Logger
+	Debug bool
 
 	// internals
-	ready   bool
-	trapUrl string
-	trapCN  string
-	trapSSL bool
-	trapmu  sync.Mutex
+	flushing bool
+	flushmu  sync.Mutex
+
+	ready          bool
+	trapUrl        string
+	trapCN         string
+	trapSSL        bool
+	trapLastUpdate time.Time
+	trapmu         sync.Mutex
 
 	certPool      *x509.CertPool
 	cert          []byte
@@ -109,6 +124,7 @@ type CirconusMetrics struct {
 	hm         sync.Mutex
 }
 
+// return new CirconusMetrics instance
 func NewCirconusMetrics() *CirconusMetrics {
 	_, an := path.Split(os.Args[0])
 	hn, err := os.Hostname()
@@ -117,11 +133,13 @@ func NewCirconusMetrics() *CirconusMetrics {
 	}
 
 	return &CirconusMetrics{
-		InstanceId:    fmt.Sprintf("%s:%s", hn, an),
-		SearchTag:     fmt.Sprintf("service:%s", an),
-		ApiHost:       defaultApiHost,
-		ApiApp:        defaultApiApp,
-		Interval:      defaultInterval,
+		InstanceId:            fmt.Sprintf("%s:%s", hn, an),
+		SearchTag:             fmt.Sprintf("service:%s", an),
+		ApiHost:               defaultApiHost,
+		ApiApp:                defaultApiApp,
+		Interval:              defaultInterval,
+		MaxSubmissionUrlAge:   defaultMaxSubmissionUrlAge,
+		MaxBrokerResponseTime: defaultBrokerMaxResponseTime,
 		Log:           log.New(ioutil.Discard, "", log.LstdFlags),
 		Debug:         false,
 		ready:         false,
@@ -138,34 +156,47 @@ func NewCirconusMetrics() *CirconusMetrics {
 
 }
 
-// Start starts a perdiodic submission process of all metrics collected
-func (m *CirconusMetrics) Start() {
-	go func() {
-		if m.Debug {
-			m.Log = log.New(os.Stderr, "", log.LstdFlags)
+// Start initializes the CirconusMetrics instance based on
+// configuration settings and sets the httptrap check url to
+// which metrics should be sent. It then starts a perdiodic
+// submission process of all metrics collected.
+func (m *CirconusMetrics) Start() error {
+	if m.Debug {
+		m.Log = log.New(os.Stderr, "", log.LstdFlags)
+	}
+	if !m.ready {
+		if err := m.initializeTrap(); err != nil {
+			return err
 		}
-		//m.loadCACert()
-		if !m.ready {
-			m.initializeTrap()
-		}
-	}()
+	}
 
 	go func() {
 		for _ = range time.NewTicker(m.Interval).C {
 			m.Flush()
 		}
 	}()
+
+	return nil
 }
 
+// Flush metrics kicks off the process of sending metrics to Circonus
 func (m *CirconusMetrics) Flush() {
-	if m.Debug {
-		m.Log.Println("Flushing")
+	if m.flushing {
+		return
 	}
+	m.flushmu.Lock()
+	m.flushing = true
+	m.flushmu.Unlock()
+
 	if !m.ready {
 		if err := m.initializeTrap(); err != nil {
-			m.Log.Println("Unable to initialize check, NOT flushing metrics.")
+			m.Log.Printf("[WARN] Unable to initialize check, NOT flushing metrics. %s\n", err)
 			return
 		}
+	}
+
+	if m.Debug {
+		m.Log.Println("[DEBUG] Flushing metrics")
 	}
 
 	// check for new metrics and enable them automatically
@@ -216,4 +247,8 @@ func (m *CirconusMetrics) Flush() {
 	}
 
 	m.submit(output, newMetrics)
+
+	m.flushmu.Lock()
+	m.flushing = false
+	m.flushmu.Unlock()
 }

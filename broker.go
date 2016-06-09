@@ -14,24 +14,26 @@ func init() {
 	rand.Seed(time.Now().UnixNano())
 }
 
+// Get Broker to use when creating a check
 func (m *CirconusMetrics) getBroker() (*Broker, error) {
 	if m.BrokerGroupId != 0 {
 		broker, err := m.fetchBrokerById(m.BrokerGroupId)
 		if err != nil {
-			return nil, fmt.Errorf("Error fetching designated broker %d\n", m.BrokerGroupId)
+			return nil, fmt.Errorf("[ERROR] fetching designated broker %d\n", m.BrokerGroupId)
 		}
 		if !m.isValidBroker(broker) {
-			return nil, fmt.Errorf("Error designated broker %d [%s] is invalid (not active or does not support required check type).\n", m.BrokerGroupId, broker.Name)
+			return nil, fmt.Errorf("[ERROR] designated broker %d [%s] is invalid (not active or does not support required check type).\n", m.BrokerGroupId, broker.Name)
 		}
 		return broker, nil
 	}
 	broker, err := m.selectBroker()
 	if err != nil {
-		return nil, fmt.Errorf("Unable to fetch suitable broker %s", err)
+		return nil, fmt.Errorf("[ERROR] Unable to fetch suitable broker %s", err)
 	}
 	return broker, nil
 }
 
+// Get CN of Broker associated with submission_url to satisfy no IP SANS in certs
 func (m *CirconusMetrics) getBrokerCN(broker *Broker, submissionUrl string) (string, error) {
 	u, err := url.Parse(submissionUrl)
 	if err != nil {
@@ -55,13 +57,15 @@ func (m *CirconusMetrics) getBrokerCN(broker *Broker, submissionUrl string) (str
 	}
 
 	if cn == "" {
-		return "", fmt.Errorf("Unable to match URL host (%s) to Broker", u.Host)
+		return "", fmt.Errorf("[ERROR] Unable to match URL host (%s) to Broker", u.Host)
 	}
 
 	return cn, nil
 
 }
 
+// Select a broker for use when creating a check, if a specific broker
+// was not specified.
 func (m *CirconusMetrics) selectBroker() (*Broker, error) {
 	brokerList, err := m.fetchBrokerList()
 	if err != nil {
@@ -95,6 +99,7 @@ func (m *CirconusMetrics) selectBroker() (*Broker, error) {
 
 }
 
+// Verify broker supports the check type to be used
 func (m *CirconusMetrics) brokerSupportsCheckType(checkType string, details *BrokerDetail) bool {
 
 	for _, module := range details.Modules {
@@ -107,17 +112,43 @@ func (m *CirconusMetrics) brokerSupportsCheckType(checkType string, details *Bro
 
 }
 
+// Is the broker valid (active, supports check type, and reachable)
 func (m *CirconusMetrics) isValidBroker(broker *Broker) bool {
+	brokerPort := 0
 	valid := false
 	for _, detail := range broker.Details {
+		brokerPort = 43191
+
+		// broker must be active
 		if detail.Status != "active" {
 			continue
 		}
 
-		if m.brokerSupportsCheckType(m.checkType, &detail) {
-			valid = true
-			break
+		// broker must have module loaded for the check type to be used
+		if !m.brokerSupportsCheckType(m.checkType, &detail) {
+			continue
 		}
+
+		// broker must be reachable and respond within designated time
+		conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", detail.IP, brokerPort), m.MaxBrokerResponseTime)
+		if err != nil {
+			if detail.CN != "trap.noit.circonus.net" {
+				continue // not able to reach the broker (or respone slow enough for it to be considered not usable)
+			}
+			// if circonus trap broker, try port 443
+			brokerPort = 443
+			conn, err = net.DialTimeout("tcp", fmt.Sprintf("%s:%d", detail.IP, brokerPort), m.MaxBrokerResponseTime)
+			if err != nil {
+				continue // not able to reach the broker on 443 either (or respone slow enough for it to be considered not usable)
+			}
+			conn.Close()
+		} else {
+			conn.Close()
+		}
+
+		valid = true
+		break
+
 	}
 	return valid
 }
