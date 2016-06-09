@@ -67,16 +67,17 @@ const (
 //
 
 type CirconusMetrics struct {
-	ApiToken      string
-	SubmissionUrl string
-	CheckId       int
-	ApiApp        string
-	ApiHost       string
-	InstanceId    string
-	SearchTag     string
-	BrokerGroupId int
-	Tags          []string
-	CheckSecret   string
+	ApiToken        string
+	SubmissionUrl   string
+	CheckId         int
+	ApiApp          string
+	ApiHost         string
+	InstanceId      string
+	SearchTag       string
+	BrokerGroupId   int
+	BrokerSelectTag string
+	Tags            []string
+	CheckSecret     string
 
 	Interval time.Duration
 	// if the submission url returns errors
