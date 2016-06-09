@@ -22,7 +22,7 @@ func (m *CirconusMetrics) submit(output map[string]interface{}, newMetrics map[s
 
 	str, err := json.Marshal(output)
 	if err != nil {
-		m.Log.Printf("Error marshling output %+v", err)
+		m.Log.Printf("[ERROR] marshling output %+v", err)
 		return
 	}
 
@@ -32,7 +32,9 @@ func (m *CirconusMetrics) submit(output map[string]interface{}, newMetrics map[s
 		return
 	}
 
-	m.Log.Printf("%d stats sent to %s\n", numStats, m.trapUrl)
+	if m.Debug {
+		m.Log.Printf("[DEBUG] %d stats sent to %s\n", numStats, m.trapUrl)
+	}
 }
 
 func (m *CirconusMetrics) trapCall(payload []byte) (int, error) {
@@ -114,7 +116,7 @@ func (m *CirconusMetrics) trapCall(payload []byte) (int, error) {
 	}
 
 	if resp.StatusCode != 200 {
-		return 0, errors.New("bad response code: " + strconv.Itoa(resp.StatusCode))
+		return 0, errors.New("[ERROR] bad response code: " + strconv.Itoa(resp.StatusCode))
 	}
 	switch v := response["stats"].(type) {
 	case float64:
@@ -123,5 +125,5 @@ func (m *CirconusMetrics) trapCall(payload []byte) (int, error) {
 		return v, nil
 	default:
 	}
-	return 0, errors.New("bad response type")
+	return 0, errors.New("[ERROR] bad response type")
 }
