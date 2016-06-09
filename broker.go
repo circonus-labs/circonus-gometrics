@@ -107,7 +107,7 @@ func (m *CirconusMetrics) selectBroker() (*Broker, error) {
 	}
 
 	if len(validBrokers) == 0 {
-		return nil, fmt.Errorf("zero valid brokers found.")
+		return nil, fmt.Errorf("found %d broker(s), zero are valid.", len(brokerList))
 	}
 
 	validBrokerKeys := reflect.ValueOf(validBrokers).MapKeys()
