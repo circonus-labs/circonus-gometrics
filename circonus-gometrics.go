@@ -39,10 +39,11 @@ import (
 
 const (
 	// a few sensible defaults
-	defaultApiHost             = "api.circonus.com"
-	defaultApiApp              = "circonus-gometrics"
-	defaultInterval            = 10 * time.Second
-	defaultMaxSubmissionUrlAge = 60 * time.Second
+	defaultApiHost               = "api.circonus.com"
+	defaultApiApp                = "circonus-gometrics"
+	defaultInterval              = 10 * time.Second
+	defaultMaxSubmissionUrlAge   = 60 * time.Second
+	defaultBrokerMaxResponseTime = 500 * time.Millisecond
 )
 
 // a few words about: "BrokerGroupId"
@@ -83,6 +84,9 @@ type CirconusMetrics struct {
 	// submission url before attempting to retrieve it
 	// again from the api
 	MaxSubmissionUrlAge time.Duration
+	// for a broker to be considered valid it must
+	// respond to a connection attempt within this amount of time
+	MaxBrokerResponseTime time.Duration
 
 	Log   *log.Logger
 	Debug bool
@@ -129,24 +133,25 @@ func NewCirconusMetrics() *CirconusMetrics {
 	}
 
 	return &CirconusMetrics{
-		InstanceId:          fmt.Sprintf("%s:%s", hn, an),
-		SearchTag:           fmt.Sprintf("service:%s", an),
-		ApiHost:             defaultApiHost,
-		ApiApp:              defaultApiApp,
-		Interval:            defaultInterval,
-		MaxSubmissionUrlAge: defaultMaxSubmissionUrlAge,
-		Log:                 log.New(ioutil.Discard, "", log.LstdFlags),
-		Debug:               false,
-		ready:               false,
-		trapUrl:             "",
-		activeMetrics:       make(map[string]bool),
-		counters:            make(map[string]uint64),
-		counterFuncs:        make(map[string]func() uint64),
-		gauges:              make(map[string]int64),
-		gaugeFuncs:          make(map[string]func() int64),
-		histograms:          make(map[string]*Histogram),
-		certPool:            x509.NewCertPool(),
-		checkType:           "httptrap",
+		InstanceId:            fmt.Sprintf("%s:%s", hn, an),
+		SearchTag:             fmt.Sprintf("service:%s", an),
+		ApiHost:               defaultApiHost,
+		ApiApp:                defaultApiApp,
+		Interval:              defaultInterval,
+		MaxSubmissionUrlAge:   defaultMaxSubmissionUrlAge,
+		MaxBrokerResponseTime: defaultBrokerMaxResponseTime,
+		Log:           log.New(ioutil.Discard, "", log.LstdFlags),
+		Debug:         false,
+		ready:         false,
+		trapUrl:       "",
+		activeMetrics: make(map[string]bool),
+		counters:      make(map[string]uint64),
+		counterFuncs:  make(map[string]func() uint64),
+		gauges:        make(map[string]int64),
+		gaugeFuncs:    make(map[string]func() int64),
+		histograms:    make(map[string]*Histogram),
+		certPool:      x509.NewCertPool(),
+		checkType:     "httptrap",
 	}
 
 }
@@ -177,7 +182,6 @@ func (m *CirconusMetrics) Start() error {
 // Flush metrics kicks off the process of sending metrics to Circonus
 func (m *CirconusMetrics) Flush() {
 	if m.flushing {
-		m.Log.Println("Flush already active.")
 		return
 	}
 	m.flushmu.Lock()
@@ -185,15 +189,14 @@ func (m *CirconusMetrics) Flush() {
 	m.flushmu.Unlock()
 
 	if !m.ready {
-		m.Log.Println("Initializing trap")
 		if err := m.initializeTrap(); err != nil {
-			m.Log.Printf("Unable to initialize check, NOT flushing metrics. %s\n", err)
+			m.Log.Printf("[WARN] Unable to initialize check, NOT flushing metrics. %s\n", err)
 			return
 		}
 	}
 
 	if m.Debug {
-		m.Log.Println("Flushing")
+		m.Log.Println("[DEBUG] Flushing metrics")
 	}
 
 	// check for new metrics and enable them automatically
