@@ -23,7 +23,7 @@ func (m *CirconusMetrics) loadCACert() {
 	cert, err := m.fetchCert()
 	if err != nil {
 		if m.Debug {
-			m.Log.Printf("Error fetching ca.crt, using default. %+v\n", err)
+			m.Log.Printf("[DEBUG] Unable to fetch ca.crt, using default. %+v\n", err)
 		}
 	}
 
@@ -49,8 +49,9 @@ func (m *CirconusMetrics) fetchCert() ([]byte, error) {
 	}
 
 	if cadata.Contents == "" {
-		return nil, fmt.Errorf("Unable to find ca cert %+v", cadata)
+		return nil, fmt.Errorf("[ERROR] Unable to find ca cert %+v", cadata)
 	}
+
 	return []byte(cadata.Contents), nil
 }
 
