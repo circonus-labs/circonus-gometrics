@@ -2,12 +2,12 @@ package circonusgometrics
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
-	"github.com/hashicorp/go-retryablehttp"
 	"io/ioutil"
 	"net/http"
 	"time"
+
+	"github.com/hashicorp/go-retryablehttp"
 )
 
 // Call Circonus API
@@ -63,16 +63,12 @@ func (m *CirconusMetrics) apiCall(reqMethod string, reqPath string, data []byte)
 	}
 
 	if resp.StatusCode != 200 {
+		msg := fmt.Sprintf("API response code %d: %s", resp.StatusCode, string(body))
 		if m.Debug {
-			m.Log.Printf("[DEBUG] Response code:%v\n%+v\n", resp.StatusCode, string(body))
+			m.Log.Printf("[DEBUG] %s\n", msg)
 		}
 
-		var response map[string]interface{}
-		json.Unmarshal(body, &response)
-		if err != nil {
-			return nil, fmt.Errorf("[ERROR] parsing JSON response %+v", err)
-		}
-		return nil, fmt.Errorf("[ERROR] API response code %+v", response)
+		return nil, fmt.Errorf("[ERROR] %s", msg)
 	}
 
 	return body, nil
