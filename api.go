@@ -17,7 +17,7 @@ func (m *CirconusMetrics) apiCall(reqMethod string, reqPath string, data []byte)
 	// default to SSL
 	proto := "https://"
 	// allow override with explict "http://" in ApiHost
-	if m.ApiHost[0:4] == "http" {
+	if m.ApiHost[0:5] == "http:" {
 		proto = ""
 	}
 
