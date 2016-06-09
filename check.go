@@ -5,6 +5,9 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"strconv"
+	"strings"
+	"time"
 )
 
 // Initialize CirconusMetrics instance. Attempt to find a check otherwise create one.
@@ -27,6 +30,7 @@ func (m *CirconusMetrics) initializeTrap() error {
 		m.trapUrl = m.SubmissionUrl
 		m.trapSSL = false
 		m.ready = true
+		m.trapLastUpdate = time.Now()
 		return nil
 	}
 
@@ -39,6 +43,19 @@ func (m *CirconusMetrics) initializeTrap() error {
 		check, err = m.fetchCheckBySubmissionUrl(m.SubmissionUrl)
 		if err != nil {
 			return err
+		}
+		// extract check id from check object returned from looking up using submission url
+		// set m.CheckId to the id
+		// set m.SubmissionUrl to "" to prevent trying to search on it going forward
+		// use case: if the broker is changed in the UI metrics would stop flowing
+		// unless the new submission url can be fetched with the API (which is no
+		// longer possible using the original submission url)
+		id, err := strconv.Atoi(strings.Replace(check.Cid, "/check/", "", -1))
+		if err == nil {
+			m.CheckId = id
+			m.SubmissionUrl = ""
+		} else {
+			m.Log.Printf("SubmissionUrl check to Check ID: unable to convert %s to int %q\n", check.Cid, err)
 		}
 	} else if m.CheckId != 0 {
 		check, err = m.fetchCheckById(m.CheckId)
@@ -101,10 +118,14 @@ func (m *CirconusMetrics) initializeTrap() error {
 		return err
 	}
 	m.trapCN = cn
+
+	m.trapLastUpdate = time.Now()
+
 	// all ready, flush can send metrics
 	m.ready = true
 
-	// inventory actie metrics
+	// inventory active metrics
+	m.activeMetrics = make(map[string]bool)
 	for _, metric := range checkBundle.Metrics {
 		if metric.Status == "active" {
 			m.activeMetrics[metric.Name] = true
@@ -226,6 +247,7 @@ func (m *CirconusMetrics) addNewCheckMetrics(newMetrics map[string]*CheckBundleM
 	checkBundle, err := m.updateCheckBundle(newCheckBundle)
 	if err != nil {
 		m.Log.Printf("[ERROR] updating check bundle with new metrics %v", err)
+		return
 	}
 
 	for _, metric := range newMetrics {
