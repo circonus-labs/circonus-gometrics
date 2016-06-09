@@ -55,13 +55,13 @@ func (m *CirconusMetrics) fetchCheckBySubmissionUrl(submissionUrl string) (*Chec
 
 	// does it smell like a valid trap url path
 	if u.Path[0:17] != "/module/httptrap/" {
-		return nil, fmt.Errorf("Invalid submission URL '%s', unrecognized path.", submissionUrl)
+		return nil, fmt.Errorf("[ERROR] Invalid submission URL '%s', unrecognized path.", submissionUrl)
 	}
 
 	// extract uuid/secret
 	pathParts := strings.Split(u.Path[17:], "/")
 	if len(pathParts) != 2 {
-		return nil, fmt.Errorf("Invalid submission URL '%s', UUID not where expected.", submissionUrl)
+		return nil, fmt.Errorf("[ERROR] Invalid submission URL '%s', UUID not where expected.", submissionUrl)
 	}
 
 	uuid := pathParts[0]
@@ -77,7 +77,7 @@ func (m *CirconusMetrics) fetchCheckBySubmissionUrl(submissionUrl string) (*Chec
 	json.Unmarshal(result, &checks)
 
 	if len(checks) == 0 {
-		return nil, fmt.Errorf("No checks found with UUID %s", uuid)
+		return nil, fmt.Errorf("[ERROR] No checks found with UUID %s", uuid)
 	}
 
 	numActive := 0
@@ -91,7 +91,7 @@ func (m *CirconusMetrics) fetchCheckBySubmissionUrl(submissionUrl string) (*Chec
 	}
 
 	if numActive > 1 {
-		return nil, fmt.Errorf("Multiple checks with same UUID %s", uuid)
+		return nil, fmt.Errorf("[ERROR] Multiple checks with same UUID %s", uuid)
 	}
 
 	return &checks[checkId], nil
