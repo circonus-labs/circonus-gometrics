@@ -55,7 +55,7 @@ func (m *CirconusMetrics) initializeTrap() error {
 			m.CheckId = id
 			m.SubmissionUrl = ""
 		} else {
-			m.Log.Printf("SubmissionUrl check to Check ID: unable to convert %s to int %q\n", check.Cid, err)
+			m.Log.Printf("[WARN] SubmissionUrl check to Check ID: unable to convert %s to int %q\n", check.Cid, err)
 		}
 	} else if m.CheckId != 0 {
 		check, err = m.fetchCheckById(m.CheckId)
@@ -86,7 +86,7 @@ func (m *CirconusMetrics) initializeTrap() error {
 				return err
 			}
 		} else {
-			return fmt.Errorf("Unable to determine check bundle")
+			return fmt.Errorf("[ERROR] Unable to retrieve, find, or create check.")
 		}
 	}
 
@@ -157,7 +157,7 @@ func (m *CirconusMetrics) checkBundleSearch(criteria string) (*CheckBundle, erro
 	}
 
 	if numActive > 1 {
-		return nil, fmt.Errorf("Multiple possibilities multiple check bundles match criteria %s\n", criteria)
+		return nil, fmt.Errorf("[ERROR] Multiple possibilities multiple check bundles match criteria %s\n", criteria)
 	}
 
 	return &checkBundles[checkId], nil
