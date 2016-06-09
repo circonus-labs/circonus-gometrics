@@ -159,10 +159,8 @@ func (m *CirconusMetrics) isValidBroker(broker *Broker) bool {
 			if err != nil {
 				continue // not able to reach the broker on 443 either (or respone slow enough for it to be considered not usable)
 			}
-			conn.Close()
-		} else {
-			conn.Close()
 		}
+		conn.Close()
 
 		valid = true
 		break
