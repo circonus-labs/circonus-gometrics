@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"time"
-
 	"github.com/hashicorp/go-retryablehttp"
+	"io/ioutil"
+	"net/http"
+	"time"
 )
 
 func (m *CirconusMetrics) apiCall(reqMethod string, reqPath string, data []byte) ([]byte, error) {
@@ -39,9 +39,23 @@ func (m *CirconusMetrics) apiCall(reqMethod string, reqPath string, data []byte)
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("Error fetching %s: %s\n", url, err)
+		standard_client := &http.Client{}
+		dataReader.Seek(0, 0)
+		standard_req, _ := http.NewRequest(reqMethod, url, dataReader)
+		standard_req.Header.Add("Accept", "application/json")
+		standard_req.Header.Add("X-Circonus-Auth-Token", m.ApiToken)
+		standard_req.Header.Add("X-Circonus-App-Name", m.ApiApp)
+		resp, err := standard_client.Do(standard_req)
+		if resp != nil && resp.Body != nil {
+			defer resp.Body.Close()
+			body, _ := ioutil.ReadAll(resp.Body)
+			if m.Debug {
+				m.Log.Printf("[DEBUG] %v\n", string(body))
+			}
+			return nil, fmt.Errorf("Error: %s", string(body))
+		}
+		return nil, fmt.Errorf("Error fetching %s: %s", url, err)
 	}
-
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -49,7 +63,7 @@ func (m *CirconusMetrics) apiCall(reqMethod string, reqPath string, data []byte)
 	}
 
 	if resp.StatusCode != 200 {
-		m.Log.Printf("%+v\n", string(body))
+		m.Log.Printf("response code:%v\n%+v\n", resp.StatusCode, string(body))
 
 		var response map[string]interface{}
 		json.Unmarshal(body, &response)
