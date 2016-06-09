@@ -22,7 +22,7 @@ func (m *CirconusMetrics) getBroker() (*Broker, error) {
 			return nil, fmt.Errorf("[ERROR] fetching designated broker %d\n", m.BrokerGroupId)
 		}
 		if !m.isValidBroker(broker) {
-			return nil, fmt.Errorf("[ERROR] designated broker %d [%s] is invalid (not active or does not support required check type).\n", m.BrokerGroupId, broker.Name)
+			return nil, fmt.Errorf("[ERROR] designated broker %d [%s] is invalid (not active, does not support required check type, or connectivity issue).\n", m.BrokerGroupId, broker.Name)
 		}
 		return broker, nil
 	}
@@ -67,9 +67,23 @@ func (m *CirconusMetrics) getBrokerCN(broker *Broker, submissionUrl string) (str
 // Select a broker for use when creating a check, if a specific broker
 // was not specified.
 func (m *CirconusMetrics) selectBroker() (*Broker, error) {
-	brokerList, err := m.fetchBrokerList()
-	if err != nil {
-		return nil, err
+	var brokerList []Broker
+	var err error
+
+	if m.BrokerSelectTag != "" {
+		brokerList, err = m.fetchBrokerListByTag(m.BrokerSelectTag)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		brokerList, err = m.fetchBrokerList()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if len(brokerList) == 0 {
+		return nil, fmt.Errorf("zero brokers found.")
 	}
 
 	validBrokers := make(map[string]Broker)
@@ -90,6 +104,10 @@ func (m *CirconusMetrics) selectBroker() (*Broker, error) {
 				delete(validBrokers, k)
 			}
 		}
+	}
+
+	if len(validBrokers) == 0 {
+		return nil, fmt.Errorf("found %d broker(s), zero are valid.", len(brokerList))
 	}
 
 	validBrokerKeys := reflect.ValueOf(validBrokers).MapKeys()

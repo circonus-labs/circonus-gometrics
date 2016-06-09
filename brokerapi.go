@@ -50,6 +50,19 @@ func (m *CirconusMetrics) fetchBrokerByCid(cid string) (*Broker, error) {
 
 }
 
+// Use Circonus API to retreive a list of brokers which have a specific tag
+func (m *CirconusMetrics) fetchBrokerListByTag(searchTag string) ([]Broker, error) {
+	result, err := m.apiCall("GET", fmt.Sprintf("/v2/broker?f__tags_has=%s", searchTag), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var response []Broker
+	json.Unmarshal(result, &response)
+
+	return response, nil
+}
+
 // Use Circonus API to retreive a list of brokers
 func (m *CirconusMetrics) fetchBrokerList() ([]Broker, error) {
 	result, err := m.apiCall("GET", "/v2/broker", nil)

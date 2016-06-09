@@ -102,12 +102,14 @@ func (m *CirconusMetrics) createCheckBundle(config CheckBundle) (*CheckBundle, e
 
 // Use Circonus API to update a check bundle
 func (m *CirconusMetrics) updateCheckBundle(config *CheckBundle) (*CheckBundle, error) {
+	if m.Debug {
+		m.Log.Printf("[DEBUG] Updating check bundle with new metrics.")
+	}
+
 	cfgJson, err := json.Marshal(config)
 	if err != nil {
 		return nil, err
 	}
-
-	fmt.Printf("%s\n", string(cfgJson))
 
 	response, err := m.apiCall("PUT", config.Cid, cfgJson)
 	if err != nil {
