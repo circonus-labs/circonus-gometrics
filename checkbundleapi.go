@@ -67,13 +67,13 @@ func (m *CirconusMetrics) searchCheckBundles(searchCriteria string) ([]CheckBund
 
 	response, err := m.apiCall("GET", apiPath, nil)
 	if err != nil {
-		return nil, fmt.Errorf("API call error %+v", response)
+		return nil, fmt.Errorf("[ERROR] API call error %+v", response)
 	}
 
 	var results []CheckBundle
 	err = json.Unmarshal(response, &results)
 	if err != nil {
-		return nil, fmt.Errorf("Error parsing JSON response %+v", err)
+		return nil, fmt.Errorf("[ERROR] Parsing JSON response %+v", err)
 	}
 
 	return results, nil
