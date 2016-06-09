@@ -114,37 +114,37 @@ func (m *CirconusMetrics) brokerSupportsCheckType(checkType string, details *Bro
 
 // Is the broker valid (active, supports check type, and reachable)
 func (m *CirconusMetrics) isValidBroker(broker *Broker) bool {
-    brokerPort := 0
+	brokerPort := 0
 	valid := false
 	for _, detail := range broker.Details {
-        brokerPort = 43191
+		brokerPort = 43191
 
-        // broker must be active
+		// broker must be active
 		if detail.Status != "active" {
 			continue
 		}
 
-        // broker must have module loaded for the check type to be used
+		// broker must have module loaded for the check type to be used
 		if !m.brokerSupportsCheckType(m.checkType, &detail) {
-            continue
-        }
+			continue
+		}
 
-        // broker must be reachable and respond within designated time
-        conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", detail.IP, brokerPort), m.MaxBrokerResponseTime)
-        if err != nil {
-            if detail.CN != "trap.noit.circonus.net" {
-                continue // not able to reach the broker (or respone slow enough for it to be considered not usable)
-            }
-            // if circonus trap broker, try port 443
-            brokerPort = 443
-            conn, err = net.DialTimeout("tcp", fmt.Sprintf("%s:%d", detail.IP, brokerPort), m.MaxBrokerResponseTime)
-            if err != nil {
-                continue    // not able to reach the broker on 443 either (or respone slow enough for it to be considered not usable)
-            }
-            conn.Close()
-        } else {
-            conn.Close()
-        }
+		// broker must be reachable and respond within designated time
+		conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", detail.IP, brokerPort), m.MaxBrokerResponseTime)
+		if err != nil {
+			if detail.CN != "trap.noit.circonus.net" {
+				continue // not able to reach the broker (or respone slow enough for it to be considered not usable)
+			}
+			// if circonus trap broker, try port 443
+			brokerPort = 443
+			conn, err = net.DialTimeout("tcp", fmt.Sprintf("%s:%d", detail.IP, brokerPort), m.MaxBrokerResponseTime)
+			if err != nil {
+				continue // not able to reach the broker on 443 either (or respone slow enough for it to be considered not usable)
+			}
+			conn.Close()
+		} else {
+			conn.Close()
+		}
 
 		valid = true
 		break
