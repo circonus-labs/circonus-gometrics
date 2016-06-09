@@ -35,7 +35,7 @@ func main() {
     //metrics.ApiHost = ""                          // default: 'api.circonus.com'
 
     // interval at which metrics should be sent to circonus
-    //metrics.Interval = 60 * time.seconds          // default: 10 seconds
+    //metrics.Interval = 60 * time.Second           // default: 10 seconds
 
     // submission url for a previously created httptrap check
     //metrics.SubmissionUrl = "https://..."         // precedence 1
@@ -67,12 +67,22 @@ func main() {
     // if more than one broker has the tag, one will be selected randomly from the resulting list
     // metrics.BrokerSelectTag = ""                 // default: not used
 
+    // longest time to wait for a broker connection (if latency is > the broker will
+    // be considered invalid and not available for selection.)
+    // metrics.MaxBrokerResponseTime = 250 * time.Millisecond  // default: 500 milliseconds
+
     // if no BrokerGroupId or BrokerSelectTag is specified a broker will be selected randomly
     // from the list of brokers available to the api token. enterprise brokers take precedence
-    // viable brokers are "active" and have the "httptrap" module enabled.
+    // viable brokers are "active", have the "httptrap" module enabled, be reachable and respond
+    // within MaxBrokerResponseTime.
 
     // additional tags to add to an automatically created check (array of strings)
     // metrics.Tags = []string{"category:tag", "category:tag"} // default: none
+
+    // if sending metrics to the submission url fails; after this amount of time
+    // the module will retrieve the submission url from the API again. main use case
+    // is if the broker was changed in the UI.
+    // metrics.MaxSubmissionUrlAge = 300 * time.Second  // default: 60 seconds
 
     // specific check secret
     // metrics.CheckSecret = "a!secret"             // default: randomly generated
