@@ -192,7 +192,9 @@ func (m *CirconusMetrics) Flush() {
 		}
 	}
 
-	m.Log.Println("Flushing")
+	if m.Debug {
+		m.Log.Println("Flushing")
+	}
 
 	// check for new metrics and enable them automatically
 	newMetrics := make(map[string]*CheckBundleMetric)
