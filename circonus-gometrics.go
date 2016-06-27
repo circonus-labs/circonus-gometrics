@@ -123,6 +123,12 @@ type CirconusMetrics struct {
 
 	histograms map[string]*Histogram
 	hm         sync.Mutex
+
+	text map[string]string
+	tm   sync.Mutex
+
+	textFuncs map[string]func() string
+	tfm       sync.Mutex
 }
 
 // return new CirconusMetrics instance
@@ -150,6 +156,8 @@ func NewCirconusMetrics() *CirconusMetrics {
 		gauges:        make(map[string]int64),
 		gaugeFuncs:    make(map[string]func() int64),
 		histograms:    make(map[string]*Histogram),
+		text:          make(map[string]string),
+		textFuncs:     make(map[string]func() string),
 		certPool:      x509.NewCertPool(),
 		checkType:     "httptrap",
 	}
@@ -217,7 +225,7 @@ func (m *CirconusMetrics) Flush() {
 	// check for new metrics and enable them automatically
 	newMetrics := make(map[string]*CheckBundleMetric)
 
-	counters, gauges, histograms := m.snapshot()
+	counters, gauges, histograms, text := m.snapshot()
 	output := make(map[string]interface{})
 	for name, value := range counters {
 		output[name] = map[string]interface{}{
@@ -256,6 +264,20 @@ func (m *CirconusMetrics) Flush() {
 			newMetrics[name] = &CheckBundleMetric{
 				Name:   name,
 				Type:   "histogram",
+				Status: "active",
+			}
+		}
+	}
+
+	for name, value := range text {
+		output[name] = map[string]interface{}{
+			"_type":  "s",
+			"_value": value,
+		}
+		if _, ok := m.activeMetrics[name]; !ok {
+			newMetrics[name] = &CheckBundleMetric{
+				Name:   name,
+				Type:   "text",
 				Status: "active",
 			}
 		}

@@ -21,15 +21,23 @@ func (m *CirconusMetrics) Reset() {
 	m.hm.Lock()
 	defer m.hm.Unlock()
 
+	m.tm.Lock()
+	defer m.tm.Unlock()
+
+	m.tfm.Lock()
+	defer m.tfm.Unlock()
+
 	m.counters = make(map[string]uint64)
 	m.counterFuncs = make(map[string]func() uint64)
 	m.gauges = make(map[string]int64)
 	m.gaugeFuncs = make(map[string]func() int64)
 	m.histograms = make(map[string]*Histogram)
+	m.text = make(map[string]string)
+	m.textFuncs = make(map[string]func() string)
 }
 
 // snapshot returns a copy of the values of all registered counters and gauges.
-func (m *CirconusMetrics) snapshot() (c map[string]uint64, g map[string]int64, h map[string]*circonusllhist.Histogram) {
+func (m *CirconusMetrics) snapshot() (c map[string]uint64, g map[string]int64, h map[string]*circonusllhist.Histogram, t map[string]string) {
 	m.cm.Lock()
 	defer m.cm.Unlock()
 
@@ -44,6 +52,12 @@ func (m *CirconusMetrics) snapshot() (c map[string]uint64, g map[string]int64, h
 
 	m.hm.Lock()
 	defer m.hm.Unlock()
+
+	m.tm.Lock()
+	defer m.tm.Unlock()
+
+	m.tfm.Lock()
+	defer m.tfm.Unlock()
 
 	c = make(map[string]uint64, len(m.counters)+len(m.counterFuncs))
 	for n, v := range m.counters {
@@ -66,6 +80,15 @@ func (m *CirconusMetrics) snapshot() (c map[string]uint64, g map[string]int64, h
 	h = make(map[string]*circonusllhist.Histogram, len(m.histograms))
 	for n, hist := range m.histograms {
 		h[n] = hist.hist.CopyAndReset()
+	}
+
+	t = make(map[string]string, len(m.text)+len(m.textFuncs))
+	for n, v := range m.text {
+		t[n] = v
+	}
+
+	for n, f := range m.textFuncs {
+		t[n] = f()
 	}
 
 	return
