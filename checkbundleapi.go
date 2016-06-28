@@ -67,7 +67,7 @@ func (m *CirconusMetrics) searchCheckBundles(searchCriteria string) ([]CheckBund
 
 	response, err := m.apiCall("GET", apiPath, nil)
 	if err != nil {
-		return nil, fmt.Errorf("[ERROR] API call error %+v", response)
+		return nil, fmt.Errorf("[ERROR] API call error %+v", err)
 	}
 
 	var results []CheckBundle
