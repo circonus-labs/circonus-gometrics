@@ -35,16 +35,21 @@ import (
 	"path"
 	"sync"
 	"time"
+
+	"github.com/circonus-labs/circonus-gometrics/api"
+	"github.com/circonus-labs/circonus-gometrics/checkmgr"
 )
 
 const (
 	// a few sensible defaults
-	defaultApiHost               = "api.circonus.com"
-	defaultApiApp                = "circonus-gometrics"
 	defaultInterval              = 10 * time.Second
 	defaultMaxSubmissionUrlAge   = 60 * time.Second
 	defaultBrokerMaxResponseTime = 500 * time.Millisecond
 )
+
+type Config struct {
+	Api *api.Config
+}
 
 // a few words about: "BrokerGroupId"
 //
@@ -70,6 +75,7 @@ type CirconusMetrics struct {
 	ApiToken        string
 	SubmissionUrl   string
 	CheckId         int
+	ManageCheck     bool
 	ApiApp          string
 	ApiHost         string
 	InstanceId      string
@@ -105,9 +111,11 @@ type CirconusMetrics struct {
 
 	certPool      *x509.CertPool
 	cert          []byte
-	checkBundle   *CheckBundle
+	checkBundle   *api.CheckBundle
 	activeMetrics map[string]bool
 	checkType     string
+
+	checkManager *checkmgr.CheckManager
 
 	counters map[string]uint64
 	cm       sync.Mutex
@@ -147,19 +155,20 @@ func NewCirconusMetrics() *CirconusMetrics {
 		Interval:              defaultInterval,
 		MaxSubmissionUrlAge:   defaultMaxSubmissionUrlAge,
 		MaxBrokerResponseTime: defaultBrokerMaxResponseTime,
-		Debug:         false,
-		ready:         false,
-		trapUrl:       "",
-		activeMetrics: make(map[string]bool),
-		counters:      make(map[string]uint64),
-		counterFuncs:  make(map[string]func() uint64),
-		gauges:        make(map[string]int64),
-		gaugeFuncs:    make(map[string]func() int64),
-		histograms:    make(map[string]*Histogram),
-		text:          make(map[string]string),
-		textFuncs:     make(map[string]func() string),
-		certPool:      x509.NewCertPool(),
-		checkType:     "httptrap",
+		ManageCheck:           true,
+		Debug:                 false,
+		ready:                 false,
+		trapUrl:               "",
+		activeMetrics:         make(map[string]bool),
+		counters:              make(map[string]uint64),
+		counterFuncs:          make(map[string]func() uint64),
+		gauges:                make(map[string]int64),
+		gaugeFuncs:            make(map[string]func() int64),
+		histograms:            make(map[string]*Histogram),
+		text:                  make(map[string]string),
+		textFuncs:             make(map[string]func() string),
+		certPool:              x509.NewCertPool(),
+		checkType:             "httptrap",
 	}
 
 }

@@ -1,4 +1,4 @@
-package circonusgometrics
+package checkmgr
 
 import (
 	"crypto/rand"
@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/circonus-labs/circonus-gometrics/api"
 )
 
 // Initialize CirconusMetrics instance. Attempt to find a check otherwise create one.
@@ -17,30 +19,30 @@ import (
 // check [bundle] by *check* id (note, not check_bundle id)
 // check [bundle] by search
 // create check [bundle]
-func (m *CirconusMetrics) initializeTrap() error {
-	m.trapmu.Lock()
-	defer m.trapmu.Unlock()
+func (cm *CheckManager) initializeTrap() error {
+	cm.trapmu.Lock()
+	defer cm.trapmu.Unlock()
 
-	if m.ready {
+	if cm.ready {
 		return nil
 	}
 
 	// short-circuit for non-ssl submission urls
-	if m.SubmissionUrl != "" && m.SubmissionUrl[0:5] == "http:" {
-		m.trapUrl = m.SubmissionUrl
-		m.trapSSL = false
-		m.ready = true
-		m.trapLastUpdate = time.Now()
+	if cm.submissionUrl != "" && cm.submissionUrl[0:5] == "http:" {
+		cm.trapUrl = cm.submissionUrl
+		cm.trapSSL = false
+		cm.ready = true
+		cm.trapLastUpdate = time.Now()
 		return nil
 	}
 
 	var err error
-	var check *Check
-	var checkBundle *CheckBundle
-	var broker *Broker
+	var check *api.Check
+	var checkBundle *api.CheckBundle
+	var broker *api.Broker
 
-	if m.SubmissionUrl != "" {
-		check, err = m.fetchCheckBySubmissionUrl(m.SubmissionUrl)
+	if cm.submissionUrl != "" {
+		check, err = cm.apih.FetchCheckBySubmissionUrl(cm.submissionUrl)
 		if err != nil {
 			return err
 		}
@@ -52,19 +54,19 @@ func (m *CirconusMetrics) initializeTrap() error {
 		// longer possible using the original submission url)
 		id, err := strconv.Atoi(strings.Replace(check.Cid, "/check/", "", -1))
 		if err == nil {
-			m.CheckId = id
-			m.SubmissionUrl = ""
+			cm.checkId = id
+			cm.submissionUrl = ""
 		} else {
-			m.Log.Printf("[WARN] SubmissionUrl check to Check ID: unable to convert %s to int %q\n", check.Cid, err)
+			cm.Log.Printf("[WARN] SubmissionUrl check to Check ID: unable to convert %s to int %q\n", check.Cid, err)
 		}
-	} else if m.CheckId != 0 {
-		check, err = m.fetchCheckById(m.CheckId)
+	} else if cm.checkId != 0 {
+		check, err = cm.apih.FetchCheckById(cm.checkId)
 		if err != nil {
 			return err
 		}
 	} else {
-		searchCriteria := fmt.Sprintf("(active:1)(host:\"%s\")(type:\"%s\")(tags:%s)", m.InstanceId, m.checkType, m.SearchTag)
-		checkBundle, err = m.checkBundleSearch(searchCriteria)
+		searchCriteria := fmt.Sprintf("(active:1)(host:\"%s\")(type:\"%s\")(tags:%s)", cm.instanceId, cm.checkType, cm.searchTag)
+		checkBundle, err = cm.checkBundleSearch(searchCriteria)
 		if err != nil {
 			return err
 		}
@@ -72,7 +74,7 @@ func (m *CirconusMetrics) initializeTrap() error {
 		if checkBundle == nil {
 			// err==nil && checkBundle==nil is "no check bundles matched"
 			// an error *should* be returned for any other invalid scenario
-			checkBundle, broker, err = m.createNewCheck()
+			checkBundle, broker, err = cm.createNewCheck()
 			if err != nil {
 				return err
 			}
@@ -81,7 +83,7 @@ func (m *CirconusMetrics) initializeTrap() error {
 
 	if checkBundle == nil {
 		if check != nil {
-			checkBundle, err = m.fetchCheckBundleByCid(check.CheckBundleCid)
+			checkBundle, err = cm.apih.FetchCheckBundleByCid(check.CheckBundleCid)
 			if err != nil {
 				return err
 			}
@@ -91,44 +93,45 @@ func (m *CirconusMetrics) initializeTrap() error {
 	}
 
 	if broker == nil {
-		broker, err = m.fetchBrokerByCid(checkBundle.Brokers[0])
+		broker, err = cm.apih.FetchBrokerByCid(checkBundle.Brokers[0])
 		if err != nil {
 			return err
 		}
 	}
 
 	// retain to facilitate metric management (adding new metrics specifically)
-	m.checkBundle = checkBundle
+	cm.checkBundle = checkBundle
 
 	// url to which metrics should be PUT
-	m.trapUrl = checkBundle.Config.SubmissionUrl
+	cm.trapUrl = checkBundle.Config.SubmissionUrl
 
 	// mark for SSL
-	if m.trapUrl[0:6] == "https:" {
-		m.trapSSL = true
+	if cm.trapUrl[0:6] == "https:" {
+		cm.trapSSL = true
 	}
 
+	// FIX: this needs to move somewhere else
 	// load the CA certificate for the broker hosting the submission url
-	m.loadCACert()
+	//CirconusMetrics.loadCACert()
 
 	// used when sending as "ServerName" get around certs not having IP SANS
 	// (cert created with server name as CN but IP used in trap url)
-	cn, err := m.getBrokerCN(broker, m.trapUrl)
+	cn, err := cm.GetBrokerCN(broker, cm.trapUrl)
 	if err != nil {
 		return err
 	}
-	m.trapCN = cn
+	cm.trapCN = cn
 
-	m.trapLastUpdate = time.Now()
+	cm.trapLastUpdate = time.Now()
 
 	// all ready, flush can send metrics
-	m.ready = true
+	cm.ready = true
 
 	// inventory active metrics
-	m.activeMetrics = make(map[string]bool)
+	cm.activeMetrics = make(map[string]bool)
 	for _, metric := range checkBundle.Metrics {
 		if metric.Status == "active" {
-			m.activeMetrics[metric.Name] = true
+			cm.activeMetrics[metric.Name] = true
 		}
 	}
 
@@ -136,8 +139,8 @@ func (m *CirconusMetrics) initializeTrap() error {
 }
 
 // Search for a check bundle given a predetermined set of criteria
-func (m *CirconusMetrics) checkBundleSearch(criteria string) (*CheckBundle, error) {
-	checkBundles, err := m.searchCheckBundles(criteria)
+func (cm *CheckManager) checkBundleSearch(criteria string) (*api.CheckBundle, error) {
+	checkBundles, err := cm.apih.SearchCheckBundles(criteria)
 	if err != nil {
 		return nil, err
 	}
@@ -164,8 +167,8 @@ func (m *CirconusMetrics) checkBundleSearch(criteria string) (*CheckBundle, erro
 }
 
 // Create a new check to receive metrics
-func (m *CirconusMetrics) createNewCheck() (*CheckBundle, *Broker, error) {
-	checkSecret := m.CheckSecret
+func (cm *CheckManager) createNewCheck() (*api.CheckBundle, *api.Broker, error) {
+	checkSecret := cm.checkSecret
 	if checkSecret == "" {
 		secret, err := makeSecret()
 		if err != nil {
@@ -174,33 +177,35 @@ func (m *CirconusMetrics) createNewCheck() (*CheckBundle, *Broker, error) {
 		checkSecret = secret
 	}
 
-	broker, brokerErr := m.getBroker()
+	broker, brokerErr := cm.GetBroker()
 	if brokerErr != nil {
 		return nil, nil, brokerErr
 	}
 
-	config := CheckBundle{
+	config := api.CheckBundle{
 		Brokers:     []string{broker.Cid},
-		Config:      CheckBundleConfig{AsyncMetrics: true, Secret: checkSecret},
-		DisplayName: fmt.Sprintf("%s /%s", m.InstanceId, m.checkType),
-		Metrics: []CheckBundleMetric{
-			CheckBundleMetric{
-				Name:   "cgmplaceholder",
-				Status: "active",
-				Type:   "numeric",
+		Config:      api.CheckBundleConfig{AsyncMetrics: true, Secret: checkSecret},
+		DisplayName: fmt.Sprintf("%s /%s", cm.instanceId, cm.checkType),
+		Metrics:     []api.CheckBundleMetric{},
+		/*
+				api.CheckBundleMetric{
+					Name:   "cgmplaceholder",
+					Status: "active",
+					Type:   "numeric",
+				},
 			},
-		},
+		*/
 		MetricLimit: 0,
 		Notes:       "",
 		Period:      60,
 		Status:      "active",
-		Tags:        append([]string{m.SearchTag}, m.Tags...),
-		Target:      m.InstanceId,
+		Tags:        append([]string{cm.searchTag}, cm.tags...),
+		Target:      cm.instanceId,
 		Timeout:     10,
-		Type:        m.checkType,
+		Type:        cm.checkType,
 	}
 
-	checkBundle, err := m.createCheckBundle(config)
+	checkBundle, err := cm.apih.CreateCheckBundle(config)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -220,18 +225,18 @@ func makeSecret() (string, error) {
 }
 
 // Add new metrics to an existing check
-func (m *CirconusMetrics) addNewCheckMetrics(newMetrics map[string]*CheckBundleMetric) {
+func (cm *CheckManager) addNewCheckMetrics(newMetrics map[string]*api.CheckBundleMetric) {
 	// only manage metrics if checkBundle has been populated
-	if m.checkBundle == nil {
+	if cm.checkBundle == nil {
 		return
 	}
 
-	newCheckBundle := m.checkBundle
+	newCheckBundle := cm.checkBundle
 	numCurrMetrics := len(newCheckBundle.Metrics)
 	numNewMetrics := len(newMetrics)
 
 	if numCurrMetrics+numNewMetrics >= cap(newCheckBundle.Metrics) {
-		nm := make([]CheckBundleMetric, numCurrMetrics+numNewMetrics)
+		nm := make([]api.CheckBundleMetric, numCurrMetrics+numNewMetrics)
 		copy(nm, newCheckBundle.Metrics)
 		newCheckBundle.Metrics = nm
 	}
@@ -244,15 +249,15 @@ func (m *CirconusMetrics) addNewCheckMetrics(newMetrics map[string]*CheckBundleM
 		i++
 	}
 
-	checkBundle, err := m.updateCheckBundle(newCheckBundle)
+	checkBundle, err := cm.apih.UpdateCheckBundle(newCheckBundle)
 	if err != nil {
-		m.Log.Printf("[ERROR] updating check bundle with new metrics %v", err)
+		cm.Log.Printf("[ERROR] updating check bundle with new metrics %v", err)
 		return
 	}
 
 	for _, metric := range newMetrics {
-		m.activeMetrics[metric.Name] = true
+		cm.activeMetrics[metric.Name] = true
 	}
 
-	m.checkBundle = checkBundle
+	cm.checkBundle = checkBundle
 }

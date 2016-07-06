@@ -1,4 +1,4 @@
-package circonusgometrics
+package api
 
 // abstracted in preparation of separate circonus-api-go package
 
@@ -25,14 +25,14 @@ type Check struct {
 }
 
 // Use Circonus API to retrieve a check by ID
-func (m *CirconusMetrics) fetchCheckById(id int) (*Check, error) {
+func (a *Api) FetchCheckById(id int) (*Check, error) {
 	cid := fmt.Sprintf("/check/%d", id)
-	return m.fetchCheckByCid(cid)
+	return a.FetchCheckByCid(cid)
 }
 
 // Use Circonus API to retrieve a check by CID
-func (m *CirconusMetrics) fetchCheckByCid(cid string) (*Check, error) {
-	result, err := m.apiCall("GET", cid, nil)
+func (a *Api) FetchCheckByCid(cid string) (*Check, error) {
+	result, err := a.apiCall("GET", cid, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -44,7 +44,7 @@ func (m *CirconusMetrics) fetchCheckByCid(cid string) (*Check, error) {
 }
 
 // Use Circonus API to retrieve a check by submission url
-func (m *CirconusMetrics) fetchCheckBySubmissionUrl(submissionUrl string) (*Check, error) {
+func (a *Api) FetchCheckBySubmissionUrl(submissionUrl string) (*Check, error) {
 
 	u, err := url.Parse(submissionUrl)
 	if err != nil {
@@ -68,7 +68,7 @@ func (m *CirconusMetrics) fetchCheckBySubmissionUrl(submissionUrl string) (*Chec
 
 	query := fmt.Sprintf("/v2/check?f__check_uuid=%s", uuid)
 
-	result, err := m.apiCall("GET", query, nil)
+	result, err := a.apiCall("GET", query, nil)
 	if err != nil {
 		return nil, err
 	}

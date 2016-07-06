@@ -1,4 +1,4 @@
-package circonusgometrics
+package api
 
 // abstracted in preparation of separate circonus-api-go package
 
@@ -29,14 +29,14 @@ type Broker struct {
 }
 
 // Use Circonus API to retrieve  a specific broker by Broker Group ID
-func (m *CirconusMetrics) fetchBrokerById(id int) (*Broker, error) {
+func (a *Api) FetchBrokerById(id int) (*Broker, error) {
 	cid := fmt.Sprintf("/v2/broker/%d", id)
-	return m.fetchBrokerByCid(cid)
+	return a.FetchBrokerByCid(cid)
 }
 
 // Use Circonus API to retreive a broker by CID
-func (m *CirconusMetrics) fetchBrokerByCid(cid string) (*Broker, error) {
-	result, err := m.apiCall("GET", cid, nil)
+func (a *Api) FetchBrokerByCid(cid string) (*Broker, error) {
+	result, err := a.apiCall("GET", cid, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -51,8 +51,8 @@ func (m *CirconusMetrics) fetchBrokerByCid(cid string) (*Broker, error) {
 }
 
 // Use Circonus API to retreive a list of brokers which have a specific tag
-func (m *CirconusMetrics) fetchBrokerListByTag(searchTag string) ([]Broker, error) {
-	result, err := m.apiCall("GET", fmt.Sprintf("/v2/broker?f__tags_has=%s", searchTag), nil)
+func (a *Api) FetchBrokerListByTag(searchTag string) ([]Broker, error) {
+	result, err := a.apiCall("GET", fmt.Sprintf("/v2/broker?f__tags_has=%s", searchTag), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -64,8 +64,8 @@ func (m *CirconusMetrics) fetchBrokerListByTag(searchTag string) ([]Broker, erro
 }
 
 // Use Circonus API to retreive a list of brokers
-func (m *CirconusMetrics) fetchBrokerList() ([]Broker, error) {
-	result, err := m.apiCall("GET", "/v2/broker", nil)
+func (a *Api) FetchBrokerList() ([]Broker, error) {
+	result, err := a.apiCall("GET", "/v2/broker", nil)
 	if err != nil {
 		return nil, err
 	}
