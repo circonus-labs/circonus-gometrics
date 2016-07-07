@@ -23,79 +23,91 @@ import (
 
 func main() {
 
-	metrics := circonusgometrics.NewCirconusMetrics()
+    cmc := &circonusgometrics.Config{}
 
-    // from circonus UI tokens page
-	metrics.ApiToken = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx"
+    // Interval at which metrics are submitted to Circonus, default: 10 seconds
+    cmc.CheckManager.Interval = 60 * time.Second
+    // Enable debug messages, default: false
+    cmc.Debug = false
+    // Send debug messages to specific log.Logger instance
+    // default: if debug stderr, else, discard
+    //cmc.CheckManager.Log = ...
 
-    // app name associated with token
-    //metrics.ApiApp = ""                           // default: 'circonus-gometrics'
+    // Circonus API configuration options
+    //
+    // Token, no default (blank disables check manager)
+    cmc.CheckManager.Api.Token.Key = os.Getenv("CIRCONUS_API_TOKEN")    
+    // App name, default: circonus-gometrics
+    cmc.CheckManager.Api.Token.App = os.Getenv("CIRCONUS_API_APP")
+    // URL, default: https://api.circonus.com/v2
+    cmc.CheckManager.Api.Token.Url = os.Getenv("CIRCONUS_API_URL")
 
-    // fqdn of the circonus api server
-    //metrics.ApiHost = ""                          // default: 'api.circonus.com'
-
-    // interval at which metrics should be sent to circonus
-    //metrics.Interval = 60 * time.Second           // default: 10 seconds
-
-    // submission url for a previously created httptrap check
-    //metrics.SubmissionUrl = "https://..."         // precedence 1
-
-    // a specific **check** id (not check bundle id)
-    //metrics.CheckId = 0                           // precedence 2
-
+    // Check configuration options
+    //
+    // precedence 1 - explicit submission_url
+    // precedence 2 - specific check id (note: not a check bundle id)
+    // precedence 3 - search using instanceId and searchTag
+    // otherwise: if an applicable check is NOT specified or found, an
+    //            attempt will be made to automatically create one
+    //
+    // Pre-existing httptrap check submission_url
+    cmc.CheckManager.Check.SubmissionUrl = os.Getenv("CIRCONUS_SUBMISION_URL")
+    // Pre-existing httptrap check id (check not check bundle)
+    cmc.CheckManager.Check.Id = 0
     // if neither a submission url nor check id are provided, an attempt will be made to find an existing
     // httptrap check by using the circonus api to search for a check matching the following criteria:
     //      an active check,
     //      of type httptrap,
-    //      where the target/host is equal to metrics.InstanceId - see below
-    //      and the check has a tag equal to metrics.SearchTag - see below
-
-    // an identifier for the 'group of metrics emitted by this process or service'
-	//metrics.InstanceId = "centos7.gmtest"          // default: 'hostname':'program name'
-
-    // a specific tag which, when coupled with the instanceid serves to identify the
+    //      where the target/host is equal to InstanceId - see below
+    //      and the check has a tag equal to SearchTag - see below
+    // Instance ID - an identifier for the 'group of metrics emitted by this process or service'
+	// default: 'hostname':'program name'
+    // note: for a persistent instance that is ephemeral or transient where metric continuity is
+    //       desired set this explicitly so that the current hostname will not be used.
+    cmc.CheckManager.Check.InstanceId = ""
+    // Search tag - a specific tag which, when coupled with the instanceId serves to identify the
     // origin and/or grouping of the metrics
-    //metrics.SearchTag = "service:gmtest"          // default: service:'program name'
+    // default: service:application name (e.g. service:consul)
+    cmc.CheckManager.Check.SearchTag = ""
+    // Check secret, default: generated when a check needs to be created
+    cmc.CheckManager.Check.Secret = ""
+    // Check tags, array of strings, additional tags to add to a new check, default: []
+    cmc.CheckManager.Check.Tags = []
+    // max amount of time to to hold on to a submission url
+    // when a given submission fails (due to retries) if the
+    // time the url was last updated is > than this, the trap
+    // url will be refreshed (e.g. if the broker is changed
+    // in the UI)
+    cmc.CheckManager.Check.MaxUrlAge = 300 * time.Second
 
-    // if an applicable check is NOT specified or found, an attempt will be made to automatically create one
-
-    // "GROUP ID" for a specific broker from the Brokers page in circonus ui
-    // metrics.BrokerGroupId = 58938                // default: random enterprise broker
-
+    // Broker configuration options
+    //
+    // Broker ID of specific broker to use, default: random enterprise broker or
+    // Circonus default if no enterprise brokers are available.
+    // default: not used unless > 0
+    cmc.CheckManager.Broker.Id = 0
     // used to select a broker with the same tag (e.g. can be used to dictate that a broker
     // serving a specific location should be used. "dc:sfo", "location:new_york", "zone:us-west")
     // if more than one broker has the tag, one will be selected randomly from the resulting list
-    // metrics.BrokerSelectTag = ""                 // default: not used
-
+    // default: not used unless != ""
+    cmc.CheckManager.Broker.SelectTag = ""                 
     // longest time to wait for a broker connection (if latency is > the broker will
-    // be considered invalid and not available for selection.)
-    // metrics.MaxBrokerResponseTime = 250 * time.Millisecond  // default: 500 milliseconds
-
-    // if no BrokerGroupId or BrokerSelectTag is specified a broker will be selected randomly
+    // be considered invalid and not available for selection.), default: 500 milliseconds
+    cmc.CheckManager.Broker.MaxResponseTime = 500 * time.Millisecond
+    // if broker Id or SelectTag are not specified, a broker will be selected randomly
     // from the list of brokers available to the api token. enterprise brokers take precedence
-    // viable brokers are "active", have the "httptrap" module enabled, be reachable and respond
+    // viable brokers are "active", have the "httptrap" module enabled, are reachable and respond
     // within MaxBrokerResponseTime.
 
-    // additional tags to add to an automatically created check (array of strings)
-    // metrics.Tags = []string{"category:tag", "category:tag"} // default: none
-
-    // if sending metrics to the submission url fails; after this amount of time
-    // the module will retrieve the submission url from the API again. main use case
-    // is if the broker was changed in the UI.
-    // metrics.MaxSubmissionUrlAge = 300 * time.Second  // default: 60 seconds
-
-    // specific check secret
-    // metrics.CheckSecret = "a!secret"             // default: randomly generated
-
-    // custom logger
-    //metrics.Log =                                 // default: discards messages (unless debug is true)
-
-    // emit debugging messages
-	metrics.Debug = true                           // default: false
+	metrics, err := circonusgometrics.NewCirconusMetrics(cmc)
+    if err != nil {
+        panic(err)
+    }
 
 	src := rand.NewSource(time.Now().UnixNano())
 	rnd := rand.New(src)
 
+    // starts the interval timer to submit metrics to circonus
 	metrics.Start()
 
 	for i := 1; i < 60; i++ {

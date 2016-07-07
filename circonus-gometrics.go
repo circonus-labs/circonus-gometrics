@@ -27,12 +27,10 @@
 package circonusgometrics
 
 import (
-	"crypto/x509"
-	"fmt"
+	"errors"
 	"io/ioutil"
 	"log"
 	"os"
-	"path"
 	"sync"
 	"time"
 
@@ -41,94 +39,27 @@ import (
 )
 
 const (
-	// a few sensible defaults
-	defaultInterval              = 10 * time.Second
-	defaultMaxSubmissionUrlAge   = 60 * time.Second
-	defaultBrokerMaxResponseTime = 500 * time.Millisecond
+	defaultFlushInterval = 10 * time.Second
 )
 
 type Config struct {
-
-	// check manager configuration
-	CheckManager checkmgr.Config
-
-	// circonus metrics configuration
-	Interval time.Duration
-	// if the submission url returns errors
-	// this gates the amount of time to keep the current
-	// submission url before attempting to retrieve it
-	// again from the api
-	MaxSubmissionUrlAge time.Duration
-	// for a broker to be considered valid it must
-	// respond to a connection attempt within this amount of time
-	MaxBrokerResponseTime time.Duration
-}
-
-// a few words about: "BrokerGroupId"
-//
-// calling it this because the instructions for how to get into the UI and FIND this value are more straight-forward:
-//
-// log into ui
-// navigate to brokers page
-// identify which broker you need to use
-// click the little down arrow in the circle on the right-hand side of the line for the broker you'd like to use
-// use the value from the "GROUP ID:" field under "Broker Details" in the drop-down afetr clicking the down arrow
-//
-// ... or ...
-//
-// log into ui
-// navigate to brokers page
-// identify which broker you need to use
-// click the hamburger menu icon (three lines to the left of the broker name)
-// click "view API object" from the drop-down menu
-// look for "_cid" field, use integer value after "/broker/" e.g. "/broker/35" would be 35
-//
-
-type CirconusMetrics struct {
-	ApiToken        string
-	SubmissionUrl   string
-	CheckId         int
-	ManageCheck     bool
-	ApiApp          string
-	ApiHost         string
-	InstanceId      string
-	SearchTag       string
-	BrokerGroupId   int
-	BrokerSelectTag string
-	Tags            []string
-	CheckSecret     string
-
-	Interval time.Duration
-	// if the submission url returns errors
-	// this gates the amount of time to keep the current
-	// submission url before attempting to retrieve it
-	// again from the api
-	MaxSubmissionUrlAge time.Duration
-	// for a broker to be considered valid it must
-	// respond to a connection attempt within this amount of time
-	MaxBrokerResponseTime time.Duration
-
 	Log   *log.Logger
 	Debug bool
 
-	// internals
-	flushing bool
-	flushmu  sync.Mutex
+	// API, Check and Broker configuration options
+	CheckManager checkmgr.Config
 
-	ready          bool
-	trapUrl        string
-	trapCN         string
-	trapSSL        bool
-	trapLastUpdate time.Time
-	trapmu         sync.Mutex
+	// how frequenly to submit metrics to Circonus, default 10 seconds
+	Interval time.Duration
+}
 
-	certPool      *x509.CertPool
-	cert          []byte
-	checkBundle   *api.CheckBundle
-	activeMetrics map[string]bool
-	checkType     string
-
-	checkManager *checkmgr.CheckManager
+type CirconusMetrics struct {
+	Log           *log.Logger
+	Debug         bool
+	flushInterval time.Duration
+	flushing      bool
+	flushmu       sync.Mutex
+	check         *checkmgr.CheckManager
 
 	counters map[string]uint64
 	cm       sync.Mutex
@@ -153,73 +84,60 @@ type CirconusMetrics struct {
 }
 
 // return new CirconusMetrics instance
-func NewCirconusMetrics() *CirconusMetrics {
-	_, an := path.Split(os.Args[0])
-	hn, err := os.Hostname()
-	if err != nil {
-		hn = "unknown"
+func NewCirconusMetrics(cfg *Config) (*CirconusMetrics, error) {
+
+	if cfg == nil {
+		return nil, errors.New("Invalid configuration (nil).")
 	}
 
-	return &CirconusMetrics{
-		InstanceId:            fmt.Sprintf("%s:%s", hn, an),
-		SearchTag:             fmt.Sprintf("service:%s", an),
-		ApiHost:               defaultApiHost,
-		ApiApp:                defaultApiApp,
-		Interval:              defaultInterval,
-		MaxSubmissionUrlAge:   defaultMaxSubmissionUrlAge,
-		MaxBrokerResponseTime: defaultBrokerMaxResponseTime,
-		ManageCheck:           true,
-		Debug:                 false,
-		ready:                 false,
-		trapUrl:               "",
-		activeMetrics:         make(map[string]bool),
-		counters:              make(map[string]uint64),
-		counterFuncs:          make(map[string]func() uint64),
-		gauges:                make(map[string]int64),
-		gaugeFuncs:            make(map[string]func() int64),
-		histograms:            make(map[string]*Histogram),
-		text:                  make(map[string]string),
-		textFuncs:             make(map[string]func() string),
-		certPool:              x509.NewCertPool(),
-		checkType:             "httptrap",
+	cm := &CirconusMetrics{
+		counters:     make(map[string]uint64),
+		counterFuncs: make(map[string]func() uint64),
+		gauges:       make(map[string]int64),
+		gaugeFuncs:   make(map[string]func() int64),
+		histograms:   make(map[string]*Histogram),
+		text:         make(map[string]string),
+		textFuncs:    make(map[string]func() string),
 	}
 
-}
-
-// ensure logging is initialized
-func (m *CirconusMetrics) initializeLogging() {
-	if m.Log == nil { // was not explicitly set by user
-		// note: this is only done once.
-		// after a Start or Flush call - changing Debug will
-		// NOT toggle logging
-		if m.Debug {
-			m.Log = log.New(os.Stderr, "", log.LstdFlags)
+	cm.Debug = cfg.Debug
+	cm.Log = cfg.Log
+	if cm.Log == nil {
+		if cm.Debug {
+			cm.Log = log.New(os.Stderr, "", log.LstdFlags)
 		} else {
-			m.Log = log.New(ioutil.Discard, "", log.LstdFlags)
+			cm.Log = log.New(ioutil.Discard, "", log.LstdFlags)
 		}
 	}
+
+	cm.flushInterval = defaultFlushInterval
+	if cfg.Interval > 0 {
+		cm.flushInterval = cfg.Interval
+	}
+
+	check, err := checkmgr.NewCheckManager(&cfg.CheckManager)
+	if err != nil {
+		return nil, err
+	}
+	cm.check = check
+
+	if _, err := cm.check.GetTrap(); err != nil {
+		return nil, err
+	}
+
+	return cm, nil
 }
 
 // Start initializes the CirconusMetrics instance based on
 // configuration settings and sets the httptrap check url to
 // which metrics should be sent. It then starts a perdiodic
 // submission process of all metrics collected.
-func (m *CirconusMetrics) Start() error {
-	m.initializeLogging()
-
-	if !m.ready {
-		if err := m.initializeTrap(); err != nil {
-			return err
-		}
-	}
-
+func (m *CirconusMetrics) Start() {
 	go func() {
-		for _ = range time.NewTicker(m.Interval).C {
+		for _ = range time.NewTicker(m.flushInterval).C {
 			m.Flush()
 		}
 	}()
-
-	return nil
 }
 
 // Flush metrics kicks off the process of sending metrics to Circonus
@@ -231,21 +149,12 @@ func (m *CirconusMetrics) Flush() {
 	m.flushing = true
 	m.flushmu.Unlock()
 
-	m.initializeLogging()
-
-	if !m.ready {
-		if err := m.initializeTrap(); err != nil {
-			m.Log.Printf("[WARN] Unable to initialize check, NOT flushing metrics. %s\n", err)
-			return
-		}
-	}
-
 	if m.Debug {
 		m.Log.Println("[DEBUG] Flushing metrics")
 	}
 
 	// check for new metrics and enable them automatically
-	newMetrics := make(map[string]*CheckBundleMetric)
+	newMetrics := make(map[string]*api.CheckBundleMetric)
 
 	counters, gauges, histograms, text := m.snapshot()
 	output := make(map[string]interface{})
@@ -254,8 +163,8 @@ func (m *CirconusMetrics) Flush() {
 			"_type":  "n",
 			"_value": value,
 		}
-		if _, ok := m.activeMetrics[name]; !ok {
-			newMetrics[name] = &CheckBundleMetric{
+		if !m.check.IsMetricActive(name) {
+			newMetrics[name] = &api.CheckBundleMetric{
 				Name:   name,
 				Type:   "numeric",
 				Status: "active",
@@ -268,8 +177,8 @@ func (m *CirconusMetrics) Flush() {
 			"_type":  "n",
 			"_value": value,
 		}
-		if _, ok := m.activeMetrics[name]; !ok {
-			newMetrics[name] = &CheckBundleMetric{
+		if !m.check.IsMetricActive(name) {
+			newMetrics[name] = &api.CheckBundleMetric{
 				Name:   name,
 				Type:   "numeric",
 				Status: "active",
@@ -282,8 +191,8 @@ func (m *CirconusMetrics) Flush() {
 			"_type":  "n",
 			"_value": value.DecStrings(),
 		}
-		if _, ok := m.activeMetrics[name]; !ok {
-			newMetrics[name] = &CheckBundleMetric{
+		if !m.check.IsMetricActive(name) {
+			newMetrics[name] = &api.CheckBundleMetric{
 				Name:   name,
 				Type:   "histogram",
 				Status: "active",
@@ -296,8 +205,8 @@ func (m *CirconusMetrics) Flush() {
 			"_type":  "s",
 			"_value": value,
 		}
-		if _, ok := m.activeMetrics[name]; !ok {
-			newMetrics[name] = &CheckBundleMetric{
+		if !m.check.IsMetricActive(name) {
+			newMetrics[name] = &api.CheckBundleMetric{
 				Name:   name,
 				Type:   "text",
 				Status: "active",
