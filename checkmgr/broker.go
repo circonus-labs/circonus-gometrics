@@ -17,7 +17,7 @@ func init() {
 }
 
 // Get Broker to use when creating a check
-func (cm *CheckManager) GetBroker() (*api.Broker, error) {
+func (cm *CheckManager) getBroker() (*api.Broker, error) {
 	if cm.brokerId != 0 {
 		broker, err := cm.apih.FetchBrokerById(cm.brokerId)
 		if err != nil {
@@ -39,7 +39,7 @@ func (cm *CheckManager) GetBroker() (*api.Broker, error) {
 }
 
 // Get CN of Broker associated with submission_url to satisfy no IP SANS in certs
-func (cm *CheckManager) GetBrokerCN(broker *api.Broker, submissionUrl string) (string, error) {
+func (cm *CheckManager) getBrokerCN(broker *api.Broker, submissionUrl string) (string, error) {
 	u, err := url.Parse(submissionUrl)
 	if err != nil {
 		return "", err
