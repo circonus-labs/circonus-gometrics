@@ -48,7 +48,20 @@ const (
 )
 
 type Config struct {
-	Api *api.Config
+
+	// check manager configuration
+	CheckManager checkmgr.Config
+
+	// circonus metrics configuration
+	Interval time.Duration
+	// if the submission url returns errors
+	// this gates the amount of time to keep the current
+	// submission url before attempting to retrieve it
+	// again from the api
+	MaxSubmissionUrlAge time.Duration
+	// for a broker to be considered valid it must
+	// respond to a connection attempt within this amount of time
+	MaxBrokerResponseTime time.Duration
 }
 
 // a few words about: "BrokerGroupId"
