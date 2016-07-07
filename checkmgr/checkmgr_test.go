@@ -32,7 +32,7 @@ func TestNewCheckManagerNoTokenNoUrl(t *testing.T) {
 
 }
 
-func TestNewCheckManagerUrlNoToken(t *testing.T) {
+func TestNewCheckManagerHttpUrlNoToken(t *testing.T) {
 	t.Log("Testing correct return with Submission URL (http) and no API Token supplied")
 
 	cfg := &Config{}
@@ -81,8 +81,5 @@ func TestNewCheckManagerHttpsUrlNoToken(t *testing.T) {
 	if trap.Tls == nil {
 		t.Errorf("Expected a x509 cert pool, found nil")
 	}
-
-	// t.Logf("%#v\n", trap.Url)
-	// t.Logf("%#v\n", trap.Tls)
 
 }

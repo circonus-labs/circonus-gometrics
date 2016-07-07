@@ -113,16 +113,6 @@ type Trap struct {
 	Tls *tls.Config
 }
 
-/*
-return &Trap{
-    url.Parse(cm.trapUrl),
-    &tls.Config{
-       RootCAs:    cm.certPool,
-       ServerName: cm.trapCN,
-    },
-}
-*/
-
 func NewCheckManager(cfg *Config) (*CheckManager, error) {
 
 	if cfg == nil {
@@ -222,27 +212,11 @@ func (cm *CheckManager) GetTrap() (*Trap, error) {
 		if cm.trapCN != "" {
 			t.ServerName = cm.trapCN
 		}
-		// trap.Tls := &tls.Config{
-		//     RootCAs:    cm.certPool,
-		//     ServerName: cm.trapCN,
-		// }
 		trap.Tls = t
 	}
 
 	return trap, nil
 }
-
-// func (cm *CheckManager) GetTrapUrl() (string, error) {
-// 	if cm.trapUrl != "" {
-// 		return cm.trapUrl, nil
-// 	}
-//
-// 	if err := cm.initializeTrapUrl(); err != nil {
-// 		return "", err
-// 	}
-//
-// 	return cm.trapUrl, nil
-// }
 
 func (cm *CheckManager) ResetTrap() error {
 	if cm.trapUrl == "" {
@@ -250,6 +224,7 @@ func (cm *CheckManager) ResetTrap() error {
 	}
 
 	cm.trapUrl = ""
+	cm.certPool = nil
 	err := cm.initializeTrapUrl()
 	return err
 }

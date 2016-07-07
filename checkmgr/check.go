@@ -61,16 +61,19 @@ func (cm *CheckManager) initializeTrapUrl() error {
 			cm.checkId = id
 			cm.checkSubmissionUrl = ""
 		} else {
-			cm.Log.Printf("[WARN] SubmissionUrl check to Check ID: unable to convert %s to int %q\n", check.Cid, err)
+			cm.Log.Printf(
+				"[WARN] SubmissionUrl check to Check ID: unable to convert %s to int %q\n",
+				check.Cid, err)
 		}
-	} else if cm.checkId != 0 {
+	} else if cm.checkId > 0 {
 		check, err = cm.apih.FetchCheckById(cm.checkId)
 		if err != nil {
 			return err
 		}
 	} else {
 		searchCriteria := fmt.Sprintf(
-			"(active:1)(host:\"%s\")(type:\"%s\")(tags:%s)", cm.checkInstanceId, cm.checkType, cm.checkSearchTag)
+			"(active:1)(host:\"%s\")(type:\"%s\")(tags:%s)",
+			cm.checkInstanceId, cm.checkType, cm.checkSearchTag)
 		checkBundle, err = cm.checkBundleSearch(searchCriteria)
 		if err != nil {
 			return err
@@ -116,7 +119,7 @@ func (cm *CheckManager) initializeTrapUrl() error {
 
 	// used when sending as "ServerName" get around certs not having IP SANS
 	// (cert created with server name as CN but IP used in trap url)
-	cn, err := cm.GetBrokerCN(broker, cm.trapUrl)
+	cn, err := cm.getBrokerCN(broker, cm.trapUrl)
 	if err != nil {
 		return err
 	}
@@ -174,7 +177,7 @@ func (cm *CheckManager) createNewCheck() (*api.CheckBundle, *api.Broker, error) 
 		checkSecret = secret
 	}
 
-	broker, brokerErr := cm.GetBroker()
+	broker, brokerErr := cm.getBroker()
 	if brokerErr != nil {
 		return nil, nil, brokerErr
 	}
@@ -211,42 +214,4 @@ func (cm *CheckManager) makeSecret() (string, error) {
 	}
 	hash.Write(x)
 	return hex.EncodeToString(hash.Sum(nil))[0:16], nil
-}
-
-// Add new metrics to an existing check
-func (cm *CheckManager) addNewCheckMetrics(newMetrics map[string]*api.CheckBundleMetric) {
-	// only manage metrics if checkBundle has been populated
-	if cm.checkBundle == nil {
-		return
-	}
-
-	newCheckBundle := cm.checkBundle
-	numCurrMetrics := len(newCheckBundle.Metrics)
-	numNewMetrics := len(newMetrics)
-
-	if numCurrMetrics+numNewMetrics >= cap(newCheckBundle.Metrics) {
-		nm := make([]api.CheckBundleMetric, numCurrMetrics+numNewMetrics)
-		copy(nm, newCheckBundle.Metrics)
-		newCheckBundle.Metrics = nm
-	}
-
-	newCheckBundle.Metrics = newCheckBundle.Metrics[0 : numCurrMetrics+numNewMetrics]
-
-	i := 0
-	for _, metric := range newMetrics {
-		newCheckBundle.Metrics[numCurrMetrics+i] = *metric
-		i++
-	}
-
-	checkBundle, err := cm.apih.UpdateCheckBundle(newCheckBundle)
-	if err != nil {
-		cm.Log.Printf("[ERROR] updating check bundle with new metrics %v", err)
-		return
-	}
-
-	for _, metric := range newMetrics {
-		cm.activeMetrics[metric.Name] = true
-	}
-
-	cm.checkBundle = checkBundle
 }
