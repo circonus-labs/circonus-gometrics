@@ -1,10 +1,15 @@
 package checkmgr
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"log"
+	"net/url"
 	"os"
+	"path"
 	"sync"
 	"time"
 
@@ -74,43 +79,62 @@ type Config struct {
 }
 
 type CheckManager struct {
-	enabled               bool
-	Log                   *log.Logger
-	Debug                 bool
-	apih                  *api.Api
-	checkBundle           *api.CheckBundle
-	activeMetrics         map[string]bool
-	checkType             string
-	ready                 bool
-	trapUrl               string
-	trapCN                string
-	trapSSL               bool
-	trapLastUpdate        time.Time
-	trapmu                sync.Mutex
-	submissionUrl         string
-	checkId               int
-	instanceId            string
-	searchTag             string
-	checkSecret           string
-	tags                  []string
-	brokerGroupId         int
+	enabled bool
+	Log     *log.Logger
+	Debug   bool
+	apih    *api.Api
+
+	// check
+	checkType          string
+	checkId            int
+	checkInstanceId    string
+	checkSearchTag     string
+	checkSecret        string
+	checkTags          []string
+	checkSubmissionUrl string
+
+	// broker
+	brokerId              int
 	brokerSelectTag       string
 	brokerMaxResponseTime time.Duration
+
+	// state
+	checkBundle    *api.CheckBundle
+	activeMetrics  map[string]bool
+	trapUrl        string
+	trapCN         string
+	trapLastUpdate time.Time
+	trapmu         sync.Mutex
+	certPool       *x509.CertPool
 }
 
-func NewCheckManager(cmc *Config) (*CheckManager, error) {
+type Trap struct {
+	Url *url.URL
+	Tls *tls.Config
+}
 
-	if cmc == nil {
+/*
+return &Trap{
+    url.Parse(cm.trapUrl),
+    &tls.Config{
+       RootCAs:    cm.certPool,
+       ServerName: cm.trapCN,
+    },
+}
+*/
+
+func NewCheckManager(cfg *Config) (*CheckManager, error) {
+
+	if cfg == nil {
 		return nil, errors.New("Invalid Check Manager configuration (nil).")
 	}
 
 	cm := &CheckManager{
 		enabled: false,
-		ready:   false,
 	}
 
-	cm.Debug = cmc.Debug
-	cm.Log = cmc.Log
+	cm.Debug = cfg.Debug
+	cm.Log = cfg.Log
 	if cm.Log == nil {
 		if cm.Debug {
 			cm.Log = log.New(os.Stderr, "", log.LstdFlags)
@@ -119,48 +143,113 @@ func NewCheckManager(cmc *Config) (*CheckManager, error) {
 		}
 	}
 
-	if cmc.Check.SubmissionUrl != "" {
-		cm.trapUrl = cmc.Check.SubmissionUrl
-		cm.ready = true
+	if cfg.Check.SubmissionUrl != "" {
+		cm.checkSubmissionUrl = cfg.Check.SubmissionUrl
 	}
 
-	if cmc.Api.Token.Key == "" {
-		if cm.trapUrl != "" && cm.ready {
-			return cm, nil
-		} else {
+	if cfg.Api.Token.Key == "" {
+		if cm.checkSubmissionUrl == "" {
 			return nil, errors.New("Invalid check manager configuration (no API token AND no submission url).")
 		}
+		cm.trapUrl = cm.checkSubmissionUrl
+		return cm, nil
 	}
 
 	// enable check manager (a blank api.Token.Key *disables* check management)
 
 	cm.enabled = true
-	cm.checkType = defaultCheckType
 
-	cmc.Api.Debug = cm.Debug
-	cmc.Api.Log = cm.Log
+	// initialize api handle
 
-	apih, err := api.NewApi(&cmc.Api)
+	cfg.Api.Debug = cm.Debug
+	cfg.Api.Log = cm.Log
+
+	apih, err := api.NewApi(&cfg.Api)
 	if err != nil {
 		return nil, err
 	}
 	cm.apih = apih
 
+	// initialize check related data
+
+	cm.checkType = defaultCheckType
+	cm.checkId = cfg.Check.Id
+	cm.checkInstanceId = cfg.Check.InstanceId
+	cm.checkSearchTag = cfg.Check.SearchTag
+	cm.checkSecret = cfg.Check.Secret
+	cm.checkTags = cfg.Check.Tags
+
+	_, an := path.Split(os.Args[0])
+
+	if cm.checkInstanceId == "" {
+		hn, err := os.Hostname()
+		if err != nil {
+			hn = "unknown"
+		}
+		cm.checkInstanceId = fmt.Sprintf("%s:%s", hn, an)
+	}
+
+	if cm.checkSearchTag == "" {
+		cm.checkSearchTag = fmt.Sprintf("service:%s", an)
+	}
+
 	return cm, nil
 }
 
-func (cm *CheckManager) GetTrapUrl() (string, error) {
-	if cm.trapUrl != "" {
-		return cm.trapUrl, nil
+func (cm *CheckManager) GetTrap() (*Trap, error) {
+	if cm.trapUrl == "" {
+		if err := cm.initializeTrapUrl(); err != nil {
+			return nil, err
+		}
 	}
 
-	if !cm.enabled {
-		return "", errors.New("No submission URL supplied and check manager disabled.")
+	trap := &Trap{}
+
+	u, err := url.Parse(cm.trapUrl)
+	if err != nil {
+		return nil, err
 	}
 
-	if err := cm.initializeTrap(); err != nil {
-		return "", err
+	trap.Url = u
+
+	if u.Scheme == "https" {
+		if cm.certPool == nil {
+			cm.loadCACert()
+		}
+		t := &tls.Config{
+			RootCAs: cm.certPool,
+		}
+		if cm.trapCN != "" {
+			t.ServerName = cm.trapCN
+		}
+		// trap.Tls := &tls.Config{
+		//     RootCAs:    cm.certPool,
+		//     ServerName: cm.trapCN,
+		// }
+		trap.Tls = t
 	}
 
-	return "", errors.New("Unable to initialze Circonus metrics trap.")
+	return trap, nil
+}
+
+// func (cm *CheckManager) GetTrapUrl() (string, error) {
+// 	if cm.trapUrl != "" {
+// 		return cm.trapUrl, nil
+// 	}
+//
+// 	if err := cm.initializeTrapUrl(); err != nil {
+// 		return "", err
+// 	}
+//
+// 	return cm.trapUrl, nil
+// }
+
+func (cm *CheckManager) ResetTrap() error {
+	if cm.trapUrl == "" {
+		return nil
+	}
+
+	cm.trapUrl = ""
+	err := cm.initializeTrapUrl()
+	return err
 }

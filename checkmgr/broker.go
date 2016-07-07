@@ -18,15 +18,15 @@ func init() {
 
 // Get Broker to use when creating a check
 func (cm *CheckManager) GetBroker() (*api.Broker, error) {
-	if cm.brokerGroupId != 0 {
-		broker, err := cm.apih.FetchBrokerById(cm.brokerGroupId)
+	if cm.brokerId != 0 {
+		broker, err := cm.apih.FetchBrokerById(cm.brokerId)
 		if err != nil {
-			return nil, fmt.Errorf("[ERROR] fetching designated broker %d\n", cm.brokerGroupId)
+			return nil, fmt.Errorf("[ERROR] fetching designated broker %d\n", cm.brokerId)
 		}
 		if !cm.isValidBroker(broker) {
 			return nil, fmt.Errorf(
 				"[ERROR] designated broker %d [%s] is invalid (not active, does not support required check type, or connectivity issue).\n",
-				cm.brokerGroupId,
+				cm.brokerId,
 				broker.Name)
 		}
 		return broker, nil

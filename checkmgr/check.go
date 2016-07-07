@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -19,21 +20,24 @@ import (
 // check [bundle] by *check* id (note, not check_bundle id)
 // check [bundle] by search
 // create check [bundle]
-func (cm *CheckManager) initializeTrap() error {
-	cm.trapmu.Lock()
-	defer cm.trapmu.Unlock()
-
-	if cm.ready {
+func (cm *CheckManager) initializeTrapUrl() error {
+	if cm.trapUrl != "" {
 		return nil
 	}
 
-	// short-circuit for non-ssl submission urls
-	if cm.submissionUrl != "" && cm.submissionUrl[0:5] == "http:" {
-		cm.trapUrl = cm.submissionUrl
-		cm.trapSSL = false
-		cm.ready = true
-		cm.trapLastUpdate = time.Now()
-		return nil
+	cm.trapmu.Lock()
+	defer cm.trapmu.Unlock()
+
+	if cm.checkSubmissionUrl != "" {
+		if !cm.enabled {
+			cm.trapUrl = cm.checkSubmissionUrl
+			cm.trapLastUpdate = time.Now()
+			return nil
+		}
+	}
+
+	if !cm.enabled {
+		return errors.New("Unable to initialize trap, check manager is disabled.")
 	}
 
 	var err error
@@ -41,8 +45,8 @@ func (cm *CheckManager) initializeTrap() error {
 	var checkBundle *api.CheckBundle
 	var broker *api.Broker
 
-	if cm.submissionUrl != "" {
-		check, err = cm.apih.FetchCheckBySubmissionUrl(cm.submissionUrl)
+	if cm.checkSubmissionUrl != "" {
+		check, err := cm.apih.FetchCheckBySubmissionUrl(cm.checkSubmissionUrl)
 		if err != nil {
 			return err
 		}
@@ -55,7 +59,7 @@ func (cm *CheckManager) initializeTrap() error {
 		id, err := strconv.Atoi(strings.Replace(check.Cid, "/check/", "", -1))
 		if err == nil {
 			cm.checkId = id
-			cm.submissionUrl = ""
+			cm.checkSubmissionUrl = ""
 		} else {
 			cm.Log.Printf("[WARN] SubmissionUrl check to Check ID: unable to convert %s to int %q\n", check.Cid, err)
 		}
@@ -65,7 +69,8 @@ func (cm *CheckManager) initializeTrap() error {
 			return err
 		}
 	} else {
-		searchCriteria := fmt.Sprintf("(active:1)(host:\"%s\")(type:\"%s\")(tags:%s)", cm.instanceId, cm.checkType, cm.searchTag)
+		searchCriteria := fmt.Sprintf(
+			"(active:1)(host:\"%s\")(type:\"%s\")(tags:%s)", cm.checkInstanceId, cm.checkType, cm.checkSearchTag)
 		checkBundle, err = cm.checkBundleSearch(searchCriteria)
 		if err != nil {
 			return err
@@ -105,11 +110,6 @@ func (cm *CheckManager) initializeTrap() error {
 	// url to which metrics should be PUT
 	cm.trapUrl = checkBundle.Config.SubmissionUrl
 
-	// mark for SSL
-	if cm.trapUrl[0:6] == "https:" {
-		cm.trapSSL = true
-	}
-
 	// FIX: this needs to move somewhere else
 	// load the CA certificate for the broker hosting the submission url
 	//CirconusMetrics.loadCACert()
@@ -123,9 +123,6 @@ func (cm *CheckManager) initializeTrap() error {
 	cm.trapCN = cn
 
 	cm.trapLastUpdate = time.Now()
-
-	// all ready, flush can send metrics
-	cm.ready = true
 
 	// inventory active metrics
 	cm.activeMetrics = make(map[string]bool)
@@ -170,7 +167,7 @@ func (cm *CheckManager) checkBundleSearch(criteria string) (*api.CheckBundle, er
 func (cm *CheckManager) createNewCheck() (*api.CheckBundle, *api.Broker, error) {
 	checkSecret := cm.checkSecret
 	if checkSecret == "" {
-		secret, err := makeSecret()
+		secret, err := cm.makeSecret()
 		if err != nil {
 			secret = "myS3cr3t"
 		}
@@ -185,22 +182,14 @@ func (cm *CheckManager) createNewCheck() (*api.CheckBundle, *api.Broker, error) 
 	config := api.CheckBundle{
 		Brokers:     []string{broker.Cid},
 		Config:      api.CheckBundleConfig{AsyncMetrics: true, Secret: checkSecret},
-		DisplayName: fmt.Sprintf("%s /%s", cm.instanceId, cm.checkType),
+		DisplayName: fmt.Sprintf("%s /%s", cm.checkInstanceId, cm.checkType),
 		Metrics:     []api.CheckBundleMetric{},
-		/*
-				api.CheckBundleMetric{
-					Name:   "cgmplaceholder",
-					Status: "active",
-					Type:   "numeric",
-				},
-			},
-		*/
 		MetricLimit: 0,
 		Notes:       "",
 		Period:      60,
 		Status:      "active",
-		Tags:        append([]string{cm.searchTag}, cm.tags...),
-		Target:      cm.instanceId,
+		Tags:        append([]string{cm.checkSearchTag}, cm.checkTags...),
+		Target:      cm.checkInstanceId,
 		Timeout:     10,
 		Type:        cm.checkType,
 	}
@@ -214,7 +203,7 @@ func (cm *CheckManager) createNewCheck() (*api.CheckBundle, *api.Broker, error) 
 }
 
 // Create a dynamic secret to use with a new check
-func makeSecret() (string, error) {
+func (cm *CheckManager) makeSecret() (string, error) {
 	hash := sha256.New()
 	x := make([]byte, 2048)
 	if _, err := rand.Read(x); err != nil {
