@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"time"
 
@@ -15,51 +16,60 @@ import (
 
 const (
 	// a few sensible defaults
-	defaultApiHost = "api.circonus.com"
-	defaultApiApp  = "circonus-gometrics"
+	defaultApiUrl = "https://api.circonus.com/v2"
+	defaultApiApp = "circonus-gometrics"
 )
 
+type TokenConfig struct {
+	Key string
+	App string
+}
+
 type Config struct {
-	Host     string
-	TokenKey string
-	TokenApp string
-	Log      *log.Logger
-	Debug    bool
+	Url   string
+	Token TokenConfig
+	Log   *log.Logger
+	Debug bool
 }
 
 type Api struct {
-	host  string
-	token string
-	app   string
-	proto string
-	Debug bool
-	Log   *log.Logger
+	apiUrl *url.URL
+	key    string
+	app    string
+	Debug  bool
+	Log    *log.Logger
 }
 
+// New Circonus API handle
 func NewApi(ac *Config) (*Api, error) {
-	if ac.TokenKey == "" {
+
+	if ac == nil {
+		return nil, errors.New("Invalid API configuration (nil).")
+	}
+
+	key := ac.Token.Key
+	if key == "" {
 		return nil, errors.New("API Token is required.")
 	}
 
-	token := ac.TokenKey
-
-	host := defaultApiHost
-	if ac.Host != "" {
-		host = ac.Host
+	app := ac.Token.App
+	if app == "" {
+		app = defaultApiApp
 	}
 
-	app := defaultApiApp
-	if ac.TokenApp != "" {
-		app = ac.TokenApp
+	api_url := ac.Url
+	if api_url == "" {
+		api_url = defaultApiUrl
+	}
+	if last := len(api_url) - 1; last >= 0 && api_url[last] == '/' {
+		api_url = api_url[:last]
+	}
+	apiUrl, err := url.Parse(api_url)
+	if err != nil {
+		return nil, err
 	}
 
-	// allow override with explict "http://" in ApiHost
-	proto := "https://"
-	if host[0:5] == "http:" {
-		proto = ""
-	}
-
-	a := &Api{host, token, app, proto, ac.Debug, ac.Log}
+	a := &Api{apiUrl, key, app, ac.Debug, ac.Log}
 
 	if a.Log == nil {
 		if a.Debug {
@@ -72,18 +82,46 @@ func NewApi(ac *Config) (*Api, error) {
 	return a, nil
 }
 
+// API GET request
+func (a *Api) Get(reqPath string) ([]byte, error) {
+	return a.apiCall("GET", reqPath, nil)
+}
+
+// API DELETE request
+func (a *Api) Delete(reqPath string) ([]byte, error) {
+	return a.apiCall("DELETE", reqPath, nil)
+}
+
+// API Post request
+func (a *Api) Post(reqPath string, data []byte) ([]byte, error) {
+	return a.apiCall("POST", reqPath, data)
+}
+
+// API PUT request
+func (a *Api) Put(reqPath string, data []byte) ([]byte, error) {
+	return a.apiCall("PUT", reqPath, data)
+}
+
 // Call Circonus API
 func (a *Api) apiCall(reqMethod string, reqPath string, data []byte) ([]byte, error) {
 	dataReader := bytes.NewReader(data)
+	reqUrl := a.apiUrl.String()
 
-	url := fmt.Sprintf("%s%s%s", a.proto, a.host, reqPath)
+	if reqPath[:1] != "/" {
+		reqUrl += "/"
+	}
+	if reqPath[:3] == "/v2" {
+		reqUrl += reqPath[3:len(reqPath)]
+	} else {
+		reqUrl += reqPath
+	}
 
-	req, err := retryablehttp.NewRequest(reqMethod, url, dataReader)
+	req, err := retryablehttp.NewRequest(reqMethod, reqUrl, dataReader)
 	if err != nil {
-		return nil, fmt.Errorf("[ERROR] creating API request: %s %+v", url, err)
+		return nil, fmt.Errorf("[ERROR] creating API request: %s %+v", reqUrl, err)
 	}
 	req.Header.Add("Accept", "application/json")
-	req.Header.Add("X-Circonus-Auth-Token", a.token)
+	req.Header.Add("X-Circonus-Auth-Token", a.key)
 	req.Header.Add("X-Circonus-App-Name", a.app)
 
 	client := retryablehttp.NewClient()
@@ -96,9 +134,9 @@ func (a *Api) apiCall(reqMethod string, reqPath string, data []byte) ([]byte, er
 	if err != nil {
 		standard_client := &http.Client{}
 		dataReader.Seek(0, 0)
-		standard_req, _ := http.NewRequest(reqMethod, url, dataReader)
+		standard_req, _ := http.NewRequest(reqMethod, reqUrl, dataReader)
 		standard_req.Header.Add("Accept", "application/json")
-		standard_req.Header.Add("X-Circonus-Auth-Token", a.token)
+		standard_req.Header.Add("X-Circonus-Auth-Token", a.key)
 		standard_req.Header.Add("X-Circonus-App-Name", a.app)
 		resp, err := standard_client.Do(standard_req)
 		if resp != nil && resp.Body != nil {
@@ -109,7 +147,7 @@ func (a *Api) apiCall(reqMethod string, reqPath string, data []byte) ([]byte, er
 			}
 			return nil, fmt.Errorf("[ERROR] %s", string(body))
 		}
-		return nil, fmt.Errorf("[ERROR] fetching %s: %s", url, err)
+		return nil, fmt.Errorf("[ERROR] fetching %s: %s", reqUrl, err)
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)

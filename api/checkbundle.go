@@ -50,7 +50,7 @@ func (a *Api) FetchCheckBundleById(id int) (*CheckBundle, error) {
 
 // Use Circonus API to retrieve a check bundle by CID
 func (a *Api) FetchCheckBundleByCid(cid string) (*CheckBundle, error) {
-	result, err := a.apiCall("GET", cid, nil)
+	result, err := a.Get(cid)
 	if err != nil {
 		return nil, err
 	}
@@ -63,9 +63,9 @@ func (a *Api) FetchCheckBundleByCid(cid string) (*CheckBundle, error) {
 
 // Use Circonus API to search for a check bundle
 func (a *Api) SearchCheckBundles(searchCriteria string) ([]CheckBundle, error) {
-	apiPath := fmt.Sprintf("/v2/check_bundle?search=%s", searchCriteria)
+	apiPath := fmt.Sprintf("/check_bundle?search=%s", searchCriteria)
 
-	response, err := a.apiCall("GET", apiPath, nil)
+	response, err := a.Get(apiPath)
 	if err != nil {
 		return nil, fmt.Errorf("[ERROR] API call error %+v", err)
 	}
@@ -86,7 +86,7 @@ func (a *Api) CreateCheckBundle(config CheckBundle) (*CheckBundle, error) {
 		return nil, err
 	}
 
-	response, err := a.apiCall("POST", "/v2/check_bundle", cfgJson)
+	response, err := a.Post("/check_bundle", cfgJson)
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +111,7 @@ func (a *Api) UpdateCheckBundle(config *CheckBundle) (*CheckBundle, error) {
 		return nil, err
 	}
 
-	response, err := a.apiCall("PUT", config.Cid, cfgJson)
+	response, err := a.Put(config.Cid, cfgJson)
 	if err != nil {
 		return nil, err
 	}
