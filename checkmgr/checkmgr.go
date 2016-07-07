@@ -35,7 +35,9 @@ import (
 //    4. a new check is created
 
 const (
-	defaultCheckType = "httptrap"
+	defaultCheckType             = "httptrap"
+	defaultTrapMaxUrlAge         = 60 * time.Second
+	defaultBrokerMaxResponseTime = 500 * time.Millisecond
 )
 
 type CheckConfig struct {
@@ -56,6 +58,12 @@ type CheckConfig struct {
 	// additional tags to add to a check (when creating a check)
 	// these tags will not be added to an existing check
 	Tags []string
+	// max amount of time to to hold on to a submission url
+	// when a given submission fails (due to retries) if the
+	// time the url was last updated is > than this, the trap
+	// url will be refreshed (e.g. if the broker is changed
+	// in the UI) **only relevant when check management is enabled**
+	MaxUrlAge time.Duration
 }
 
 type BrokerConfig struct {
@@ -70,12 +78,15 @@ type BrokerConfig struct {
 }
 
 type Config struct {
-	Api    api.Config
-	Check  CheckConfig
-	Broker BrokerConfig
-
 	Log   *log.Logger
 	Debug bool
+
+	// Circonus API config
+	Api api.Config
+	// Check specific configuration options
+	Check CheckConfig
+	// Broker specific configuration options
+	Broker BrokerConfig
 }
 
 type CheckManager struct {
@@ -104,6 +115,7 @@ type CheckManager struct {
 	trapUrl        string
 	trapCN         string
 	trapLastUpdate time.Time
+	trapMaxUrlAge  time.Duration
 	trapmu         sync.Mutex
 	certPool       *x509.CertPool
 }
@@ -183,6 +195,20 @@ func NewCheckManager(cfg *Config) (*CheckManager, error) {
 		cm.checkSearchTag = fmt.Sprintf("service:%s", an)
 	}
 
+	cm.trapMaxUrlAge = cfg.Check.MaxUrlAge
+	if cm.trapMaxUrlAge == 0 {
+		cm.trapMaxUrlAge = defaultTrapMaxUrlAge
+	}
+
+	// setup broker
+
+	cm.brokerId = cfg.Broker.Id
+	cm.brokerSelectTag = cfg.Broker.SelectTag
+	cm.brokerMaxResponseTime = cfg.Broker.MaxResponseTime
+	if cm.brokerMaxResponseTime == 0 {
+		cm.brokerMaxResponseTime = defaultBrokerMaxResponseTime
+	}
+
 	return cm, nil
 }
 
@@ -227,4 +253,14 @@ func (cm *CheckManager) ResetTrap() error {
 	cm.certPool = nil
 	err := cm.initializeTrapUrl()
 	return err
+}
+
+func (cm *CheckManager) RefreshTrap() {
+	if cm.trapUrl == "" {
+		return
+	}
+
+	if time.Since(cm.trapLastUpdate) >= cm.trapMaxUrlAge {
+		cm.ResetTrap()
+	}
 }

@@ -46,9 +46,17 @@ func (cm *CheckManager) AddNewMetrics(newMetrics map[string]*api.CheckBundleMetr
 		return
 	}
 
-	for _, metric := range newMetrics {
-		cm.activeMetrics[metric.Name] = true
-	}
-
 	cm.checkBundle = checkBundle
+	cm.inventoryMetrics()
+}
+
+// inventory active metrics to facilitate managing
+func (cm *CheckManager) inventoryMetrics() {
+	activeMetrics := make(map[string]bool)
+	for _, metric := range cm.checkBundle.Metrics {
+		if metric.Status == "active" {
+			activeMetrics[metric.Name] = true
+		}
+	}
+	cm.activeMetrics = activeMetrics
 }

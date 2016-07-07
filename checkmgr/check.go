@@ -109,13 +109,10 @@ func (cm *CheckManager) initializeTrapUrl() error {
 
 	// retain to facilitate metric management (adding new metrics specifically)
 	cm.checkBundle = checkBundle
+	cm.inventoryMetrics()
 
 	// url to which metrics should be PUT
 	cm.trapUrl = checkBundle.Config.SubmissionUrl
-
-	// FIX: this needs to move somewhere else
-	// load the CA certificate for the broker hosting the submission url
-	//CirconusMetrics.loadCACert()
 
 	// used when sending as "ServerName" get around certs not having IP SANS
 	// (cert created with server name as CN but IP used in trap url)
@@ -126,14 +123,6 @@ func (cm *CheckManager) initializeTrapUrl() error {
 	cm.trapCN = cn
 
 	cm.trapLastUpdate = time.Now()
-
-	// inventory active metrics
-	cm.activeMetrics = make(map[string]bool)
-	for _, metric := range checkBundle.Metrics {
-		if metric.Status == "active" {
-			cm.activeMetrics[metric.Name] = true
-		}
-	}
 
 	return nil
 }
