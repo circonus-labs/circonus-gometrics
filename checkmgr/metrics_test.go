@@ -34,12 +34,13 @@ func TestInventoryMetrics(t *testing.T) {
 	cm.checkBundle.Metrics = []api.CheckBundleMetric{
 		api.CheckBundleMetric{
 			Name:   "foo",
-			Type:   "text",
+			Type:   "numeric",
 			Status: "active",
 		},
 	}
 
 	cm.activeMetrics = make(map[string]bool)
+
 	t.Log("Testing for 'foo', foo not in list")
 	if cm.IsMetricActive("foo") {
 		t.Error("Expected false")
