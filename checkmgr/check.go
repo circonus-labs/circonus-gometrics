@@ -166,9 +166,9 @@ func (cm *CheckManager) createNewCheck() (*api.CheckBundle, *api.Broker, error) 
 		checkSecret = secret
 	}
 
-	broker, brokerErr := cm.getBroker()
-	if brokerErr != nil {
-		return nil, nil, brokerErr
+	broker, err := cm.getBroker()
+	if err != nil {
+		return nil, nil, err
 	}
 
 	config := api.CheckBundle{
