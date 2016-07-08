@@ -21,11 +21,11 @@ func (cm *CheckManager) getBroker() (*api.Broker, error) {
 	if cm.brokerId != 0 {
 		broker, err := cm.apih.FetchBrokerById(cm.brokerId)
 		if err != nil {
-			return nil, fmt.Errorf("[ERROR] fetching designated broker %d\n", cm.brokerId)
+			return nil, err
 		}
 		if !cm.isValidBroker(broker) {
 			return nil, fmt.Errorf(
-				"[ERROR] designated broker %d [%s] is invalid (not active, does not support required check type, or connectivity issue).\n",
+				"[ERROR] designated broker %d [%s] is invalid (not active, does not support required check type, or connectivity issue).",
 				cm.brokerId,
 				broker.Name)
 		}
