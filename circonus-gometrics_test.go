@@ -2,7 +2,7 @@ package circonusgometrics
 
 import (
 	"errors"
-	"os"
+	//	"os"
 	"testing"
 )
 
@@ -88,6 +88,8 @@ func TestNewCirconusMetricsHttpsUrlNoToken(t *testing.T) {
 		t.Errorf("Expected a x509 cert pool, found nil")
 	}
 }
+
+/* migrated to checkmgr
 
 func TestNewCirconusMetrics1(t *testing.T) {
 	// flag to indicate whether to do this test
@@ -184,3 +186,4 @@ func TestNewCirconusMetrics2(t *testing.T) {
 
 	t.Log(trap2.Url.String())
 }
+*/
