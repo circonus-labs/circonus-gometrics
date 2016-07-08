@@ -2,8 +2,17 @@ package circonusgometrics
 
 import (
 	"errors"
+	"os"
 	"testing"
 )
+
+/*
+
+because some of these tests interact with the circonus api directly
+to create checks, the tests in question have environment variable
+flags to gate whether they run or not.
+
+*/
 
 func TestNewCirconusMetricsInvalidConfig(t *testing.T) {
 	t.Log("Testing correct error return when no config supplied")
@@ -78,4 +87,100 @@ func TestNewCirconusMetricsHttpsUrlNoToken(t *testing.T) {
 	if trap.Tls == nil {
 		t.Errorf("Expected a x509 cert pool, found nil")
 	}
+}
+
+func TestNewCirconusMetrics1(t *testing.T) {
+	// flag to indicate whether to do this test
+	if os.Getenv("CIRCONUS_CGM_TEST1") == "" {
+		t.Skip("skipping test; $CIRCONUS_CGM_TEST1 not set")
+	}
+
+	// note, this test expects to CREATE a check then, search (and find) the check.
+	// ensure there is no existing check which would match the default search criteria
+	// iow, remember to remove the check after running this test otherwise it
+	// will test search+search not create+search
+
+	if os.Getenv("CIRCONUS_API_TOKEN") == "" {
+		t.Skip("skipping test; $CIRCONUS_API_TOKEN not set")
+	}
+	t.Log("Testing correct check creation and search with API Token only")
+
+	cfg := &Config{}
+	cfg.CheckManager.Api.Token.Key = os.Getenv("CIRCONUS_API_TOKEN")
+
+	t.Log("Testing correct check creation - should create a check, if it doesn't exist")
+	cm, err := NewCirconusMetrics(cfg)
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	trap, err := cm.check.GetTrap()
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	t.Log("Testing correct check search - should find the check created")
+	cm2, err := NewCirconusMetrics(cfg)
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	trap2, err := cm2.check.GetTrap()
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	if trap.Url.String() != trap2.Url.String() {
+		t.Errorf("Expected '%s' == '%s'", trap.Url.String(), trap2.Url.String())
+	}
+}
+
+func TestNewCirconusMetrics2(t *testing.T) {
+	// flag to indicate whether to do this test
+	if os.Getenv("CIRCONUS_CGM_TEST2") == "" {
+		t.Skip("skipping test; $CIRCONUS_CGM_TEST2 not set")
+	}
+
+	// note, this test expects to CREATE a check then, search (and find) the check.
+	// ensure there is no existing check which would match the search criteria
+	// iow, remember to remove the check after running this test otherwise it
+	// will test search+search not create+search
+
+	if os.Getenv("CIRCONUS_API_TOKEN") == "" {
+		t.Skip("skipping test; $CIRCONUS_API_TOKEN not set")
+	}
+	t.Log("Testing correct check creation and search with API Token only")
+
+	cfg := &Config{}
+	cfg.CheckManager.Api.Token.Key = os.Getenv("CIRCONUS_API_TOKEN")
+	cfg.CheckManager.Check.InstanceId = "cgmtest2:gotest"
+	cfg.CheckManager.Check.SearchTag = "gotest:cgm"
+
+	t.Log("Testing correct check creation - should create a check, if it doesn't exist")
+	cm, err := NewCirconusMetrics(cfg)
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	trap, err := cm.check.GetTrap()
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	t.Log("Testing correct check search - should find the check created")
+	cm2, err := NewCirconusMetrics(cfg)
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	trap2, err := cm2.check.GetTrap()
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	if trap.Url.String() != trap2.Url.String() {
+		t.Errorf("Expected '%s' == '%s'", trap.Url.String(), trap2.Url.String())
+	}
+
+	t.Log(trap2.Url.String())
 }

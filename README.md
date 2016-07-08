@@ -61,6 +61,7 @@ func main() {
     //      where the target/host is equal to InstanceId - see below
     //      and the check has a tag equal to SearchTag - see below
     // Instance ID - an identifier for the 'group of metrics emitted by this process or service'
+    //               this is used as the value for check.target (aka host)
 	// default: 'hostname':'program name'
     // note: for a persistent instance that is ephemeral or transient where metric continuity is
     //       desired set this explicitly so that the current hostname will not be used.
@@ -79,6 +80,8 @@ func main() {
     // url will be refreshed (e.g. if the broker is changed
     // in the UI)
     cmc.CheckManager.Check.MaxUrlAge = 300 * time.Second
+    // custom display name for check, default: "InstanceId /cgm"
+    cmc.CheckManager.Check.DisplayName = ""
 
     // Broker configuration options
     //

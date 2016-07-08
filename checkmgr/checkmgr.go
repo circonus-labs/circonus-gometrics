@@ -53,6 +53,8 @@ type CheckConfig struct {
 	// used to search for a check to use (combined with instanceid)
 	// used as a regular tag when creating a check
 	SearchTag string
+	// a custom display name for the check (as viewed in UI Checks)
+	DisplayName string
 	// httptrap check secret (for creating a check)
 	Secret string
 	// additional tags to add to a check (when creating a check)
@@ -103,6 +105,7 @@ type CheckManager struct {
 	checkSecret        string
 	checkTags          []string
 	checkSubmissionUrl string
+	checkDisplayName   string
 
 	// broker
 	brokerId              int
@@ -177,6 +180,7 @@ func NewCheckManager(cfg *Config) (*CheckManager, error) {
 	cm.checkType = defaultCheckType
 	cm.checkId = cfg.Check.Id
 	cm.checkInstanceId = cfg.Check.InstanceId
+	cm.checkDisplayName = cfg.Check.DisplayName
 	cm.checkSearchTag = cfg.Check.SearchTag
 	cm.checkSecret = cfg.Check.Secret
 	cm.checkTags = cfg.Check.Tags
@@ -193,6 +197,10 @@ func NewCheckManager(cfg *Config) (*CheckManager, error) {
 
 	if cm.checkSearchTag == "" {
 		cm.checkSearchTag = fmt.Sprintf("service:%s", an)
+	}
+
+	if cm.checkDisplayName == "" {
+		cm.checkDisplayName = fmt.Sprintf("%s /cgm", cm.checkInstanceId)
 	}
 
 	cm.trapMaxUrlAge = cfg.Check.MaxUrlAge

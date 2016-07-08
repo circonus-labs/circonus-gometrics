@@ -174,7 +174,7 @@ func (cm *CheckManager) createNewCheck() (*api.CheckBundle, *api.Broker, error) 
 	config := api.CheckBundle{
 		Brokers:     []string{broker.Cid},
 		Config:      api.CheckBundleConfig{AsyncMetrics: true, Secret: checkSecret},
-		DisplayName: fmt.Sprintf("%s /%s", cm.checkInstanceId, cm.checkType),
+		DisplayName: cm.checkDisplayName,
 		Metrics:     []api.CheckBundleMetric{},
 		MetricLimit: 0,
 		Notes:       "",
