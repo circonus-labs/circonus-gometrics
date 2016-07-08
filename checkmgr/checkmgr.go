@@ -217,6 +217,9 @@ func NewCheckManager(cfg *Config) (*CheckManager, error) {
 		cm.brokerMaxResponseTime = defaultBrokerMaxResponseTime
 	}
 
+	// state
+	cm.activeMetrics = make(map[string]bool)
+
 	if err := cm.initializeTrapUrl(); err != nil {
 		return nil, err
 	}
