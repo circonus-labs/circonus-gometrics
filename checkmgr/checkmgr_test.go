@@ -16,7 +16,6 @@ func TestNewCheckManager1(t *testing.T) {
 	if err == nil || err.Error() != expectedError.Error() {
 		t.Errorf("Expected an '%#v' error, got '%#v'", expectedError, err)
 	}
-
 }
 
 func TestNewCheckManager2(t *testing.T) {
@@ -81,27 +80,6 @@ func TestNewCheckManager4(t *testing.T) {
 	if trap.Tls == nil {
 		t.Fatalf("Expected a x509 cert pool, found nil")
 	}
-}
-
-func TestNewCheckManager5(t *testing.T) {
-	if os.Getenv("CIRCONUS_API_TOKEN") == "" {
-		t.Skip("skipping test; $CIRCONUS_API_TOKEN not set")
-	}
-
-    t.Log("Testing custom/specific Broker ID (invalid)")
-
-	cfg := &Config{}
-	cfg.Api.Token.Key = os.Getenv("CIRCONUS_API_TOKEN")
-    // chicago broker, does not support httptrap
-    cfg.Broker.Id = 275
-
-    expectedError := errors.New("[ERROR] designated broker 275 [Chicago, IL, US] is invalid (not active, does not support required check type, or connectivity issue).")
-
-	_, err := NewCheckManager(cfg)
-
-    if err == nil || err.Error() != expectedError.Error() {
-        t.Errorf("Expected an '%#v' error, got '%#v'", expectedError, err)
-    }
 }
 
 func TestNewCheckManager6(t *testing.T) {
