@@ -26,7 +26,7 @@ func TestNewApiNoToken(t *testing.T) {
 
 	ac := &Config{}
 	ac.Token = TokenConfig{
-		Key: "", //os.Getenv("CIRCONUS_API_TOKEN"),
+		Key: "",
 		App: os.Getenv("CIRCONUS_API_APP"),
 	}
 	_, err := NewApi(ac)
@@ -38,6 +38,10 @@ func TestNewApiNoToken(t *testing.T) {
 }
 
 func TestApiGetUser(t *testing.T) {
+	if os.Getenv("CIRCONUS_API_TOKEN") == "" {
+		t.Skip("skipping test; $CIRCONUS_API_TOKEN not set")
+	}
+
 	t.Log("Testing correct API call to /user/current")
 
 	ac := &Config{}
