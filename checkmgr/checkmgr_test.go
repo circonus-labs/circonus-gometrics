@@ -84,9 +84,30 @@ func TestNewCheckManager4(t *testing.T) {
 }
 
 func TestNewCheckManager5(t *testing.T) {
+	if os.Getenv("CIRCONUS_API_TOKEN") == "" {
+		t.Skip("skipping test; $CIRCONUS_API_TOKEN not set")
+	}
+
+    t.Log("Testing custom/specific Broker ID (invalid)")
+
+	cfg := &Config{}
+	cfg.Api.Token.Key = os.Getenv("CIRCONUS_API_TOKEN")
+    // chicago broker, does not support httptrap
+    cfg.Broker.Id = 275
+
+    expectedError := errors.New("[ERROR] designated broker 275 [Chicago, IL, US] is invalid (not active, does not support required check type, or connectivity issue).")
+
+	_, err := NewCheckManager(cfg)
+
+    if err == nil || err.Error() != expectedError.Error() {
+        t.Errorf("Expected an '%#v' error, got '%#v'", expectedError, err)
+    }
+}
+
+func TestNewCheckManager6(t *testing.T) {
 	// flag to indicate whether to do this test
-	if os.Getenv("CIRCONUS_CGM_CMTEST5") == "" {
-		t.Skip("skipping test; $CIRCONUS_CGM_CMTEST5 not set")
+	if os.Getenv("CIRCONUS_CGM_CMTEST6") == "" {
+		t.Skip("skipping test; $CIRCONUS_CGM_CMTEST6 not set")
 	}
 
 	// !!IMPORTANT!! this test is DESTRUCTIVE it will DELETE the check bundle
@@ -114,7 +135,8 @@ func TestNewCheckManager5(t *testing.T) {
 		t.Fatalf("Expected no error, got '%v'", err)
 	}
 
-	trap, err := cm.GetTrap()
+    t.Log("Getting Trap from cm instance")
+    trap, err := cm.GetTrap()
 	if err != nil {
 		t.Fatalf("Expected no error, got '%v'", err)
 	}
@@ -125,11 +147,13 @@ func TestNewCheckManager5(t *testing.T) {
 		t.Fatalf("Expected no error, got '%v'", err)
 	}
 
+    t.Log("Getting Trap from cm2 instance")
 	trap2, err := cm2.GetTrap()
 	if err != nil {
 		t.Fatalf("Expected no error, got '%v'", err)
 	}
 
+    t.Log("Comparing Trap URLs")
 	if trap.Url.String() != trap2.Url.String() {
 		t.Fatalf("Expected '%s' == '%s'", trap.Url.String(), trap2.Url.String())
 	}
