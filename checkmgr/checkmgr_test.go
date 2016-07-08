@@ -2,10 +2,11 @@ package checkmgr
 
 import (
 	"errors"
+	"os"
 	"testing"
 )
 
-func TestNewCheckManagerInvalidConfig(t *testing.T) {
+func TestNewCheckManager1(t *testing.T) {
 	t.Log("Testing correct error return when no Check Manager config supplied")
 
 	expectedError := errors.New("Invalid Check Manager configuration (nil).")
@@ -18,7 +19,7 @@ func TestNewCheckManagerInvalidConfig(t *testing.T) {
 
 }
 
-func TestNewCheckManagerNoTokenNoUrl(t *testing.T) {
+func TestNewCheckManager2(t *testing.T) {
 	t.Log("Testing correct error return when no API Token and no Submission URL supplied")
 
 	expectedError := errors.New("Invalid check manager configuration (no API token AND no submission url).")
@@ -32,7 +33,7 @@ func TestNewCheckManagerNoTokenNoUrl(t *testing.T) {
 
 }
 
-func TestNewCheckManagerHttpUrlNoToken(t *testing.T) {
+func TestNewCheckManager3(t *testing.T) {
 	t.Log("Testing correct return with Submission URL (http) and no API Token supplied")
 
 	cfg := &Config{}
@@ -55,10 +56,9 @@ func TestNewCheckManagerHttpUrlNoToken(t *testing.T) {
 	if trap.Tls != nil {
 		t.Errorf("Expected nil found %#v", trap.Tls)
 	}
-
 }
 
-func TestNewCheckManagerHttpsUrlNoToken(t *testing.T) {
+func TestNewCheckManager4(t *testing.T) {
 	t.Log("Testing correct return with Submission URL (https) and no API Token supplied")
 
 	cfg := &Config{}
@@ -66,20 +66,77 @@ func TestNewCheckManagerHttpsUrlNoToken(t *testing.T) {
 
 	cm, err := NewCheckManager(cfg)
 	if err != nil {
-		t.Errorf("Expected no error, got '%v'", err)
+		t.Fatalf("Expected no error, got '%v'", err)
 	}
 
 	trap, err := cm.GetTrap()
 	if err != nil {
-		t.Errorf("Expected no error, got '%v'", err)
+		t.Fatalf("Expected no error, got '%v'", err)
 	}
 
 	if trap.Url.String() != cfg.Check.SubmissionUrl {
-		t.Errorf("Expected '%s' == '%s'", trap.Url.String(), cfg.Check.SubmissionUrl)
+		t.Fatalf("Expected '%s' == '%s'", trap.Url.String(), cfg.Check.SubmissionUrl)
 	}
 
 	if trap.Tls == nil {
-		t.Errorf("Expected a x509 cert pool, found nil")
+		t.Fatalf("Expected a x509 cert pool, found nil")
+	}
+}
+
+func TestNewCheckManager5(t *testing.T) {
+	// flag to indicate whether to do this test
+	if os.Getenv("CIRCONUS_CGM_CMTEST5") == "" {
+		t.Skip("skipping test; $CIRCONUS_CGM_CMTEST5 not set")
 	}
 
+	// !!IMPORTANT!! this test is DESTRUCTIVE it will DELETE the check bundle
+	//
+	// this test expects to CREATE a check then, search (and find) the check.
+	//
+	// ensure there is no existing check which would match the default search criteria
+	// it *will* be deleted at the end of this test...
+	//
+	// the default InstanceId is "os.hostname():program name" e.g. testhost1:checkmgr.test
+	// the default SearchTag is "service:program name" e.g. service:checkmgr.test
+
+	if os.Getenv("CIRCONUS_API_TOKEN") == "" {
+		t.Skip("skipping test; $CIRCONUS_API_TOKEN not set")
+	}
+
+	t.Log("Testing correct check creation and search with API Token only")
+
+	cfg := &Config{}
+	cfg.Api.Token.Key = os.Getenv("CIRCONUS_API_TOKEN")
+
+	t.Log("Testing correct check creation - should create a check, if it doesn't exist")
+	cm, err := NewCheckManager(cfg)
+	if err != nil {
+		t.Fatalf("Expected no error, got '%v'", err)
+	}
+
+	trap, err := cm.GetTrap()
+	if err != nil {
+		t.Fatalf("Expected no error, got '%v'", err)
+	}
+
+	t.Log("Testing correct check search - should find the check created")
+	cm2, err := NewCheckManager(cfg)
+	if err != nil {
+		t.Fatalf("Expected no error, got '%v'", err)
+	}
+
+	trap2, err := cm2.GetTrap()
+	if err != nil {
+		t.Fatalf("Expected no error, got '%v'", err)
+	}
+
+	if trap.Url.String() != trap2.Url.String() {
+		t.Fatalf("Expected '%s' == '%s'", trap.Url.String(), trap2.Url.String())
+	}
+
+	t.Logf("Deleting %s %s", cm2.checkBundle.Cid, cm2.checkBundle.DisplayName)
+	_, err = cm2.apih.Delete(cm2.checkBundle.Cid)
+	if err != nil {
+		t.Fatalf("Expected no error, got '%v'", err)
+	}
 }
