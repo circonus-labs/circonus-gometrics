@@ -68,11 +68,11 @@ func main() {
 	// default: 'hostname':'program name'
 	// note: for a persistent instance that is ephemeral or transient where metric continuity is
 	//       desired set this explicitly so that the current hostname will not be used.
-	cmc.CheckManager.Check.InstanceId = "cgmtest2:gotest"
+	cmc.CheckManager.Check.InstanceId = ""
 	// Search tag - a specific tag which, when coupled with the instanceId serves to identify the
 	// origin and/or grouping of the metrics
 	// default: service:application name (e.g. service:consul)
-	cmc.CheckManager.Check.SearchTag = "gotest:cgm"
+	cmc.CheckManager.Check.SearchTag = ""
 	// Check secret, default: generated when a check needs to be created
 	cmc.CheckManager.Check.Secret = ""
 	// Check tags, array of strings, additional tags to add to a new check, default: none
