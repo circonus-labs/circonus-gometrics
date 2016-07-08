@@ -155,7 +155,7 @@ func (a *Api) apiCall(reqMethod string, reqPath string, data []byte) ([]byte, er
 		return nil, fmt.Errorf("[ERROR] reading body %+v", err)
 	}
 
-	if resp.StatusCode != 200 {
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		msg := fmt.Sprintf("API response code %d: %s", resp.StatusCode, string(body))
 		if a.Debug {
 			a.Log.Printf("[DEBUG] %s\n", msg)
