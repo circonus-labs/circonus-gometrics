@@ -103,7 +103,7 @@ func main() {
 	// if broker Id or SelectTag are not specified, a broker will be selected randomly
 	// from the list of brokers available to the api token. enterprise brokers take precedence
 	// viable brokers are "active", have the "httptrap" module enabled, are reachable and respond
-	// within MaxBrokerResponseTime.
+	// within MaxResponseTime.
 
 	log.Println("Creating new cgm instance")
 
@@ -116,7 +116,6 @@ func main() {
 	rnd := rand.New(src)
 
 	log.Println("Starting cgm internal auto-flush timer")
-	// starts the interval timer to submit metrics to circonus
 	metrics.Start()
 
 	log.Println("Starting to send metrics")
@@ -133,7 +132,6 @@ func main() {
 	}
 
 	log.Println("Flushing any outstanding metrics manually")
-	// ensure last bit are flushed (or if it has run for less than interval)
 	metrics.Flush()
 
 }
