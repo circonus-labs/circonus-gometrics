@@ -82,10 +82,10 @@ func TestNewCheckManager4(t *testing.T) {
 	}
 }
 
-func TestNewCheckManager6(t *testing.T) {
+func TestNewCheckManager5(t *testing.T) {
 	// flag to indicate whether to do this test
-	if os.Getenv("CIRCONUS_CGM_CMTEST6") == "" {
-		t.Skip("skipping test; $CIRCONUS_CGM_CMTEST6 not set")
+	if os.Getenv("CIRCONUS_CGM_CMTEST5") == "" {
+		t.Skip("skipping test; $CIRCONUS_CGM_CMTEST5 not set")
 	}
 
 	// !!IMPORTANT!! this test is DESTRUCTIVE it will DELETE the check bundle
@@ -113,8 +113,8 @@ func TestNewCheckManager6(t *testing.T) {
 		t.Fatalf("Expected no error, got '%v'", err)
 	}
 
-    t.Log("Getting Trap from cm instance")
-    trap, err := cm.GetTrap()
+	t.Log("Getting Trap from cm instance")
+	trap, err := cm.GetTrap()
 	if err != nil {
 		t.Fatalf("Expected no error, got '%v'", err)
 	}
@@ -125,13 +125,13 @@ func TestNewCheckManager6(t *testing.T) {
 		t.Fatalf("Expected no error, got '%v'", err)
 	}
 
-    t.Log("Getting Trap from cm2 instance")
+	t.Log("Getting Trap from cm2 instance")
 	trap2, err := cm2.GetTrap()
 	if err != nil {
 		t.Fatalf("Expected no error, got '%v'", err)
 	}
 
-    t.Log("Comparing Trap URLs")
+	t.Log("Comparing Trap URLs")
 	if trap.Url.String() != trap2.Url.String() {
 		t.Fatalf("Expected '%s' == '%s'", trap.Url.String(), trap2.Url.String())
 	}
