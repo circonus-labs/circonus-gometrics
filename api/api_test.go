@@ -42,13 +42,37 @@ func TestApiGetUser(t *testing.T) {
 		t.Skip("skipping test; $CIRCONUS_API_TOKEN not set")
 	}
 
-	t.Log("Testing correct API call to /user/current")
+	t.Log("Testing correct API call to /user/current [defaults]")
 
 	ac := &Config{}
 	ac.Token = TokenConfig{
 		Key: os.Getenv("CIRCONUS_API_TOKEN"),
 		App: os.Getenv("CIRCONUS_API_APP"),
 	}
+	apih, err := NewApi(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	if _, err := apih.Get("/user/current"); err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+}
+
+func TestApiGetUser2(t *testing.T) {
+	if os.Getenv("CIRCONUS_API_TOKEN") == "" {
+		t.Skip("skipping test; $CIRCONUS_API_TOKEN not set")
+	}
+
+	t.Log("Testing correct API call to /user/current [url=hostname]")
+
+	ac := &Config{}
+	ac.Token = TokenConfig{
+		Key: os.Getenv("CIRCONUS_API_TOKEN"),
+		App: os.Getenv("CIRCONUS_API_APP"),
+	}
+	ac.Url = "api.circonus.com"
 	apih, err := NewApi(ac)
 	if err != nil {
 		t.Errorf("Expected no error, got '%v'", err)

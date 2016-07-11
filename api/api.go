@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/go-retryablehttp"
@@ -60,6 +61,10 @@ func NewApi(ac *Config) (*Api, error) {
 	api_url := ac.Url
 	if api_url == "" {
 		api_url = defaultApiUrl
+	}
+	if !strings.Contains(api_url, "/") {
+		// if just a hostname is passed, ASSume "https" and a path prefix of "/v2"
+		api_url = fmt.Sprintf("https://%s/v2", ac.Url)
 	}
 	if last := len(api_url) - 1; last >= 0 && api_url[last] == '/' {
 		api_url = api_url[:last]
