@@ -38,10 +38,6 @@ func (m *CirconusMetrics) submit(output map[string]interface{}, newMetrics map[s
 }
 
 func (m *CirconusMetrics) trapCall(payload []byte) (int, error) {
-	// m.trapmu.Lock()
-	// trapUrl := m.trapUrl
-	// m.trapmu.Unlock()
-
 	trap, err := m.check.GetTrap()
 	if err != nil {
 		return 0, err
