@@ -1,4 +1,4 @@
-package circonusgometrics
+package checkmgr
 
 import (
 	"fmt"
@@ -8,6 +8,8 @@ import (
 	"reflect"
 	"strings"
 	"time"
+
+	"github.com/circonus-labs/circonus-gometrics/api"
 )
 
 func init() {
@@ -15,18 +17,21 @@ func init() {
 }
 
 // Get Broker to use when creating a check
-func (m *CirconusMetrics) getBroker() (*Broker, error) {
-	if m.BrokerGroupId != 0 {
-		broker, err := m.fetchBrokerById(m.BrokerGroupId)
+func (cm *CheckManager) getBroker() (*api.Broker, error) {
+	if cm.brokerId != 0 {
+		broker, err := cm.apih.FetchBrokerById(cm.brokerId)
 		if err != nil {
-			return nil, fmt.Errorf("[ERROR] fetching designated broker %d\n", m.BrokerGroupId)
+			return nil, err
 		}
-		if !m.isValidBroker(broker) {
-			return nil, fmt.Errorf("[ERROR] designated broker %d [%s] is invalid (not active, does not support required check type, or connectivity issue).\n", m.BrokerGroupId, broker.Name)
+		if !cm.isValidBroker(broker) {
+			return nil, fmt.Errorf(
+				"[ERROR] designated broker %d [%s] is invalid (not active, does not support required check type, or connectivity issue).",
+				cm.brokerId,
+				broker.Name)
 		}
 		return broker, nil
 	}
-	broker, err := m.selectBroker()
+	broker, err := cm.selectBroker()
 	if err != nil {
 		return nil, fmt.Errorf("[ERROR] Unable to fetch suitable broker %s", err)
 	}
@@ -34,7 +39,7 @@ func (m *CirconusMetrics) getBroker() (*Broker, error) {
 }
 
 // Get CN of Broker associated with submission_url to satisfy no IP SANS in certs
-func (m *CirconusMetrics) getBrokerCN(broker *Broker, submissionUrl string) (string, error) {
+func (cm *CheckManager) getBrokerCN(broker *api.Broker, submissionUrl string) (string, error) {
 	u, err := url.Parse(submissionUrl)
 	if err != nil {
 		return "", err
@@ -66,17 +71,17 @@ func (m *CirconusMetrics) getBrokerCN(broker *Broker, submissionUrl string) (str
 
 // Select a broker for use when creating a check, if a specific broker
 // was not specified.
-func (m *CirconusMetrics) selectBroker() (*Broker, error) {
-	var brokerList []Broker
+func (cm *CheckManager) selectBroker() (*api.Broker, error) {
+	var brokerList []api.Broker
 	var err error
 
-	if m.BrokerSelectTag != "" {
-		brokerList, err = m.fetchBrokerListByTag(m.BrokerSelectTag)
+	if cm.brokerSelectTag != "" {
+		brokerList, err = cm.apih.FetchBrokerListByTag(cm.brokerSelectTag)
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		brokerList, err = m.fetchBrokerList()
+		brokerList, err = cm.apih.FetchBrokerList()
 		if err != nil {
 			return nil, err
 		}
@@ -86,11 +91,11 @@ func (m *CirconusMetrics) selectBroker() (*Broker, error) {
 		return nil, fmt.Errorf("zero brokers found.")
 	}
 
-	validBrokers := make(map[string]Broker)
+	validBrokers := make(map[string]api.Broker)
 	haveEnterprise := false
 
 	for _, broker := range brokerList {
-		if m.isValidBroker(&broker) {
+		if cm.isValidBroker(&broker) {
 			validBrokers[broker.Cid] = broker
 			if broker.Type == "enterprise" {
 				haveEnterprise = true
@@ -113,8 +118,8 @@ func (m *CirconusMetrics) selectBroker() (*Broker, error) {
 	validBrokerKeys := reflect.ValueOf(validBrokers).MapKeys()
 	selectedBroker := validBrokers[validBrokerKeys[rand.Intn(len(validBrokerKeys))].String()]
 
-	if m.Debug {
-		m.Log.Printf("[DEBUG] Selected broker '%s'\n", selectedBroker.Name)
+	if cm.Debug {
+		cm.Log.Printf("[DEBUG] Selected broker '%s'\n", selectedBroker.Name)
 	}
 
 	return &selectedBroker, nil
@@ -122,7 +127,7 @@ func (m *CirconusMetrics) selectBroker() (*Broker, error) {
 }
 
 // Verify broker supports the check type to be used
-func (m *CirconusMetrics) brokerSupportsCheckType(checkType string, details *BrokerDetail) bool {
+func (cm *CheckManager) brokerSupportsCheckType(checkType string, details *api.BrokerDetail) bool {
 
 	for _, module := range details.Modules {
 		if module == checkType {
@@ -135,7 +140,7 @@ func (m *CirconusMetrics) brokerSupportsCheckType(checkType string, details *Bro
 }
 
 // Is the broker valid (active, supports check type, and reachable)
-func (m *CirconusMetrics) isValidBroker(broker *Broker) bool {
+func (cm *CheckManager) isValidBroker(broker *api.Broker) bool {
 	brokerPort := 0
 	valid := false
 	for _, detail := range broker.Details {
@@ -143,43 +148,43 @@ func (m *CirconusMetrics) isValidBroker(broker *Broker) bool {
 
 		// broker must be active
 		if detail.Status != "active" {
-			if m.Debug {
-				m.Log.Printf("[DEBUG] Broker '%s' is not active.\n", broker.Name)
+			if cm.Debug {
+				cm.Log.Printf("[DEBUG] Broker '%s' is not active.\n", broker.Name)
 			}
 			continue
 		}
 
 		// broker must have module loaded for the check type to be used
-		if !m.brokerSupportsCheckType(m.checkType, &detail) {
-			if m.Debug {
-				m.Log.Printf("[DEBUG] Broker '%s' does not support '%s' checks.\n", broker.Name, m.checkType)
+		if !cm.brokerSupportsCheckType(cm.checkType, &detail) {
+			if cm.Debug {
+				cm.Log.Printf("[DEBUG] Broker '%s' does not support '%s' checks.\n", broker.Name, cm.checkType)
 			}
 			continue
 		}
 
 		// broker must be reachable and respond within designated time
-		conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", detail.IP, brokerPort), m.MaxBrokerResponseTime)
+		conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", detail.IP, brokerPort), cm.brokerMaxResponseTime)
 		if err != nil {
 			if detail.CN != "trap.noit.circonus.net" {
-				if m.Debug {
-					m.Log.Printf("[DEBUG] Broker '%s' unable to connect, %v\n", broker.Name, err)
+				if cm.Debug {
+					cm.Log.Printf("[DEBUG] Broker '%s' unable to connect, %v\n", broker.Name, err)
 				}
 				continue // not able to reach the broker (or respone slow enough for it to be considered not usable)
 			}
 			// if circonus trap broker, try port 443
 			brokerPort = 443
-			conn, err = net.DialTimeout("tcp", fmt.Sprintf("%s:%d", detail.CN, brokerPort), m.MaxBrokerResponseTime)
+			conn, err = net.DialTimeout("tcp", fmt.Sprintf("%s:%d", detail.CN, brokerPort), cm.brokerMaxResponseTime)
 			if err != nil {
-				if m.Debug {
-					m.Log.Printf("[DEBUG] Broker '%s' unable to connect %v\n", broker.Name, err)
+				if cm.Debug {
+					cm.Log.Printf("[DEBUG] Broker '%s' unable to connect %v\n", broker.Name, err)
 				}
 				continue // not able to reach the broker on 443 either (or respone slow enough for it to be considered not usable)
 			}
 		}
 		conn.Close()
 
-		if m.Debug {
-			m.Log.Printf("[DEBUG] Broker '%s' is valid\n", broker.Name)
+		if cm.Debug {
+			cm.Log.Printf("[DEBUG] Broker '%s' is valid\n", broker.Name)
 		}
 
 		valid = true

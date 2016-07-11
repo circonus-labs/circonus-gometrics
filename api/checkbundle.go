@@ -1,4 +1,4 @@
-package circonusgometrics
+package api
 
 // abstracted in preparation of separate circonus-api-go package
 
@@ -43,14 +43,14 @@ type CheckBundle struct {
 }
 
 // Use Circonus API to retrieve a check bundle by ID
-func (m *CirconusMetrics) fetchCheckBundleById(id int) (*CheckBundle, error) {
+func (a *Api) FetchCheckBundleById(id int) (*CheckBundle, error) {
 	cid := fmt.Sprintf("/check_bundle/%d", id)
-	return m.fetchCheckBundleByCid(cid)
+	return a.FetchCheckBundleByCid(cid)
 }
 
 // Use Circonus API to retrieve a check bundle by CID
-func (m *CirconusMetrics) fetchCheckBundleByCid(cid string) (*CheckBundle, error) {
-	result, err := m.apiCall("GET", cid, nil)
+func (a *Api) FetchCheckBundleByCid(cid string) (*CheckBundle, error) {
+	result, err := a.Get(cid)
 	if err != nil {
 		return nil, err
 	}
@@ -62,10 +62,10 @@ func (m *CirconusMetrics) fetchCheckBundleByCid(cid string) (*CheckBundle, error
 }
 
 // Use Circonus API to search for a check bundle
-func (m *CirconusMetrics) searchCheckBundles(searchCriteria string) ([]CheckBundle, error) {
-	apiPath := fmt.Sprintf("/v2/check_bundle?search=%s", searchCriteria)
+func (a *Api) SearchCheckBundles(searchCriteria string) ([]CheckBundle, error) {
+	apiPath := fmt.Sprintf("/check_bundle?search=%s", searchCriteria)
 
-	response, err := m.apiCall("GET", apiPath, nil)
+	response, err := a.Get(apiPath)
 	if err != nil {
 		return nil, fmt.Errorf("[ERROR] API call error %+v", err)
 	}
@@ -80,13 +80,13 @@ func (m *CirconusMetrics) searchCheckBundles(searchCriteria string) ([]CheckBund
 }
 
 // Use Circonus API to create a check bundle
-func (m *CirconusMetrics) createCheckBundle(config CheckBundle) (*CheckBundle, error) {
+func (a *Api) CreateCheckBundle(config CheckBundle) (*CheckBundle, error) {
 	cfgJson, err := json.Marshal(config)
 	if err != nil {
 		return nil, err
 	}
 
-	response, err := m.apiCall("POST", "/v2/check_bundle", cfgJson)
+	response, err := a.Post("/check_bundle", cfgJson)
 	if err != nil {
 		return nil, err
 	}
@@ -101,9 +101,9 @@ func (m *CirconusMetrics) createCheckBundle(config CheckBundle) (*CheckBundle, e
 }
 
 // Use Circonus API to update a check bundle
-func (m *CirconusMetrics) updateCheckBundle(config *CheckBundle) (*CheckBundle, error) {
-	if m.Debug {
-		m.Log.Printf("[DEBUG] Updating check bundle with new metrics.")
+func (a *Api) UpdateCheckBundle(config *CheckBundle) (*CheckBundle, error) {
+	if a.Debug {
+		a.Log.Printf("[DEBUG] Updating check bundle with new metrics.")
 	}
 
 	cfgJson, err := json.Marshal(config)
@@ -111,7 +111,7 @@ func (m *CirconusMetrics) updateCheckBundle(config *CheckBundle) (*CheckBundle, 
 		return nil, err
 	}
 
-	response, err := m.apiCall("PUT", config.Cid, cfgJson)
+	response, err := a.Put(config.Cid, cfgJson)
 	if err != nil {
 		return nil, err
 	}

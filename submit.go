@@ -2,7 +2,6 @@ package circonusgometrics
 
 import (
 	"bytes"
-	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"io/ioutil"
@@ -12,12 +11,13 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/circonus-labs/circonus-gometrics/api"
 	"github.com/hashicorp/go-retryablehttp"
 )
 
-func (m *CirconusMetrics) submit(output map[string]interface{}, newMetrics map[string]*CheckBundleMetric) {
+func (m *CirconusMetrics) submit(output map[string]interface{}, newMetrics map[string]*api.CheckBundleMetric) {
 	if len(newMetrics) > 0 {
-		m.addNewCheckMetrics(newMetrics)
+		m.check.AddNewMetrics(newMetrics)
 	}
 
 	str, err := json.Marshal(output)
@@ -33,25 +33,26 @@ func (m *CirconusMetrics) submit(output map[string]interface{}, newMetrics map[s
 	}
 
 	if m.Debug {
-		m.Log.Printf("[DEBUG] %d stats sent to %s\n", numStats, m.trapUrl)
+		m.Log.Printf("[DEBUG] %d stats sent\n", numStats)
 	}
 }
 
 func (m *CirconusMetrics) trapCall(payload []byte) (int, error) {
-	m.trapmu.Lock()
-	trapUrl := m.trapUrl
-	m.trapmu.Unlock()
+	trap, err := m.check.GetTrap()
+	if err != nil {
+		return 0, err
+	}
 
 	dataReader := bytes.NewReader(payload)
 
-	req, err := retryablehttp.NewRequest("PUT", trapUrl, dataReader)
+	req, err := retryablehttp.NewRequest("PUT", trap.Url.String(), dataReader)
 	if err != nil {
 		return 0, err
 	}
 	req.Header.Add("Accept", "application/json")
 
 	client := retryablehttp.NewClient()
-	if m.trapSSL {
+	if trap.Url.Scheme == "https" {
 		client.HTTPClient.Transport = &http.Transport{
 			Proxy: http.ProxyFromEnvironment,
 			Dial: (&net.Dialer{
@@ -59,10 +60,7 @@ func (m *CirconusMetrics) trapCall(payload []byte) (int, error) {
 				KeepAlive: 30 * time.Second,
 			}).Dial,
 			TLSHandshakeTimeout: 10 * time.Second,
-			TLSClientConfig: &tls.Config{
-				RootCAs:    m.certPool,
-				ServerName: m.trapCN,
-			},
+			TLSClientConfig:     trap.Tls,
 			DisableKeepAlives:   true,
 			MaxIdleConnsPerHost: -1,
 			DisableCompression:  true,
@@ -93,12 +91,7 @@ func (m *CirconusMetrics) trapCall(payload []byte) (int, error) {
 	resp, err := client.Do(req)
 	if err != nil {
 		if attempts == client.RetryMax {
-			if time.Since(m.trapLastUpdate) >= m.MaxSubmissionUrlAge {
-				m.trapmu.Lock()
-				defer m.trapmu.Unlock()
-				m.ready = false
-				m.trapUrl = ""
-			}
+			m.check.RefreshTrap()
 		}
 		return 0, err
 	}

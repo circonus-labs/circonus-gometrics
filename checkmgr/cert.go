@@ -1,6 +1,7 @@
-package circonusgometrics
+package checkmgr
 
 import (
+	"crypto/x509"
 	"encoding/json"
 	"fmt"
 )
@@ -10,20 +11,17 @@ type CACert struct {
 }
 
 // Load the CA cert for the broker designated by the submission url
-func (m *CirconusMetrics) loadCACert() {
-	if m.cert != nil {
+func (cm *CheckManager) loadCACert() {
+	if cm.certPool != nil {
 		return
+	} else {
+		cm.certPool = x509.NewCertPool()
 	}
 
-	if !m.trapSSL {
-		// ssl not needed
-		return
-	}
-
-	cert, err := m.fetchCert()
+	cert, err := cm.fetchCert()
 	if err != nil {
-		if m.Debug {
-			m.Log.Printf("[DEBUG] Unable to fetch ca.crt, using default. %+v\n", err)
+		if cm.Debug {
+			cm.Log.Printf("[DEBUG] Unable to fetch ca.crt, using default. %+v\n", err)
 		}
 	}
 
@@ -31,13 +29,16 @@ func (m *CirconusMetrics) loadCACert() {
 		cert = circonusCA
 	}
 
-	m.cert = cert
-	m.certPool.AppendCertsFromPEM(cert)
+	cm.certPool.AppendCertsFromPEM(cert)
 }
 
 // Use the Circonus API to retrieve the CA certificate
-func (m *CirconusMetrics) fetchCert() ([]byte, error) {
-	response, err := m.apiCall("GET", "/v2/pki/ca.crt", nil)
+func (cm *CheckManager) fetchCert() ([]byte, error) {
+	if !cm.enabled {
+		return circonusCA, nil
+	}
+
+	response, err := cm.apih.Get("/pki/ca.crt")
 	if err != nil {
 		return nil, err
 	}

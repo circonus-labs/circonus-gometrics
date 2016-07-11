@@ -4,6 +4,11 @@ package circonusgometrics
 //
 
 // Set a text metric
+func (m *CirconusMetrics) SetText(metric string, val string) {
+	m.SetTextValue(metric, val)
+}
+
+// Set a text metric
 func (m *CirconusMetrics) SetTextValue(metric string, val string) {
 	m.tm.Lock()
 	defer m.tm.Unlock()
