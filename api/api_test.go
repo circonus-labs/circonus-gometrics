@@ -3,6 +3,7 @@ package api
 import (
 	"errors"
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -33,6 +34,26 @@ func TestNewApiNoToken(t *testing.T) {
 
 	if err == nil || err.Error() != expectedError.Error() {
 		t.Errorf("Expected an '%#v' error, got '%#v'", expectedError, err)
+	}
+
+}
+
+func TestNewApiInvalidToken(t *testing.T) {
+	t.Log("Testing correct error return when INVALID API Token supplied")
+
+	ac := &Config{}
+	ac.Token = TokenConfig{
+		Key: "abc-123",
+		App: os.Getenv("CIRCONUS_API_APP"),
+	}
+	apih, err := NewApi(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	_, err = apih.Get("/user/current")
+	if err == nil || !strings.Contains(err.Error(), "The authentication token you supplied is invalid") {
+		t.Errorf("Expected an error containing 'The authentication token you supplied is invalid' error, got '%#v'", err)
 	}
 
 }
