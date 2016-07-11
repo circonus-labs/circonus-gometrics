@@ -65,3 +65,55 @@ func TestRemoveText(t *testing.T) {
 		t.Errorf("Expected '', found '%d'", val)
 	}
 }
+
+func TestSetTextFunc(t *testing.T) {
+	t.Log("Testing text.SetTextFunc")
+
+	tf := func() string {
+		return "bar"
+	}
+	cm := &CirconusMetrics{}
+	cm.textFuncs = make(map[string]func() string)
+	cm.SetTextFunc("foo", tf)
+
+	val, ok := cm.textFuncs["foo"]
+	if !ok {
+		t.Errorf("Expected to find foo")
+	}
+
+	if val() != "bar" {
+		t.Errorf("Expected 'bar', found '%s'", val())
+	}
+}
+
+func TestRemoveTextFunc(t *testing.T) {
+	t.Log("Testing text.RemoveTextFunc")
+
+	tf := func() string {
+		return "bar"
+	}
+	cm := &CirconusMetrics{}
+	cm.textFuncs = make(map[string]func() string)
+	cm.SetTextFunc("foo", tf)
+
+	val, ok := cm.textFuncs["foo"]
+	if !ok {
+		t.Errorf("Expected to find foo")
+	}
+
+	if val() != "bar" {
+		t.Errorf("Expected 'bar', found '%s'", val())
+	}
+
+	cm.RemoveTextFunc("foo")
+
+	val, ok = cm.textFuncs["foo"]
+	if ok {
+		t.Errorf("Expected NOT to find foo")
+	}
+
+	if val != nil {
+		t.Errorf("Expected nil, found %v", val)
+	}
+
+}

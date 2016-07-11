@@ -82,3 +82,55 @@ func TestRemoveCounter(t *testing.T) {
 		t.Errorf("Expected 0, found %d", val)
 	}
 }
+
+func TestSetCounterFunc(t *testing.T) {
+	t.Log("Testing counter.SetCounterFunc")
+
+	cf := func() uint64 {
+		return 1
+	}
+	cm := &CirconusMetrics{}
+	cm.counterFuncs = make(map[string]func() uint64)
+	cm.SetCounterFunc("foo", cf)
+
+	val, ok := cm.counterFuncs["foo"]
+	if !ok {
+		t.Errorf("Expected to find foo")
+	}
+
+	if val() != 1 {
+		t.Errorf("Expected 1, found %d", val())
+	}
+}
+
+func TestRemoveCounterFunc(t *testing.T) {
+	t.Log("Testing counter.RemoveCounterFunc")
+
+	cf := func() uint64 {
+		return 1
+	}
+	cm := &CirconusMetrics{}
+	cm.counterFuncs = make(map[string]func() uint64)
+	cm.SetCounterFunc("foo", cf)
+
+	val, ok := cm.counterFuncs["foo"]
+	if !ok {
+		t.Errorf("Expected to find foo")
+	}
+
+	if val() != 1 {
+		t.Errorf("Expected 1, found %d", val())
+	}
+
+	cm.RemoveCounterFunc("foo")
+
+	val, ok = cm.counterFuncs["foo"]
+	if ok {
+		t.Errorf("Expected NOT to find foo")
+	}
+
+	if val != nil {
+		t.Errorf("Expected nil, found %v", val)
+	}
+
+}
