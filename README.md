@@ -29,7 +29,7 @@ func main() {
 	cmc := &cgm.Config{}
 
 	// Interval at which metrics are submitted to Circonus, default: 10 seconds
-	cmc.Interval = 10 * time.Second
+	cmc.Interval = "10s" // 10 seconds
 	// Enable debug messages, default: false
 	cmc.Debug = false
 	// Send debug messages to specific log.Logger instance
@@ -39,11 +39,11 @@ func main() {
 	// Circonus API configuration options
 	//
 	// Token, no default (blank disables check manager)
-	cmc.CheckManager.Api.Token.Key = os.Getenv("CIRCONUS_API_TOKEN")
+	cmc.CheckManager.API.TokenKey = os.Getenv("CIRCONUS_API_TOKEN")
 	// App name, default: circonus-gometrics
-	cmc.CheckManager.Api.Token.App = os.Getenv("CIRCONUS_API_APP")
+	cmc.CheckManager.API.TokenApp = os.Getenv("CIRCONUS_API_APP")
 	// URL, default: https://api.circonus.com/v2
-	cmc.CheckManager.Api.Url = os.Getenv("CIRCONUS_API_URL")
+	cmc.CheckManager.API.URL = os.Getenv("CIRCONUS_API_URL")
 
 	// Check configuration options
 	//
@@ -54,9 +54,9 @@ func main() {
 	//            attempt will be made to automatically create one
 	//
 	// Pre-existing httptrap check submission_url
-	cmc.CheckManager.Check.SubmissionUrl = os.Getenv("CIRCONUS_SUBMISION_URL")
+	cmc.CheckManager.Check.SubmissionURL = os.Getenv("CIRCONUS_SUBMISION_URL")
 	// Pre-existing httptrap check id (check not check bundle)
-	cmc.CheckManager.Check.Id = 0
+	cmc.CheckManager.Check.ID = ""
 	// if neither a submission url nor check id are provided, an attempt will be made to find an existing
 	// httptrap check by using the circonus api to search for a check matching the following criteria:
 	//      an active check,
@@ -68,7 +68,7 @@ func main() {
 	// default: 'hostname':'program name'
 	// note: for a persistent instance that is ephemeral or transient where metric continuity is
 	//       desired set this explicitly so that the current hostname will not be used.
-	cmc.CheckManager.Check.InstanceId = ""
+	cmc.CheckManager.Check.InstanceID = ""
 	// Search tag - a specific tag which, when coupled with the instanceId serves to identify the
 	// origin and/or grouping of the metrics
 	// default: service:application name (e.g. service:consul)
@@ -81,8 +81,8 @@ func main() {
 	// when a given submission fails (due to retries) if the
 	// time the url was last updated is > than this, the trap
 	// url will be refreshed (e.g. if the broker is changed
-	// in the UI)
-	cmc.CheckManager.Check.MaxUrlAge = 300 * time.Second
+	// in the UI) default 5 minutes
+	cmc.CheckManager.Check.MaxURLAge = "5m"
 	// custom display name for check, default: "InstanceId /cgm"
 	cmc.CheckManager.Check.DisplayName = ""
 
@@ -90,8 +90,8 @@ func main() {
 	//
 	// Broker ID of specific broker to use, default: random enterprise broker or
 	// Circonus default if no enterprise brokers are available.
-	// default: not used unless > 0
-	cmc.CheckManager.Broker.Id = 0
+	// default: only used if set
+	cmc.CheckManager.Broker.ID = ""
 	// used to select a broker with the same tag (e.g. can be used to dictate that a broker
 	// serving a specific location should be used. "dc:sfo", "location:new_york", "zone:us-west")
 	// if more than one broker has the tag, one will be selected randomly from the resulting list
@@ -99,7 +99,7 @@ func main() {
 	cmc.CheckManager.Broker.SelectTag = ""
 	// longest time to wait for a broker connection (if latency is > the broker will
 	// be considered invalid and not available for selection.), default: 500 milliseconds
-	cmc.CheckManager.Broker.MaxResponseTime = 500 * time.Millisecond
+	cmc.CheckManager.Broker.MaxResponseTime = "500ms"
 	// if broker Id or SelectTag are not specified, a broker will be selected randomly
 	// from the list of brokers available to the api token. enterprise brokers take precedence
 	// viable brokers are "active", have the "httptrap" module enabled, are reachable and respond
