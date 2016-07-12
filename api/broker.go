@@ -7,6 +7,7 @@ import (
 	"fmt"
 )
 
+// BrokerDetail instance attributes
 type BrokerDetail struct {
 	CN      string   `json:"cn"`
 	IP      string   `json:"ipaddress"`
@@ -18,6 +19,7 @@ type BrokerDetail struct {
 	Version int      `json:"version"`
 }
 
+// Broker definition
 type Broker struct {
 	Cid       string         `json:"_cid"`
 	Details   []BrokerDetail `json:"_details"`
@@ -28,14 +30,14 @@ type Broker struct {
 	Type      string         `json:"_type"`
 }
 
-// Use Circonus API to retrieve  a specific broker by Broker Group ID
-func (a *Api) FetchBrokerById(id int) (*Broker, error) {
+// FetchBrokerByID Use Circonus API to retrieve  a specific broker by Broker Group ID
+func (a *API) FetchBrokerByID(id int) (*Broker, error) {
 	cid := fmt.Sprintf("/broker/%d", id)
-	return a.FetchBrokerByCid(cid)
+	return a.FetchBrokerByCID(cid)
 }
 
-// Use Circonus API to retreive a broker by CID
-func (a *Api) FetchBrokerByCid(cid string) (*Broker, error) {
+// FetchBrokerByCID Use Circonus API to retreive a broker by CID
+func (a *API) FetchBrokerByCID(cid string) (*Broker, error) {
 	result, err := a.Get(cid)
 	if err != nil {
 		return nil, err
@@ -50,8 +52,8 @@ func (a *Api) FetchBrokerByCid(cid string) (*Broker, error) {
 
 }
 
-// Use Circonus API to retreive a list of brokers which have a specific tag
-func (a *Api) FetchBrokerListByTag(searchTag string) ([]Broker, error) {
+// FetchBrokerListByTag Use Circonus API to retreive a list of brokers which have a specific tag
+func (a *API) FetchBrokerListByTag(searchTag string) ([]Broker, error) {
 	result, err := a.Get(fmt.Sprintf("/broker?f__tags_has=%s", searchTag))
 	if err != nil {
 		return nil, err
@@ -63,8 +65,8 @@ func (a *Api) FetchBrokerListByTag(searchTag string) ([]Broker, error) {
 	return response, nil
 }
 
-// Use Circonus API to retreive a list of brokers
-func (a *Api) FetchBrokerList() ([]Broker, error) {
+// FetchBrokerList Use Circonus API to retreive a list of brokers
+func (a *API) FetchBrokerList() ([]Broker, error) {
 	result, err := a.Get("/broker")
 	if err != nil {
 		return nil, err

@@ -9,12 +9,12 @@ import (
 	"strings"
 )
 
-// this is an arbitrary json structure
-// we only would care about submission_url
+// CheckDetails is an arbitrary json structure, we would only care about submission_url
 type CheckDetails struct {
-	SubmissionUrl string `json:"submission_url"`
+	SubmissionURL string `json:"submission_url"`
 }
 
+// Check definition
 type Check struct {
 	Cid            string       `json:"_cid"`
 	Active         bool         `json:"_active"`
@@ -24,14 +24,14 @@ type Check struct {
 	Details        CheckDetails `json:"_details"`
 }
 
-// Use Circonus API to retrieve a check by ID
-func (a *Api) FetchCheckById(id int) (*Check, error) {
+// FetchCheckByID Use Circonus API to retrieve a check by ID
+func (a *API) FetchCheckByID(id int) (*Check, error) {
 	cid := fmt.Sprintf("/check/%d", id)
-	return a.FetchCheckByCid(cid)
+	return a.FetchCheckByCID(cid)
 }
 
-// Use Circonus API to retrieve a check by CID
-func (a *Api) FetchCheckByCid(cid string) (*Check, error) {
+// FetchCheckByCID Use Circonus API to retrieve a check by CID
+func (a *API) FetchCheckByCID(cid string) (*Check, error) {
 	result, err := a.Get(cid)
 	if err != nil {
 		return nil, err
@@ -43,10 +43,10 @@ func (a *Api) FetchCheckByCid(cid string) (*Check, error) {
 	return check, nil
 }
 
-// Use Circonus API to retrieve a check by submission url
-func (a *Api) FetchCheckBySubmissionUrl(submissionUrl string) (*Check, error) {
+// FetchCheckBySubmissionURL Use Circonus API to retrieve a check by submission url
+func (a *API) FetchCheckBySubmissionURL(submissionURL string) (*Check, error) {
 
-	u, err := url.Parse(submissionUrl)
+	u, err := url.Parse(submissionURL)
 	if err != nil {
 		return nil, err
 	}
@@ -55,13 +55,13 @@ func (a *Api) FetchCheckBySubmissionUrl(submissionUrl string) (*Check, error) {
 
 	// does it smell like a valid trap url path
 	if u.Path[:17] != "/module/httptrap/" {
-		return nil, fmt.Errorf("[ERROR] Invalid submission URL '%s', unrecognized path.", submissionUrl)
+		return nil, fmt.Errorf("[ERROR] Invalid submission URL '%s', unrecognized path", submissionURL)
 	}
 
 	// extract uuid/secret
 	pathParts := strings.Split(u.Path[17:len(u.Path)], "/")
 	if len(pathParts) != 2 {
-		return nil, fmt.Errorf("[ERROR] Invalid submission URL '%s', UUID not where expected.", submissionUrl)
+		return nil, fmt.Errorf("[ERROR] Invalid submission URL '%s', UUID not where expected", submissionURL)
 	}
 
 	uuid := pathParts[0]
@@ -81,12 +81,12 @@ func (a *Api) FetchCheckBySubmissionUrl(submissionUrl string) (*Check, error) {
 	}
 
 	numActive := 0
-	checkId := -1
+	checkID := -1
 
 	for idx, check := range checks {
 		if check.Active {
 			numActive++
-			checkId = idx
+			checkID = idx
 		}
 	}
 
@@ -94,6 +94,6 @@ func (a *Api) FetchCheckBySubmissionUrl(submissionUrl string) (*Check, error) {
 		return nil, fmt.Errorf("[ERROR] Multiple checks with same UUID %s", uuid)
 	}
 
-	return &checks[checkId], nil
+	return &checks[checkID], nil
 
 }

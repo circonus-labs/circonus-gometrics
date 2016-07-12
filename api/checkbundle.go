@@ -7,12 +7,14 @@ import (
 	"fmt"
 )
 
+// CheckBundleConfig configuration specific to check type
 type CheckBundleConfig struct {
 	AsyncMetrics  bool   `json:"async_metrics"`
 	Secret        string `json:"secret"`
-	SubmissionUrl string `json:"submission_url"`
+	SubmissionURL string `json:"submission_url"`
 }
 
+// CheckBundleMetric individual metric configuration
 type CheckBundleMetric struct {
 	Name   string `json:"name"`
 	Type   string `json:"type"`
@@ -20,6 +22,7 @@ type CheckBundleMetric struct {
 	Status string `json:"status"`
 }
 
+// CheckBundle definition
 type CheckBundle struct {
 	CheckUUIDs         []string            `json:"_check_uuids,omitempty"`
 	Checks             []string            `json:"_checks,omitempty"`
@@ -42,14 +45,14 @@ type CheckBundle struct {
 	Type               string              `json:"type"`
 }
 
-// Use Circonus API to retrieve a check bundle by ID
-func (a *Api) FetchCheckBundleById(id int) (*CheckBundle, error) {
+// FetchCheckBundleByID Use Circonus API to retrieve a check bundle by ID
+func (a *API) FetchCheckBundleByID(id int) (*CheckBundle, error) {
 	cid := fmt.Sprintf("/check_bundle/%d", id)
-	return a.FetchCheckBundleByCid(cid)
+	return a.FetchCheckBundleByCID(cid)
 }
 
-// Use Circonus API to retrieve a check bundle by CID
-func (a *Api) FetchCheckBundleByCid(cid string) (*CheckBundle, error) {
+// FetchCheckBundleByCID Use Circonus API to retrieve a check bundle by CID
+func (a *API) FetchCheckBundleByCID(cid string) (*CheckBundle, error) {
 	result, err := a.Get(cid)
 	if err != nil {
 		return nil, err
@@ -61,8 +64,8 @@ func (a *Api) FetchCheckBundleByCid(cid string) (*CheckBundle, error) {
 	return checkBundle, nil
 }
 
-// Use Circonus API to search for a check bundle
-func (a *Api) SearchCheckBundles(searchCriteria string) ([]CheckBundle, error) {
+// SearchCheckBundles Use Circonus API to search for a check bundle
+func (a *API) SearchCheckBundles(searchCriteria string) ([]CheckBundle, error) {
 	apiPath := fmt.Sprintf("/check_bundle?search=%s", searchCriteria)
 
 	response, err := a.Get(apiPath)
@@ -79,14 +82,14 @@ func (a *Api) SearchCheckBundles(searchCriteria string) ([]CheckBundle, error) {
 	return results, nil
 }
 
-// Use Circonus API to create a check bundle
-func (a *Api) CreateCheckBundle(config CheckBundle) (*CheckBundle, error) {
-	cfgJson, err := json.Marshal(config)
+// CreateCheckBundle Use Circonus API to create a check bundle
+func (a *API) CreateCheckBundle(config CheckBundle) (*CheckBundle, error) {
+	cfgJSON, err := json.Marshal(config)
 	if err != nil {
 		return nil, err
 	}
 
-	response, err := a.Post("/check_bundle", cfgJson)
+	response, err := a.Post("/check_bundle", cfgJSON)
 	if err != nil {
 		return nil, err
 	}
@@ -100,18 +103,18 @@ func (a *Api) CreateCheckBundle(config CheckBundle) (*CheckBundle, error) {
 	return checkBundle, nil
 }
 
-// Use Circonus API to update a check bundle
-func (a *Api) UpdateCheckBundle(config *CheckBundle) (*CheckBundle, error) {
+// UpdateCheckBundle Use Circonus API to update a check bundle
+func (a *API) UpdateCheckBundle(config *CheckBundle) (*CheckBundle, error) {
 	if a.Debug {
 		a.Log.Printf("[DEBUG] Updating check bundle with new metrics.")
 	}
 
-	cfgJson, err := json.Marshal(config)
+	cfgJSON, err := json.Marshal(config)
 	if err != nil {
 		return nil, err
 	}
 
-	response, err := a.Put(config.Cid, cfgJson)
+	response, err := a.Put(config.Cid, cfgJSON)
 	if err != nil {
 		return nil, err
 	}
