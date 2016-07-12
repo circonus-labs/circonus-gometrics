@@ -4,13 +4,13 @@ import (
 	"github.com/circonus-labs/circonus-gometrics/api"
 )
 
-// is this metric currently active
+// IsMetricActive checks whether a given metric name is currently active(enabled)
 func (cm *CheckManager) IsMetricActive(name string) bool {
 	_, ok := cm.activeMetrics[name]
 	return ok
 }
 
-// Add new metrics to an existing check
+// AddNewMetrics updates a check bundle with new metrics
 func (cm *CheckManager) AddNewMetrics(newMetrics map[string]*api.CheckBundleMetric) {
 	// only if check manager is enabled
 	if !cm.enabled {
@@ -50,7 +50,7 @@ func (cm *CheckManager) AddNewMetrics(newMetrics map[string]*api.CheckBundleMetr
 	cm.inventoryMetrics()
 }
 
-// inventory active metrics to facilitate managing
+// inventoryMetrics creates list of active metrics in check bundle
 func (cm *CheckManager) inventoryMetrics() {
 	activeMetrics := make(map[string]bool)
 	for _, metric := range cm.checkBundle.Metrics {
