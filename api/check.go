@@ -25,14 +25,14 @@ type Check struct {
 }
 
 // FetchCheckByID Use Circonus API to retrieve a check by ID
-func (a *API) FetchCheckByID(id int) (*Check, error) {
-	cid := fmt.Sprintf("/check/%d", id)
+func (a *API) FetchCheckByID(id IDType) (*Check, error) {
+	cid := CIDType(fmt.Sprintf("/check/%d", int(id)))
 	return a.FetchCheckByCID(cid)
 }
 
 // FetchCheckByCID Use Circonus API to retrieve a check by CID
-func (a *API) FetchCheckByCID(cid string) (*Check, error) {
-	result, err := a.Get(cid)
+func (a *API) FetchCheckByCID(cid CIDType) (*Check, error) {
+	result, err := a.Get(string(cid))
 	if err != nil {
 		return nil, err
 	}
@@ -44,9 +44,9 @@ func (a *API) FetchCheckByCID(cid string) (*Check, error) {
 }
 
 // FetchCheckBySubmissionURL Use Circonus API to retrieve a check by submission url
-func (a *API) FetchCheckBySubmissionURL(submissionURL string) (*Check, error) {
+func (a *API) FetchCheckBySubmissionURL(submissionURL URLType) (*Check, error) {
 
-	u, err := url.Parse(submissionURL)
+	u, err := url.Parse(string(submissionURL))
 	if err != nil {
 		return nil, err
 	}
@@ -66,15 +66,12 @@ func (a *API) FetchCheckBySubmissionURL(submissionURL string) (*Check, error) {
 
 	uuid := pathParts[0]
 
-	query := fmt.Sprintf("/check?f__check_uuid=%s", uuid)
+	query := SearchQueryType(fmt.Sprintf("f__check_uuid=%s", uuid))
 
-	result, err := a.Get(query)
+	checks, err := a.CheckSearch(query)
 	if err != nil {
 		return nil, err
 	}
-
-	var checks []Check
-	json.Unmarshal(result, &checks)
 
 	if len(checks) == 0 {
 		return nil, fmt.Errorf("[ERROR] No checks found with UUID %s", uuid)
@@ -96,4 +93,19 @@ func (a *API) FetchCheckBySubmissionURL(submissionURL string) (*Check, error) {
 
 	return &checks[checkID], nil
 
+}
+
+// CheckSearch returns a list of checks matching a query/filter
+func (a *API) CheckSearch(query SearchQueryType) ([]Check, error) {
+	queryURL := fmt.Sprintf("/check?%s", string(query))
+
+	result, err := a.Get(queryURL)
+	if err != nil {
+		return nil, err
+	}
+
+	var checks []Check
+	json.Unmarshal(result, &checks)
+
+	return checks, nil
 }
