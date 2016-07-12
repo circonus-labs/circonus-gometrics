@@ -1,7 +1,5 @@
 package api
 
-// abstracted in preparation of separate circonus-api-go package
-
 import (
 	"encoding/json"
 	"fmt"
@@ -24,13 +22,13 @@ type Check struct {
 	Details        CheckDetails `json:"_details"`
 }
 
-// FetchCheckByID Use Circonus API to retrieve a check by ID
+// FetchCheckByID fetch a check configuration by id
 func (a *API) FetchCheckByID(id IDType) (*Check, error) {
 	cid := CIDType(fmt.Sprintf("/check/%d", int(id)))
 	return a.FetchCheckByCID(cid)
 }
 
-// FetchCheckByCID Use Circonus API to retrieve a check by CID
+// FetchCheckByCID fetch a check configuration by cid
 func (a *API) FetchCheckByCID(cid CIDType) (*Check, error) {
 	result, err := a.Get(string(cid))
 	if err != nil {
@@ -43,7 +41,7 @@ func (a *API) FetchCheckByCID(cid CIDType) (*Check, error) {
 	return check, nil
 }
 
-// FetchCheckBySubmissionURL Use Circonus API to retrieve a check by submission url
+// FetchCheckBySubmissionURL fetch a check configuration by submission_url
 func (a *API) FetchCheckBySubmissionURL(submissionURL URLType) (*Check, error) {
 
 	u, err := url.Parse(string(submissionURL))

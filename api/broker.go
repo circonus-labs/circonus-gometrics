@@ -1,7 +1,5 @@
 package api
 
-// abstracted in preparation of separate circonus-api-go package
-
 import (
 	"encoding/json"
 	"fmt"
@@ -30,13 +28,13 @@ type Broker struct {
 	Type      string         `json:"_type"`
 }
 
-// FetchBrokerByID Use Circonus API to retrieve  a specific broker by Broker Group ID
+// FetchBrokerByID fetch a broker configuration by [group]id
 func (a *API) FetchBrokerByID(id IDType) (*Broker, error) {
 	cid := CIDType(fmt.Sprintf("/broker/%d", id))
 	return a.FetchBrokerByCID(cid)
 }
 
-// FetchBrokerByCID Use Circonus API to retreive a broker by CID
+// FetchBrokerByCID fetch a broker configuration by cid
 func (a *API) FetchBrokerByCID(cid CIDType) (*Broker, error) {
 	result, err := a.Get(string(cid))
 	if err != nil {
@@ -73,7 +71,7 @@ func (a *API) BrokerSearch(query SearchQueryType) ([]Broker, error) {
 	return brokers, nil
 }
 
-// FetchBrokerList Use Circonus API to retreive a list of brokers
+// FetchBrokerList return list of all brokers available to the api token/app
 func (a *API) FetchBrokerList() ([]Broker, error) {
 	result, err := a.Get("/broker")
 	if err != nil {

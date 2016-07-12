@@ -1,7 +1,5 @@
 package api
 
-// abstracted in preparation of separate circonus-api-go package
-
 import (
 	"encoding/json"
 	"fmt"
@@ -45,13 +43,13 @@ type CheckBundle struct {
 	Type               string              `json:"type"`
 }
 
-// FetchCheckBundleByID Use Circonus API to retrieve a check bundle by ID
+// FetchCheckBundleByID fetch a check bundle configuration by id
 func (a *API) FetchCheckBundleByID(id IDType) (*CheckBundle, error) {
 	cid := CIDType(fmt.Sprintf("/check_bundle/%d", id))
 	return a.FetchCheckBundleByCID(cid)
 }
 
-// FetchCheckBundleByCID Use Circonus API to retrieve a check bundle by CID
+// FetchCheckBundleByCID fetch a check bundle configuration by id
 func (a *API) FetchCheckBundleByCID(cid CIDType) (*CheckBundle, error) {
 	result, err := a.Get(string(cid))
 	if err != nil {
@@ -83,7 +81,7 @@ func (a *API) CheckBundleSearch(searchCriteria SearchQueryType) ([]CheckBundle, 
 	return results, nil
 }
 
-// CreateCheckBundle Use Circonus API to create a check bundle
+// CreateCheckBundle create a new check bundle (check)
 func (a *API) CreateCheckBundle(config CheckBundle) (*CheckBundle, error) {
 	cfgJSON, err := json.Marshal(config)
 	if err != nil {
@@ -104,7 +102,7 @@ func (a *API) CreateCheckBundle(config CheckBundle) (*CheckBundle, error) {
 	return checkBundle, nil
 }
 
-// UpdateCheckBundle Use Circonus API to update a check bundle
+// UpdateCheckBundle updates a check bundle configuration
 func (a *API) UpdateCheckBundle(config *CheckBundle) (*CheckBundle, error) {
 	if a.Debug {
 		a.Log.Printf("[DEBUG] Updating check bundle with new metrics.")
