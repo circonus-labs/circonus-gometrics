@@ -23,7 +23,6 @@
 // Reporting
 //
 // A period push to a Circonus httptrap is confgurable.
-
 package circonusgometrics
 
 import (
@@ -42,6 +41,7 @@ const (
 	defaultFlushInterval = 10 * time.Second
 )
 
+// Config options for circonus-gometrics
 type Config struct {
 	Log   *log.Logger
 	Debug bool
@@ -53,6 +53,7 @@ type Config struct {
 	Interval time.Duration
 }
 
+// CirconusMetrics state
 type CirconusMetrics struct {
 	Log           *log.Logger
 	Debug         bool
@@ -83,7 +84,7 @@ type CirconusMetrics struct {
 	tfm       sync.Mutex
 }
 
-// return new CirconusMetrics instance
+// NewCirconusMetrics returns a CirconusMetrics instance
 func NewCirconusMetrics(cfg *Config) (*CirconusMetrics, error) {
 
 	if cfg == nil {

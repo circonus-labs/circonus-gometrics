@@ -34,7 +34,7 @@ func TestNewCirconusMetricsHttpUrlNoToken(t *testing.T) {
 	t.Log("Testing correct return with Submission URL (http) and no API Token supplied")
 
 	cfg := &Config{}
-	cfg.CheckManager.Check.SubmissionUrl = "http://127.0.0.1:56104"
+	cfg.CheckManager.Check.SubmissionURL = "http://127.0.0.1:56104"
 
 	cm, err := NewCirconusMetrics(cfg)
 	if err != nil {
@@ -46,12 +46,12 @@ func TestNewCirconusMetricsHttpUrlNoToken(t *testing.T) {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
-	if trap.Url.String() != cfg.CheckManager.Check.SubmissionUrl {
-		t.Errorf("Expected '%s' == '%s'", trap.Url.String(), cfg.CheckManager.Check.SubmissionUrl)
+	if trap.URL.String() != cfg.CheckManager.Check.SubmissionURL {
+		t.Errorf("Expected '%s' == '%s'", trap.URL.String(), cfg.CheckManager.Check.SubmissionURL)
 	}
 
-	if trap.Tls != nil {
-		t.Errorf("Expected nil found %#v", trap.Tls)
+	if trap.TLS != nil {
+		t.Errorf("Expected nil found %#v", trap.TLS)
 	}
 }
 
@@ -59,7 +59,7 @@ func TestNewCirconusMetricsHttpsUrlNoToken(t *testing.T) {
 	t.Log("Testing correct return with Submission URL (https) and no API Token supplied")
 
 	cfg := &Config{}
-	cfg.CheckManager.Check.SubmissionUrl = "https://127.0.0.1/v2"
+	cfg.CheckManager.Check.SubmissionURL = "https://127.0.0.1/v2"
 
 	cm, err := NewCirconusMetrics(cfg)
 	if err != nil {
@@ -71,11 +71,11 @@ func TestNewCirconusMetricsHttpsUrlNoToken(t *testing.T) {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
-	if trap.Url.String() != cfg.CheckManager.Check.SubmissionUrl {
-		t.Errorf("Expected '%s' == '%s'", trap.Url.String(), cfg.CheckManager.Check.SubmissionUrl)
+	if trap.URL.String() != cfg.CheckManager.Check.SubmissionURL {
+		t.Errorf("Expected '%s' == '%s'", trap.URL.String(), cfg.CheckManager.Check.SubmissionURL)
 	}
 
-	if trap.Tls == nil {
+	if trap.TLS == nil {
 		t.Errorf("Expected a x509 cert pool, found nil")
 	}
 }
