@@ -122,6 +122,9 @@ func NewCirconusMetrics(cfg *Config) (*CirconusMetrics, error) {
 	}
 	cm.flushInterval = dur
 
+	cfg.CheckManager.Debug = cm.Debug
+	cfg.CheckManager.Log = cm.Log
+
 	check, err := checkmgr.NewCheckManager(&cfg.CheckManager)
 	if err != nil {
 		return nil, err
