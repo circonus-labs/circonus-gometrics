@@ -1,3 +1,4 @@
+// Package checkmgr provides a check management interace to circonus-gometrics
 package checkmgr
 
 import (
