@@ -7,6 +7,15 @@ import (
 	"fmt"
 )
 
+// BrokerIDType broker id - e.g. 1234 if _cid were '/broker/1234'
+type BrokerIDType int
+
+// BrokerCIDType full broker cid - e.g. '/broker/1234'
+type BrokerCIDType string
+
+// BrokerSearchTagType search/select tag type
+type BrokerSearchTagType string
+
 // BrokerDetail instance attributes
 type BrokerDetail struct {
 	CN      string   `json:"cn"`
@@ -31,14 +40,14 @@ type Broker struct {
 }
 
 // FetchBrokerByID Use Circonus API to retrieve  a specific broker by Broker Group ID
-func (a *API) FetchBrokerByID(id int) (*Broker, error) {
-	cid := fmt.Sprintf("/broker/%d", id)
+func (a *API) FetchBrokerByID(id BrokerIDType) (*Broker, error) {
+	cid := BrokerCIDType(fmt.Sprintf("/broker/%d", id))
 	return a.FetchBrokerByCID(cid)
 }
 
 // FetchBrokerByCID Use Circonus API to retreive a broker by CID
-func (a *API) FetchBrokerByCID(cid string) (*Broker, error) {
-	result, err := a.Get(cid)
+func (a *API) FetchBrokerByCID(cid BrokerCIDType) (*Broker, error) {
+	result, err := a.Get(string(cid))
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +62,7 @@ func (a *API) FetchBrokerByCID(cid string) (*Broker, error) {
 }
 
 // FetchBrokerListByTag Use Circonus API to retreive a list of brokers which have a specific tag
-func (a *API) FetchBrokerListByTag(searchTag string) ([]Broker, error) {
+func (a *API) FetchBrokerListByTag(searchTag BrokerSearchTagType) ([]Broker, error) {
 	result, err := a.Get(fmt.Sprintf("/broker?f__tags_has=%s", searchTag))
 	if err != nil {
 		return nil, err
