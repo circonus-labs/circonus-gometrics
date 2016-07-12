@@ -1,3 +1,4 @@
+// Package api provides methods for interacting with the Circonus API
 package api
 
 import (
