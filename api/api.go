@@ -30,8 +30,20 @@ type TokenKeyType string
 // TokenAppType - Circonus API Token app name
 type TokenAppType string
 
-// URLType - Circonus API URL
-// type URLType string
+// IDType Circonus object id (numeric portion of cid)
+type IDType int
+
+// CIDType Circonus object cid
+type CIDType string
+
+// URLType submission url type
+type URLType string
+
+// SearchQueryType search query
+type SearchQueryType string
+
+// SearchTagType search/select tag type
+type SearchTagType string
 
 // Config options for Circonus API
 type Config struct {
