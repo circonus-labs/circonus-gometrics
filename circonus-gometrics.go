@@ -38,7 +38,7 @@ import (
 )
 
 const (
-	defaultFlushInterval = 10 * time.Second
+	defaultFlushInterval = "10s" // 10 * time.Second
 )
 
 // Config options for circonus-gometrics
@@ -50,7 +50,7 @@ type Config struct {
 	CheckManager checkmgr.Config
 
 	// how frequenly to submit metrics to Circonus, default 10 seconds
-	Interval time.Duration
+	Interval string
 }
 
 // CirconusMetrics state
@@ -111,10 +111,16 @@ func NewCirconusMetrics(cfg *Config) (*CirconusMetrics, error) {
 		}
 	}
 
-	cm.flushInterval = defaultFlushInterval
-	if cfg.Interval > 0 {
-		cm.flushInterval = cfg.Interval
+	fi := defaultFlushInterval
+	if cfg.Interval != "" {
+		fi = cfg.Interval
 	}
+
+	dur, err := time.ParseDuration(fi)
+	if err != nil {
+		return nil, err
+	}
+	cm.flushInterval = dur
 
 	check, err := checkmgr.NewCheckManager(&cfg.CheckManager)
 	if err != nil {
