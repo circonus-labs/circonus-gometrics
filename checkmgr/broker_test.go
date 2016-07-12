@@ -20,18 +20,15 @@ func TestGetBrokerInvalid(t *testing.T) {
 
 	cm := &CheckManager{}
 	ac := &api.Config{}
-	ac.Token = api.TokenConfig{
-		Key: os.Getenv("CIRCONUS_API_TOKEN"),
-		App: "circonus-gometrics",
-	}
-	apih, err := api.NewApi(ac)
+	ac.TokenKey = os.Getenv("CIRCONUS_API_TOKEN")
+	apih, err := api.NewAPI(ac)
 	if err != nil {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 	cm.apih = apih
-	cm.brokerId = 275
+	cm.brokerID = 275
 
-	expectedError := errors.New("[ERROR] designated broker 275 [Chicago, IL, US] is invalid (not active, does not support required check type, or connectivity issue).")
+	expectedError := errors.New("[ERROR] designated broker 275 [Chicago, IL, US] is invalid (not active, does not support required check type, or connectivity issue)")
 
 	_, err = cm.getBroker()
 	if err == nil || err.Error() != expectedError.Error() {
@@ -48,17 +45,14 @@ func TestGetBrokerValid(t *testing.T) {
 
 	cm := &CheckManager{}
 	ac := &api.Config{}
-	ac.Token = api.TokenConfig{
-		Key: os.Getenv("CIRCONUS_API_TOKEN"),
-		App: "circonus-gometrics",
-	}
-	apih, err := api.NewApi(ac)
+	ac.TokenKey = os.Getenv("CIRCONUS_API_TOKEN")
+	apih, err := api.NewAPI(ac)
 	if err != nil {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 	cm.apih = apih
-	cm.brokerId = 35
-	cm.brokerMaxResponseTime = 5000 * time.Millisecond
+	cm.brokerID = 35
+	cm.brokerMaxResponseTime, _ = time.ParseDuration("5s")
 	cm.checkType = "httptrap"
 
 	broker, err := cm.getBroker()
@@ -66,7 +60,7 @@ func TestGetBrokerValid(t *testing.T) {
 		t.Fatalf("Expected no error, got '%v'", err)
 	}
 
-	expectedCid := fmt.Sprintf("/broker/%d", cm.brokerId)
+	expectedCid := fmt.Sprintf("/broker/%d", int(cm.brokerID))
 	if broker.Cid != expectedCid {
 		t.Fatalf("%s != %s", broker.Cid, expectedCid)
 	}
@@ -81,16 +75,13 @@ func TestGetBrokerSelection(t *testing.T) {
 
 	cm := &CheckManager{}
 	ac := &api.Config{}
-	ac.Token = api.TokenConfig{
-		Key: os.Getenv("CIRCONUS_API_TOKEN"),
-		App: "circonus-gometrics",
-	}
-	apih, err := api.NewApi(ac)
+	ac.TokenKey = os.Getenv("CIRCONUS_API_TOKEN")
+	apih, err := api.NewAPI(ac)
 	if err != nil {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 	cm.apih = apih
-	cm.brokerMaxResponseTime = 5000 * time.Millisecond
+	cm.brokerMaxResponseTime, _ = time.ParseDuration("5s")
 	cm.checkType = "httptrap"
 
 	broker, err := cm.getBroker()

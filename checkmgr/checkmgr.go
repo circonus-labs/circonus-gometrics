@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"strconv"
 	"sync"
 	"time"
 
@@ -36,19 +37,20 @@ import (
 
 const (
 	defaultCheckType             = "httptrap"
-	defaultTrapMaxUrlAge         = 60 * time.Second
-	defaultBrokerMaxResponseTime = 500 * time.Millisecond
+	defaultTrapMaxURLAge         = "60s"   // 60 seconds
+	defaultBrokerMaxResponseTime = "500ms" // 500 milliseconds
 )
 
+// CheckConfig options for check
 type CheckConfig struct {
 	// a specific submission url
-	SubmissionUrl string
+	SubmissionURL string
 	// a specific check id (not check bundle id)
-	Id int
+	ID string
 	// unique instance id string
 	// used to search for a check to use
 	// used as check.target when creating a check
-	InstanceId string
+	InstanceID string
 	// unique check searching tag
 	// used to search for a check to use (combined with instanceid)
 	// used as a regular tag when creating a check
@@ -65,69 +67,93 @@ type CheckConfig struct {
 	// time the url was last updated is > than this, the trap
 	// url will be refreshed (e.g. if the broker is changed
 	// in the UI) **only relevant when check management is enabled**
-	MaxUrlAge time.Duration
+	// e.g. 5m, 30m, 1h, etc.
+	MaxURLAge string
 }
 
+// BrokerConfig options for broker
 type BrokerConfig struct {
 	// a specific broker id (numeric portion of cid)
-	Id int
+	ID string
 	// a tag that can be used to select 1-n brokers from which to select
 	// when creating a new check (e.g. datacenter:abc)
 	SelectTag string
 	// for a broker to be considered viable it must respond to a
-	// connection attempt within this amount of time
-	MaxResponseTime time.Duration
+	// connection attempt within this amount of time e.g. 200ms, 2s, 1m
+	MaxResponseTime string
 }
 
+// Config options
 type Config struct {
 	Log   *log.Logger
 	Debug bool
 
 	// Circonus API config
-	Api api.Config
+	API api.Config
 	// Check specific configuration options
 	Check CheckConfig
 	// Broker specific configuration options
 	Broker BrokerConfig
 }
 
+// CheckTypeType check type
+type CheckTypeType string
+
+// CheckInstanceIDType check instance id
+type CheckInstanceIDType string
+
+// CheckSecretType check secret
+type CheckSecretType string
+
+// CheckTagsType check tags
+type CheckTagsType []string
+
+// CheckDisplayNameType check display name
+type CheckDisplayNameType string
+
+// BrokerCNType broker common name
+type BrokerCNType string
+
+// CheckManager settings
 type CheckManager struct {
 	enabled bool
 	Log     *log.Logger
 	Debug   bool
-	apih    *api.Api
+	apih    *api.API
 
 	// check
-	checkType          string
-	checkId            int
-	checkInstanceId    string
-	checkSearchTag     string
-	checkSecret        string
-	checkTags          []string
-	checkSubmissionUrl string
-	checkDisplayName   string
+	checkType          CheckTypeType
+	checkID            api.IDType
+	checkInstanceID    CheckInstanceIDType
+	checkSearchTag     api.SearchTagType
+	checkSecret        CheckSecretType
+	checkTags          CheckTagsType
+	checkSubmissionURL api.URLType
+	checkDisplayName   CheckDisplayNameType
 
 	// broker
-	brokerId              int
-	brokerSelectTag       string
+	brokerID              api.IDType
+	brokerSelectTag       api.SearchTagType
 	brokerMaxResponseTime time.Duration
 
 	// state
 	checkBundle    *api.CheckBundle
 	activeMetrics  map[string]bool
-	trapUrl        string
-	trapCN         string
+	trapURL        api.URLType
+	trapCN         BrokerCNType
 	trapLastUpdate time.Time
-	trapMaxUrlAge  time.Duration
+	trapMaxURLAge  time.Duration
 	trapmu         sync.Mutex
 	certPool       *x509.CertPool
 }
 
+// Trap config
 type Trap struct {
-	Url *url.URL
-	Tls *tls.Config
+	URL *url.URL
+	TLS *tls.Config
 }
 
+// NewCheckManager returns a new check manager
 func NewCheckManager(cfg *Config) (*CheckManager, error) {
 
 	if cfg == nil {
@@ -148,15 +174,15 @@ func NewCheckManager(cfg *Config) (*CheckManager, error) {
 		}
 	}
 
-	if cfg.Check.SubmissionUrl != "" {
-		cm.checkSubmissionUrl = cfg.Check.SubmissionUrl
+	if cfg.Check.SubmissionURL != "" {
+		cm.checkSubmissionURL = api.URLType(cfg.Check.SubmissionURL)
 	}
 
-	if cfg.Api.Token.Key == "" {
-		if cm.checkSubmissionUrl == "" {
+	if cfg.API.TokenKey == "" {
+		if cm.checkSubmissionURL == "" {
 			return nil, errors.New("Invalid check manager configuration (no API token AND no submission url).")
 		}
-		cm.trapUrl = cm.checkSubmissionUrl
+		cm.trapURL = cm.checkSubmissionURL
 		return cm, nil
 	}
 
@@ -166,10 +192,10 @@ func NewCheckManager(cfg *Config) (*CheckManager, error) {
 
 	// initialize api handle
 
-	cfg.Api.Debug = cm.Debug
-	cfg.Api.Log = cm.Log
+	cfg.API.Debug = cm.Debug
+	cfg.API.Log = cm.Log
 
-	apih, err := api.NewApi(&cfg.Api)
+	apih, err := api.NewAPI(&cfg.API)
 	if err != nil {
 		return nil, err
 	}
@@ -178,70 +204,95 @@ func NewCheckManager(cfg *Config) (*CheckManager, error) {
 	// initialize check related data
 
 	cm.checkType = defaultCheckType
-	cm.checkId = cfg.Check.Id
-	cm.checkInstanceId = cfg.Check.InstanceId
-	cm.checkDisplayName = cfg.Check.DisplayName
-	cm.checkSearchTag = cfg.Check.SearchTag
-	cm.checkSecret = cfg.Check.Secret
+	cm.checkID = 0
+	if cfg.Check.ID != "" {
+		id, err := strconv.Atoi(cfg.Check.ID)
+		if err != nil {
+			return nil, err
+		}
+		cm.checkID = api.IDType(id)
+	}
+	cm.checkInstanceID = CheckInstanceIDType(cfg.Check.InstanceID)
+	cm.checkDisplayName = CheckDisplayNameType(cfg.Check.DisplayName)
+	cm.checkSearchTag = api.SearchTagType(cfg.Check.SearchTag)
+	cm.checkSecret = CheckSecretType(cfg.Check.Secret)
 	cm.checkTags = cfg.Check.Tags
 
 	_, an := path.Split(os.Args[0])
 
-	if cm.checkInstanceId == "" {
+	if cm.checkInstanceID == "" {
 		hn, err := os.Hostname()
 		if err != nil {
 			hn = "unknown"
 		}
-		cm.checkInstanceId = fmt.Sprintf("%s:%s", hn, an)
+		cm.checkInstanceID = CheckInstanceIDType(fmt.Sprintf("%s:%s", hn, an))
 	}
 
 	if cm.checkSearchTag == "" {
-		cm.checkSearchTag = fmt.Sprintf("service:%s", an)
+		cm.checkSearchTag = api.SearchTagType(fmt.Sprintf("service:%s", an))
 	}
 
 	if cm.checkDisplayName == "" {
-		cm.checkDisplayName = fmt.Sprintf("%s /cgm", cm.checkInstanceId)
+		cm.checkDisplayName = CheckDisplayNameType(fmt.Sprintf("%s /cgm", string(cm.checkInstanceID)))
 	}
 
-	cm.trapMaxUrlAge = cfg.Check.MaxUrlAge
-	if cm.trapMaxUrlAge == 0 {
-		cm.trapMaxUrlAge = defaultTrapMaxUrlAge
+	dur := cfg.Check.MaxURLAge
+	if dur == "" {
+		dur = defaultTrapMaxURLAge
 	}
+	maxDur, err := time.ParseDuration(dur)
+	if err != nil {
+		return nil, err
+	}
+	cm.trapMaxURLAge = maxDur
 
 	// setup broker
 
-	cm.brokerId = cfg.Broker.Id
-	cm.brokerSelectTag = cfg.Broker.SelectTag
-	cm.brokerMaxResponseTime = cfg.Broker.MaxResponseTime
-	if cm.brokerMaxResponseTime == 0 {
-		cm.brokerMaxResponseTime = defaultBrokerMaxResponseTime
+	cm.brokerID = 0
+	if cfg.Broker.ID != "" {
+		id, err := strconv.Atoi(cfg.Broker.ID)
+		if err != nil {
+			return nil, err
+		}
+		cm.brokerID = api.IDType(id)
 	}
+	cm.brokerSelectTag = api.SearchTagType(cfg.Broker.SelectTag)
+	dur = cfg.Broker.MaxResponseTime
+	if dur == "" {
+		dur = defaultBrokerMaxResponseTime
+	}
+	maxDur, err = time.ParseDuration(dur)
+	if err != nil {
+		return nil, err
+	}
+	cm.brokerMaxResponseTime = maxDur
 
 	// state
 	cm.activeMetrics = make(map[string]bool)
 
-	if err := cm.initializeTrapUrl(); err != nil {
+	if err := cm.initializeTrapURL(); err != nil {
 		return nil, err
 	}
 
 	return cm, nil
 }
 
+// GetTrap return the trap url
 func (cm *CheckManager) GetTrap() (*Trap, error) {
-	if cm.trapUrl == "" {
-		if err := cm.initializeTrapUrl(); err != nil {
+	if cm.trapURL == "" {
+		if err := cm.initializeTrapURL(); err != nil {
 			return nil, err
 		}
 	}
 
 	trap := &Trap{}
 
-	u, err := url.Parse(cm.trapUrl)
+	u, err := url.Parse(string(cm.trapURL))
 	if err != nil {
 		return nil, err
 	}
 
-	trap.Url = u
+	trap.URL = u
 
 	if u.Scheme == "https" {
 		if cm.certPool == nil {
@@ -251,31 +302,33 @@ func (cm *CheckManager) GetTrap() (*Trap, error) {
 			RootCAs: cm.certPool,
 		}
 		if cm.trapCN != "" {
-			t.ServerName = cm.trapCN
+			t.ServerName = string(cm.trapCN)
 		}
-		trap.Tls = t
+		trap.TLS = t
 	}
 
 	return trap, nil
 }
 
+// ResetTrap URL, force request to the API for the submission URL and broker ca cert
 func (cm *CheckManager) ResetTrap() error {
-	if cm.trapUrl == "" {
+	if cm.trapURL == "" {
 		return nil
 	}
 
-	cm.trapUrl = ""
+	cm.trapURL = ""
 	cm.certPool = nil
-	err := cm.initializeTrapUrl()
+	err := cm.initializeTrapURL()
 	return err
 }
 
+// RefreshTrap check when the last time the URL was reset, reset if needed
 func (cm *CheckManager) RefreshTrap() {
-	if cm.trapUrl == "" {
+	if cm.trapURL == "" {
 		return
 	}
 
-	if time.Since(cm.trapLastUpdate) >= cm.trapMaxUrlAge {
+	if time.Since(cm.trapLastUpdate) >= cm.trapMaxURLAge {
 		cm.ResetTrap()
 	}
 }

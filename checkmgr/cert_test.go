@@ -34,11 +34,8 @@ func TestLoadCertWithToken(t *testing.T) {
 
 	cm := &CheckManager{}
 	ac := &api.Config{}
-	ac.Token = api.TokenConfig{
-		Key: os.Getenv("CIRCONUS_API_TOKEN"),
-		App: "circonus-gometrics",
-	}
-	apih, err := api.NewApi(ac)
+	ac.TokenKey = os.Getenv("CIRCONUS_API_TOKEN")
+	apih, err := api.NewAPI(ac)
 	if err != nil {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
