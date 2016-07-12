@@ -46,26 +46,27 @@ type CheckBundle struct {
 }
 
 // FetchCheckBundleByID Use Circonus API to retrieve a check bundle by ID
-func (a *API) FetchCheckBundleByID(id int) (*CheckBundle, error) {
-	cid := fmt.Sprintf("/check_bundle/%d", id)
+func (a *API) FetchCheckBundleByID(id IDType) (*CheckBundle, error) {
+	cid := CIDType(fmt.Sprintf("/check_bundle/%d", id))
 	return a.FetchCheckBundleByCID(cid)
 }
 
 // FetchCheckBundleByCID Use Circonus API to retrieve a check bundle by CID
-func (a *API) FetchCheckBundleByCID(cid string) (*CheckBundle, error) {
-	result, err := a.Get(cid)
+func (a *API) FetchCheckBundleByCID(cid CIDType) (*CheckBundle, error) {
+	result, err := a.Get(string(cid))
 	if err != nil {
 		return nil, err
 	}
 
-	checkBundle := new(CheckBundle)
+	checkBundle := &CheckBundle{}
 	json.Unmarshal(result, checkBundle)
 
 	return checkBundle, nil
 }
 
-// SearchCheckBundles Use Circonus API to search for a check bundle
-func (a *API) SearchCheckBundles(searchCriteria string) ([]CheckBundle, error) {
+// CheckBundleSearch returns list of check bundles matching a search query
+//    - a search query not a filter (see: https://login.circonus.com/resources/api#searching)
+func (a *API) CheckBundleSearch(searchCriteria SearchQueryType) ([]CheckBundle, error) {
 	apiPath := fmt.Sprintf("/check_bundle?search=%s", searchCriteria)
 
 	response, err := a.Get(apiPath)
@@ -94,7 +95,7 @@ func (a *API) CreateCheckBundle(config CheckBundle) (*CheckBundle, error) {
 		return nil, err
 	}
 
-	checkBundle := new(CheckBundle)
+	checkBundle := &CheckBundle{}
 	err = json.Unmarshal(response, checkBundle)
 	if err != nil {
 		return nil, err
@@ -119,7 +120,7 @@ func (a *API) UpdateCheckBundle(config *CheckBundle) (*CheckBundle, error) {
 		return nil, err
 	}
 
-	checkBundle := new(CheckBundle)
+	checkBundle := &CheckBundle{}
 	err = json.Unmarshal(response, checkBundle)
 	if err != nil {
 		return nil, err
