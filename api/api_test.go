@@ -7,46 +7,34 @@ import (
 	"testing"
 )
 
-func TestNewApiInvalidConfig(t *testing.T) {
+func TestNewAPI(t *testing.T) {
 	t.Log("Testing correct error return when no API config supplied")
 
-	expectedError := errors.New("Invalid API configuration (nil).")
+	expectedError := errors.New("Invalid API configuration (nil)")
 
-	_, err := NewApi(nil)
+	_, err := NewAPI(nil)
 
 	if err == nil || err.Error() != expectedError.Error() {
 		t.Errorf("Expected an '%#v' error, got '%#v'", expectedError, err)
 	}
 
-}
-
-func TestNewApiNoToken(t *testing.T) {
 	t.Log("Testing correct error return when no API Token supplied")
 
-	expectedError := errors.New("API Token is required.")
+	expectedError = errors.New("API Token is required")
 
 	ac := &Config{}
-	ac.Token = TokenConfig{
-		Key: "",
-		App: os.Getenv("CIRCONUS_API_APP"),
-	}
-	_, err := NewApi(ac)
+	ac.TokenKey = ""
+	_, err = NewAPI(ac)
 
 	if err == nil || err.Error() != expectedError.Error() {
 		t.Errorf("Expected an '%#v' error, got '%#v'", expectedError, err)
 	}
 
-}
-
-func TestNewApiInvalidToken(t *testing.T) {
 	t.Log("Testing correct error return when INVALID API Token supplied")
 
-	ac := &Config{}
-	ac.Token = TokenConfig{
-		Key: "abc-123",
-		App: os.Getenv("CIRCONUS_API_APP"),
-	}
-	apih, err := NewApi(ac)
+	ac = &Config{}
+	ac.TokenKey = "abc-123"
+	apih, err := NewAPI(ac)
 	if err != nil {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
@@ -55,7 +43,6 @@ func TestNewApiInvalidToken(t *testing.T) {
 	if err == nil || !strings.Contains(err.Error(), "The authentication token you supplied is invalid") {
 		t.Errorf("Expected an error containing 'The authentication token you supplied is invalid' error, got '%#v'", err)
 	}
-
 }
 
 func TestApiGet(t *testing.T) {
@@ -66,11 +53,10 @@ func TestApiGet(t *testing.T) {
 	t.Log("Testing correct API call to /user/current [defaults]")
 
 	ac := &Config{}
-	ac.Token = TokenConfig{
-		Key: os.Getenv("CIRCONUS_API_TOKEN"),
-		App: os.Getenv("CIRCONUS_API_APP"),
-	}
-	apih, err := NewApi(ac)
+	ac.TokenKey = os.Getenv("CIRCONUS_API_TOKEN")
+	ac.TokenApp = os.Getenv("CIRCONUS_API_APP")
+
+	apih, err := NewAPI(ac)
 	if err != nil {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
@@ -82,12 +68,10 @@ func TestApiGet(t *testing.T) {
 	t.Log("Testing correct API call to /user/current [url=hostname]")
 
 	ac = &Config{}
-	ac.Token = TokenConfig{
-		Key: os.Getenv("CIRCONUS_API_TOKEN"),
-		App: os.Getenv("CIRCONUS_API_APP"),
-	}
-	ac.Url = "api.circonus.com"
-	apih, err = NewApi(ac)
+	ac.TokenKey = os.Getenv("CIRCONUS_API_TOKEN")
+	ac.TokenApp = os.Getenv("CIRCONUS_API_APP")
+	ac.URL = "api.circonus.com"
+	apih, err = NewAPI(ac)
 	if err != nil {
 		t.Errorf("Expected no error, got '%v'", err)
 	}

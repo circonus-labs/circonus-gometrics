@@ -18,15 +18,15 @@ func init() {
 
 // Get Broker to use when creating a check
 func (cm *CheckManager) getBroker() (*api.Broker, error) {
-	if cm.brokerId != 0 {
-		broker, err := cm.apih.FetchBrokerById(cm.brokerId)
+	if cm.brokerID != 0 {
+		broker, err := cm.apih.FetchBrokerByID(cm.brokerID)
 		if err != nil {
 			return nil, err
 		}
 		if !cm.isValidBroker(broker) {
 			return nil, fmt.Errorf(
-				"[ERROR] designated broker %d [%s] is invalid (not active, does not support required check type, or connectivity issue).",
-				cm.brokerId,
+				"[ERROR] designated broker %d [%s] is invalid (not active, does not support required check type, or connectivity issue)",
+				cm.brokerID,
 				broker.Name)
 		}
 		return broker, nil
@@ -39,8 +39,8 @@ func (cm *CheckManager) getBroker() (*api.Broker, error) {
 }
 
 // Get CN of Broker associated with submission_url to satisfy no IP SANS in certs
-func (cm *CheckManager) getBrokerCN(broker *api.Broker, submissionUrl string) (string, error) {
-	u, err := url.Parse(submissionUrl)
+func (cm *CheckManager) getBrokerCN(broker *api.Broker, submissionURL api.URLType) (string, error) {
+	u, err := url.Parse(string(submissionURL))
 	if err != nil {
 		return "", err
 	}
@@ -88,7 +88,7 @@ func (cm *CheckManager) selectBroker() (*api.Broker, error) {
 	}
 
 	if len(brokerList) == 0 {
-		return nil, fmt.Errorf("zero brokers found.")
+		return nil, fmt.Errorf("zero brokers found")
 	}
 
 	validBrokers := make(map[string]api.Broker)
@@ -112,7 +112,7 @@ func (cm *CheckManager) selectBroker() (*api.Broker, error) {
 	}
 
 	if len(validBrokers) == 0 {
-		return nil, fmt.Errorf("found %d broker(s), zero are valid.", len(brokerList))
+		return nil, fmt.Errorf("found %d broker(s), zero are valid", len(brokerList))
 	}
 
 	validBrokerKeys := reflect.ValueOf(validBrokers).MapKeys()
@@ -127,10 +127,10 @@ func (cm *CheckManager) selectBroker() (*api.Broker, error) {
 }
 
 // Verify broker supports the check type to be used
-func (cm *CheckManager) brokerSupportsCheckType(checkType string, details *api.BrokerDetail) bool {
+func (cm *CheckManager) brokerSupportsCheckType(checkType CheckTypeType, details *api.BrokerDetail) bool {
 
 	for _, module := range details.Modules {
-		if module == checkType {
+		if CheckTypeType(module) == checkType {
 			return true
 		}
 	}

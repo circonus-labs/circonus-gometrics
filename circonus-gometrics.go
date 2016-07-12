@@ -23,7 +23,6 @@
 // Reporting
 //
 // A period push to a Circonus httptrap is confgurable.
-
 package circonusgometrics
 
 import (
@@ -39,9 +38,10 @@ import (
 )
 
 const (
-	defaultFlushInterval = 10 * time.Second
+	defaultFlushInterval = "10s" // 10 * time.Second
 )
 
+// Config options for circonus-gometrics
 type Config struct {
 	Log   *log.Logger
 	Debug bool
@@ -50,9 +50,10 @@ type Config struct {
 	CheckManager checkmgr.Config
 
 	// how frequenly to submit metrics to Circonus, default 10 seconds
-	Interval time.Duration
+	Interval string
 }
 
+// CirconusMetrics state
 type CirconusMetrics struct {
 	Log           *log.Logger
 	Debug         bool
@@ -83,7 +84,7 @@ type CirconusMetrics struct {
 	tfm       sync.Mutex
 }
 
-// return new CirconusMetrics instance
+// NewCirconusMetrics returns a CirconusMetrics instance
 func NewCirconusMetrics(cfg *Config) (*CirconusMetrics, error) {
 
 	if cfg == nil {
@@ -110,10 +111,19 @@ func NewCirconusMetrics(cfg *Config) (*CirconusMetrics, error) {
 		}
 	}
 
-	cm.flushInterval = defaultFlushInterval
-	if cfg.Interval > 0 {
-		cm.flushInterval = cfg.Interval
+	fi := defaultFlushInterval
+	if cfg.Interval != "" {
+		fi = cfg.Interval
 	}
+
+	dur, err := time.ParseDuration(fi)
+	if err != nil {
+		return nil, err
+	}
+	cm.flushInterval = dur
+
+	cfg.CheckManager.Debug = cm.Debug
+	cfg.CheckManager.Log = cm.Log
 
 	check, err := checkmgr.NewCheckManager(&cfg.CheckManager)
 	if err != nil {

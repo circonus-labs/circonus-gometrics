@@ -20,17 +20,17 @@ import (
 // check [bundle] by *check* id (note, not check_bundle id)
 // check [bundle] by search
 // create check [bundle]
-func (cm *CheckManager) initializeTrapUrl() error {
-	if cm.trapUrl != "" {
+func (cm *CheckManager) initializeTrapURL() error {
+	if cm.trapURL != "" {
 		return nil
 	}
 
 	cm.trapmu.Lock()
 	defer cm.trapmu.Unlock()
 
-	if cm.checkSubmissionUrl != "" {
+	if cm.checkSubmissionURL != "" {
 		if !cm.enabled {
-			cm.trapUrl = cm.checkSubmissionUrl
+			cm.trapURL = cm.checkSubmissionURL
 			cm.trapLastUpdate = time.Now()
 			return nil
 		}
@@ -45,8 +45,8 @@ func (cm *CheckManager) initializeTrapUrl() error {
 	var checkBundle *api.CheckBundle
 	var broker *api.Broker
 
-	if cm.checkSubmissionUrl != "" {
-		check, err := cm.apih.FetchCheckBySubmissionUrl(cm.checkSubmissionUrl)
+	if cm.checkSubmissionURL != "" {
+		check, err := cm.apih.FetchCheckBySubmissionURL(cm.checkSubmissionURL)
 		if err != nil {
 			return err
 		}
@@ -58,22 +58,22 @@ func (cm *CheckManager) initializeTrapUrl() error {
 		// longer possible using the original submission url)
 		id, err := strconv.Atoi(strings.Replace(check.Cid, "/check/", "", -1))
 		if err == nil {
-			cm.checkId = id
-			cm.checkSubmissionUrl = ""
+			cm.checkID = api.IDType(id)
+			cm.checkSubmissionURL = ""
 		} else {
 			cm.Log.Printf(
 				"[WARN] SubmissionUrl check to Check ID: unable to convert %s to int %q\n",
 				check.Cid, err)
 		}
-	} else if cm.checkId > 0 {
-		check, err = cm.apih.FetchCheckById(cm.checkId)
+	} else if cm.checkID > 0 {
+		check, err = cm.apih.FetchCheckByID(cm.checkID)
 		if err != nil {
 			return err
 		}
 	} else {
 		searchCriteria := fmt.Sprintf(
 			"(active:1)(host:\"%s\")(type:\"%s\")(tags:%s)",
-			cm.checkInstanceId, cm.checkType, cm.checkSearchTag)
+			cm.checkInstanceID, cm.checkType, cm.checkSearchTag)
 		checkBundle, err = cm.checkBundleSearch(searchCriteria)
 		if err != nil {
 			return err
@@ -91,17 +91,17 @@ func (cm *CheckManager) initializeTrapUrl() error {
 
 	if checkBundle == nil {
 		if check != nil {
-			checkBundle, err = cm.apih.FetchCheckBundleByCid(check.CheckBundleCid)
+			checkBundle, err = cm.apih.FetchCheckBundleByCID(api.CIDType(check.CheckBundleCid))
 			if err != nil {
 				return err
 			}
 		} else {
-			return fmt.Errorf("[ERROR] Unable to retrieve, find, or create check.")
+			return fmt.Errorf("[ERROR] Unable to retrieve, find, or create check")
 		}
 	}
 
 	if broker == nil {
-		broker, err = cm.apih.FetchBrokerByCid(checkBundle.Brokers[0])
+		broker, err = cm.apih.FetchBrokerByCID(api.CIDType(checkBundle.Brokers[0]))
 		if err != nil {
 			return err
 		}
@@ -112,15 +112,15 @@ func (cm *CheckManager) initializeTrapUrl() error {
 	cm.inventoryMetrics()
 
 	// url to which metrics should be PUT
-	cm.trapUrl = checkBundle.Config.SubmissionUrl
+	cm.trapURL = api.URLType(checkBundle.Config.SubmissionURL)
 
 	// used when sending as "ServerName" get around certs not having IP SANS
 	// (cert created with server name as CN but IP used in trap url)
-	cn, err := cm.getBrokerCN(broker, cm.trapUrl)
+	cn, err := cm.getBrokerCN(broker, cm.trapURL)
 	if err != nil {
 		return err
 	}
-	cm.trapCN = cn
+	cm.trapCN = BrokerCNType(cn)
 
 	cm.trapLastUpdate = time.Now()
 
@@ -129,7 +129,7 @@ func (cm *CheckManager) initializeTrapUrl() error {
 
 // Search for a check bundle given a predetermined set of criteria
 func (cm *CheckManager) checkBundleSearch(criteria string) (*api.CheckBundle, error) {
-	checkBundles, err := cm.apih.SearchCheckBundles(criteria)
+	checkBundles, err := cm.apih.CheckBundleSearch(api.SearchQueryType(criteria))
 	if err != nil {
 		return nil, err
 	}
@@ -139,12 +139,12 @@ func (cm *CheckManager) checkBundleSearch(criteria string) (*api.CheckBundle, er
 	}
 
 	numActive := 0
-	checkId := -1
+	checkID := -1
 
 	for idx, check := range checkBundles {
 		if check.Status == "active" {
 			numActive++
-			checkId = idx
+			checkID = idx
 		}
 	}
 
@@ -152,12 +152,12 @@ func (cm *CheckManager) checkBundleSearch(criteria string) (*api.CheckBundle, er
 		return nil, fmt.Errorf("[ERROR] Multiple possibilities multiple check bundles match criteria %s\n", criteria)
 	}
 
-	return &checkBundles[checkId], nil
+	return &checkBundles[checkID], nil
 }
 
 // Create a new check to receive metrics
 func (cm *CheckManager) createNewCheck() (*api.CheckBundle, *api.Broker, error) {
-	checkSecret := cm.checkSecret
+	checkSecret := string(cm.checkSecret)
 	if checkSecret == "" {
 		secret, err := cm.makeSecret()
 		if err != nil {
@@ -174,16 +174,16 @@ func (cm *CheckManager) createNewCheck() (*api.CheckBundle, *api.Broker, error) 
 	config := api.CheckBundle{
 		Brokers:     []string{broker.Cid},
 		Config:      api.CheckBundleConfig{AsyncMetrics: true, Secret: checkSecret},
-		DisplayName: cm.checkDisplayName,
+		DisplayName: string(cm.checkDisplayName),
 		Metrics:     []api.CheckBundleMetric{},
 		MetricLimit: 0,
 		Notes:       "",
 		Period:      60,
 		Status:      "active",
-		Tags:        append([]string{cm.checkSearchTag}, cm.checkTags...),
-		Target:      cm.checkInstanceId,
+		Tags:        append([]string{string(cm.checkSearchTag)}, cm.checkTags...),
+		Target:      string(cm.checkInstanceID),
 		Timeout:     10,
-		Type:        cm.checkType,
+		Type:        string(cm.checkType),
 	}
 
 	checkBundle, err := cm.apih.CreateCheckBundle(config)

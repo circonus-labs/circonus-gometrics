@@ -6,24 +6,24 @@ import (
 	"github.com/circonus-labs/circonusllhist"
 )
 
-// A Histogram measures the distribution of a stream of values.
+// Histogram measures the distribution of a stream of values.
 type Histogram struct {
 	name string
 	hist *circonusllhist.Histogram
 	rw   sync.RWMutex
 }
 
-// Add a value to a histogram
+// Timing adds a value to a histogram
 func (m *CirconusMetrics) Timing(metric string, val float64) {
 	m.SetHistogramValue(metric, val)
 }
 
-// Add a value to a histogram
+// RecordValue adds a value to a histogram
 func (m *CirconusMetrics) RecordValue(metric string, val float64) {
 	m.SetHistogramValue(metric, val)
 }
 
-// Add a value to a histogram
+// SetHistogramValue adds a value to a histogram
 func (m *CirconusMetrics) SetHistogramValue(metric string, val float64) {
 	m.NewHistogram(metric)
 
@@ -33,14 +33,14 @@ func (m *CirconusMetrics) SetHistogramValue(metric string, val float64) {
 	m.histograms[metric].hist.RecordValue(val)
 }
 
-// Remove a histogram
+// RemoveHistogram removes a histogram
 func (m *CirconusMetrics) RemoveHistogram(metric string) {
 	m.hm.Lock()
 	defer m.hm.Unlock()
 	delete(m.histograms, metric)
 }
 
-// Create a new histogram (and receive a pointer to it)
+// NewHistogram returns a histogram instance.
 func (m *CirconusMetrics) NewHistogram(metric string) *Histogram {
 	m.hm.Lock()
 	defer m.hm.Unlock()

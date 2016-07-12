@@ -36,7 +36,7 @@ func TestNewCheckManager3(t *testing.T) {
 	t.Log("Testing correct return with Submission URL (http) and no API Token supplied")
 
 	cfg := &Config{}
-	cfg.Check.SubmissionUrl = "http://127.0.0.1:56104"
+	cfg.Check.SubmissionURL = "http://127.0.0.1:56104"
 
 	cm, err := NewCheckManager(cfg)
 	if err != nil {
@@ -48,12 +48,12 @@ func TestNewCheckManager3(t *testing.T) {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
-	if trap.Url.String() != cfg.Check.SubmissionUrl {
-		t.Errorf("Expected '%s' == '%s'", trap.Url.String(), cfg.Check.SubmissionUrl)
+	if trap.URL.String() != cfg.Check.SubmissionURL {
+		t.Errorf("Expected '%s' == '%s'", trap.URL.String(), cfg.Check.SubmissionURL)
 	}
 
-	if trap.Tls != nil {
-		t.Errorf("Expected nil found %#v", trap.Tls)
+	if trap.TLS != nil {
+		t.Errorf("Expected nil found %#v", trap.TLS)
 	}
 }
 
@@ -61,7 +61,7 @@ func TestNewCheckManager4(t *testing.T) {
 	t.Log("Testing correct return with Submission URL (https) and no API Token supplied")
 
 	cfg := &Config{}
-	cfg.Check.SubmissionUrl = "https://127.0.0.1/v2"
+	cfg.Check.SubmissionURL = "https://127.0.0.1/v2"
 
 	cm, err := NewCheckManager(cfg)
 	if err != nil {
@@ -73,11 +73,11 @@ func TestNewCheckManager4(t *testing.T) {
 		t.Fatalf("Expected no error, got '%v'", err)
 	}
 
-	if trap.Url.String() != cfg.Check.SubmissionUrl {
-		t.Fatalf("Expected '%s' == '%s'", trap.Url.String(), cfg.Check.SubmissionUrl)
+	if trap.URL.String() != cfg.Check.SubmissionURL {
+		t.Fatalf("Expected '%s' == '%s'", trap.URL.String(), cfg.Check.SubmissionURL)
 	}
 
-	if trap.Tls == nil {
+	if trap.TLS == nil {
 		t.Fatalf("Expected a x509 cert pool, found nil")
 	}
 }
@@ -105,7 +105,7 @@ func TestNewCheckManager5(t *testing.T) {
 	t.Log("Testing correct check creation and search with API Token only")
 
 	cfg := &Config{}
-	cfg.Api.Token.Key = os.Getenv("CIRCONUS_API_TOKEN")
+	cfg.API.TokenKey = os.Getenv("CIRCONUS_API_TOKEN")
 
 	t.Log("Testing correct check creation - should create a check, if it doesn't exist")
 	cm, err := NewCheckManager(cfg)
@@ -132,8 +132,8 @@ func TestNewCheckManager5(t *testing.T) {
 	}
 
 	t.Log("Comparing Trap URLs")
-	if trap.Url.String() != trap2.Url.String() {
-		t.Fatalf("Expected '%s' == '%s'", trap.Url.String(), trap2.Url.String())
+	if trap.URL.String() != trap2.URL.String() {
+		t.Fatalf("Expected '%s' == '%s'", trap.URL.String(), trap2.URL.String())
 	}
 
 	t.Logf("Deleting %s %s", cm2.checkBundle.Cid, cm2.checkBundle.DisplayName)
