@@ -45,14 +45,14 @@ func (m *CirconusMetrics) trapCall(payload []byte) (int, error) {
 
 	dataReader := bytes.NewReader(payload)
 
-	req, err := retryablehttp.NewRequest("PUT", trap.Url.String(), dataReader)
+	req, err := retryablehttp.NewRequest("PUT", trap.URL.String(), dataReader)
 	if err != nil {
 		return 0, err
 	}
 	req.Header.Add("Accept", "application/json")
 
 	client := retryablehttp.NewClient()
-	if trap.Url.Scheme == "https" {
+	if trap.URL.Scheme == "https" {
 		client.HTTPClient.Transport = &http.Transport{
 			Proxy: http.ProxyFromEnvironment,
 			Dial: (&net.Dialer{
@@ -60,7 +60,7 @@ func (m *CirconusMetrics) trapCall(payload []byte) (int, error) {
 				KeepAlive: 30 * time.Second,
 			}).Dial,
 			TLSHandshakeTimeout: 10 * time.Second,
-			TLSClientConfig:     trap.Tls,
+			TLSClientConfig:     trap.TLS,
 			DisableKeepAlives:   true,
 			MaxIdleConnsPerHost: -1,
 			DisableCompression:  true,

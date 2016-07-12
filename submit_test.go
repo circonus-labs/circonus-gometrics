@@ -27,7 +27,7 @@ func TestSubmit(t *testing.T) {
 	defer server.Close()
 
 	cfg := &Config{}
-	cfg.CheckManager.Check.SubmissionUrl = server.URL
+	cfg.CheckManager.Check.SubmissionURL = server.URL
 
 	cm, err := NewCirconusMetrics(cfg)
 	if err != nil {
@@ -50,7 +50,7 @@ func TestTrapCall(t *testing.T) {
 	defer server.Close()
 
 	cfg := &Config{}
-	cfg.CheckManager.Check.SubmissionUrl = server.URL
+	cfg.CheckManager.Check.SubmissionURL = server.URL
 
 	cm, err := NewCirconusMetrics(cfg)
 	if err != nil {
