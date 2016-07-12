@@ -10,33 +10,33 @@ func (m *CirconusMetrics) Increment(metric string) {
 	m.Add(metric, 1)
 }
 
-// Increment counter by a supplied value
+// IncrementByValue updates counter by supplied value
 func (m *CirconusMetrics) IncrementByValue(metric string, val uint64) {
 	m.Add(metric, val)
 }
 
-// Increment counter by a supplied value
+// Add updates counter by supplied value
 func (m *CirconusMetrics) Add(metric string, val uint64) {
 	m.cm.Lock()
 	defer m.cm.Unlock()
 	m.counters[metric] += val
 }
 
-// Remove a counter
+// RemoveCounter removes the named counter
 func (m *CirconusMetrics) RemoveCounter(metric string) {
 	m.cm.Lock()
 	defer m.cm.Unlock()
 	delete(m.counters, metric)
 }
 
-// Set a counter to a function [called at flush interval]
+// SetCounterFunc set counter to a function [called at flush interval]
 func (m *CirconusMetrics) SetCounterFunc(metric string, fn func() uint64) {
 	m.cfm.Lock()
 	defer m.cfm.Unlock()
 	m.counterFuncs[metric] = fn
 }
 
-// Remove a counter function
+// RemoveCounterFunc removes the named counter function
 func (m *CirconusMetrics) RemoveCounterFunc(metric string) {
 	m.cfm.Lock()
 	defer m.cfm.Unlock()
