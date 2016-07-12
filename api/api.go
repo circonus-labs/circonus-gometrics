@@ -19,6 +19,9 @@ const (
 	// a few sensible defaults
 	defaultAPIURL = "https://api.circonus.com/v2"
 	defaultAPIApp = "circonus-gometrics"
+	minRetryWait  = 10 * time.Millisecond
+	maxRetryWait  = 50 * time.Millisecond
+	maxRetries    = 3
 )
 
 // TokenKeyType - Circonus API Token key
@@ -137,9 +140,9 @@ func (a *API) apiCall(reqMethod string, reqPath string, data []byte) ([]byte, er
 	req.Header.Add("X-Circonus-App-Name", string(a.app))
 
 	client := retryablehttp.NewClient()
-	client.RetryWaitMin = 10 * time.Millisecond
-	client.RetryWaitMax = 50 * time.Millisecond
-	client.RetryMax = 3
+	client.RetryWaitMin = minRetryWait
+	client.RetryWaitMax = maxRetryWait
+	client.RetryMax = maxRetries
 	client.Logger = a.Log
 
 	resp, err := client.Do(req)
