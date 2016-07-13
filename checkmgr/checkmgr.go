@@ -40,6 +40,7 @@ const (
 	defaultCheckType             = "httptrap"
 	defaultTrapMaxURLAge         = "60s"   // 60 seconds
 	defaultBrokerMaxResponseTime = "500ms" // 500 milliseconds
+	defaultForceMetricActivation = "false"
 )
 
 // CheckConfig options for check
@@ -70,6 +71,11 @@ type CheckConfig struct {
 	// in the UI) **only relevant when check management is enabled**
 	// e.g. 5m, 30m, 1h, etc.
 	MaxURLAge string
+	// force metric activation - if a metric has been disabled via the UI
+	// the default behavior is to *not* re-activate the metric; this setting
+	// overrides the behavior and will re-activate the metric when it is
+	// encountered. "(true|false)", default "false"
+	ForceMetricActivation string
 }
 
 // BrokerConfig options for broker
@@ -123,14 +129,15 @@ type CheckManager struct {
 	apih    *api.API
 
 	// check
-	checkType          CheckTypeType
-	checkID            api.IDType
-	checkInstanceID    CheckInstanceIDType
-	checkSearchTag     api.SearchTagType
-	checkSecret        CheckSecretType
-	checkTags          CheckTagsType
-	checkSubmissionURL api.URLType
-	checkDisplayName   CheckDisplayNameType
+	checkType             CheckTypeType
+	checkID               api.IDType
+	checkInstanceID       CheckInstanceIDType
+	checkSearchTag        api.SearchTagType
+	checkSecret           CheckSecretType
+	checkTags             CheckTagsType
+	checkSubmissionURL    api.URLType
+	checkDisplayName      CheckDisplayNameType
+	forceMetricActivation bool
 
 	// broker
 	brokerID              api.IDType
@@ -138,14 +145,14 @@ type CheckManager struct {
 	brokerMaxResponseTime time.Duration
 
 	// state
-	checkBundle    *api.CheckBundle
-	activeMetrics  map[string]bool
-	trapURL        api.URLType
-	trapCN         BrokerCNType
-	trapLastUpdate time.Time
-	trapMaxURLAge  time.Duration
-	trapmu         sync.Mutex
-	certPool       *x509.CertPool
+	checkBundle      *api.CheckBundle
+	availableMetrics map[string]bool
+	trapURL          api.URLType
+	trapCN           BrokerCNType
+	trapLastUpdate   time.Time
+	trapMaxURLAge    time.Duration
+	trapmu           sync.Mutex
+	certPool         *x509.CertPool
 }
 
 // Trap config
@@ -218,6 +225,15 @@ func NewCheckManager(cfg *Config) (*CheckManager, error) {
 	cm.checkSearchTag = api.SearchTagType(cfg.Check.SearchTag)
 	cm.checkSecret = CheckSecretType(cfg.Check.Secret)
 	cm.checkTags = cfg.Check.Tags
+	fma := defaultForceMetricActivation
+	if cfg.Check.ForceMetricActivation != "" {
+		fma = cfg.Check.ForceMetricActivation
+	}
+	fm, err := strconv.ParseBool(fma)
+	if err != nil {
+		return nil, err
+	}
+	cm.forceMetricActivation = fm
 
 	_, an := path.Split(os.Args[0])
 
@@ -268,8 +284,8 @@ func NewCheckManager(cfg *Config) (*CheckManager, error) {
 	}
 	cm.brokerMaxResponseTime = maxDur
 
-	// state
-	cm.activeMetrics = make(map[string]bool)
+	// metrics
+	cm.availableMetrics = make(map[string]bool)
 
 	if err := cm.initializeTrapURL(); err != nil {
 		return nil, err

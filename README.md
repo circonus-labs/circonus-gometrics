@@ -85,6 +85,11 @@ func main() {
 	cmc.CheckManager.Check.MaxURLAge = "5m"
 	// custom display name for check, default: "InstanceId /cgm"
 	cmc.CheckManager.Check.DisplayName = ""
+    // force metric activation - if a metric has been disabled via the UI
+	// the default behavior is to *not* re-activate the metric; this setting
+	// overrides the behavior and will re-activate the metric when it is
+	// encountered. "(true|false)", default "false"
+	cmc.CheckManager.Check.ForceMetricActivation = "false"
 
 	// Broker configuration options
 	//

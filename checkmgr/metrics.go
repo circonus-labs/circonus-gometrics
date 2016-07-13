@@ -6,8 +6,23 @@ import (
 
 // IsMetricActive checks whether a given metric name is currently active(enabled)
 func (cm *CheckManager) IsMetricActive(name string) bool {
-	_, ok := cm.activeMetrics[name]
-	return ok
+	active, _ := cm.availableMetrics[name]
+	return active
+}
+
+// ActivateMetric determines if a given metric should be activated
+func (cm *CheckManager) ActivateMetric(name string) bool {
+	active, exists := cm.availableMetrics[name]
+
+	if !exists {
+		return true
+	}
+
+	if !active && cm.forceMetricActivation {
+		return true
+	}
+
+	return false
 }
 
 // AddNewMetrics updates a check bundle with new metrics
@@ -52,11 +67,9 @@ func (cm *CheckManager) AddNewMetrics(newMetrics map[string]*api.CheckBundleMetr
 
 // inventoryMetrics creates list of active metrics in check bundle
 func (cm *CheckManager) inventoryMetrics() {
-	activeMetrics := make(map[string]bool)
+	availableMetrics := make(map[string]bool)
 	for _, metric := range cm.checkBundle.Metrics {
-		if metric.Status == "active" {
-			activeMetrics[metric.Name] = true
-		}
+		availableMetrics[metric.Name] = metric.Status == "active"
 	}
-	cm.activeMetrics = activeMetrics
+	cm.availableMetrics = availableMetrics
 }

@@ -169,57 +169,73 @@ func (m *CirconusMetrics) Flush() {
 	counters, gauges, histograms, text := m.snapshot()
 	output := make(map[string]interface{})
 	for name, value := range counters {
-		output[name] = map[string]interface{}{
-			"_type":  "n",
-			"_value": value,
-		}
-		if !m.check.IsMetricActive(name) {
+		send := m.check.IsMetricActive(name)
+		if !send && m.check.ActivateMetric(name) {
+			send = true
 			newMetrics[name] = &api.CheckBundleMetric{
 				Name:   name,
 				Type:   "numeric",
 				Status: "active",
+			}
+		}
+		if send {
+			output[name] = map[string]interface{}{
+				"_type":  "n",
+				"_value": value,
 			}
 		}
 	}
 
 	for name, value := range gauges {
-		output[name] = map[string]interface{}{
-			"_type":  "n",
-			"_value": value,
-		}
-		if !m.check.IsMetricActive(name) {
+		send := m.check.IsMetricActive(name)
+		if !send && m.check.ActivateMetric(name) {
+			send = true
 			newMetrics[name] = &api.CheckBundleMetric{
 				Name:   name,
 				Type:   "numeric",
 				Status: "active",
 			}
 		}
+		if send {
+			output[name] = map[string]interface{}{
+				"_type":  "n",
+				"_value": value,
+			}
+		}
 	}
 
 	for name, value := range histograms {
-		output[name] = map[string]interface{}{
-			"_type":  "n",
-			"_value": value.DecStrings(),
-		}
-		if !m.check.IsMetricActive(name) {
+		send := m.check.IsMetricActive(name)
+		if !send && m.check.ActivateMetric(name) {
+			send = true
 			newMetrics[name] = &api.CheckBundleMetric{
 				Name:   name,
 				Type:   "histogram",
 				Status: "active",
 			}
 		}
+		if send {
+			output[name] = map[string]interface{}{
+				"_type":  "n",
+				"_value": value.DecStrings(),
+			}
+		}
 	}
 
 	for name, value := range text {
-		output[name] = map[string]interface{}{
-			"_type":  "s",
-			"_value": value,
-		}
-		if !m.check.IsMetricActive(name) {
+		send := m.check.IsMetricActive(name)
+		if !send && m.check.ActivateMetric(name) {
+			send = true
 			newMetrics[name] = &api.CheckBundleMetric{
 				Name:   name,
 				Type:   "text",
 				Status: "active",
+			}
+		}
+		if send {
+			output[name] = map[string]interface{}{
+				"_type":  "s",
+				"_value": value,
 			}
 		}
 	}
