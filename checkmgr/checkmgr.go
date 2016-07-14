@@ -41,6 +41,7 @@ const (
 	defaultTrapMaxURLAge         = "60s"   // 60 seconds
 	defaultBrokerMaxResponseTime = "500ms" // 500 milliseconds
 	defaultForceMetricActivation = "false"
+	statusActive                 = "active"
 )
 
 // CheckConfig options for check
@@ -214,9 +215,9 @@ func NewCheckManager(cfg *Config) (*CheckManager, error) {
 	cm.checkType = defaultCheckType
 	cm.checkID = 0
 	if cfg.Check.ID != "" {
-		id, err := strconv.Atoi(cfg.Check.ID)
-		if err != nil {
-			return nil, err
+		id, errSC := strconv.Atoi(cfg.Check.ID)
+		if errSC != nil {
+			return nil, errSC
 		}
 		cm.checkID = api.IDType(id)
 	}
@@ -238,8 +239,8 @@ func NewCheckManager(cfg *Config) (*CheckManager, error) {
 	_, an := path.Split(os.Args[0])
 
 	if cm.checkInstanceID == "" {
-		hn, err := os.Hostname()
-		if err != nil {
+		hn, errHN := os.Hostname()
+		if errHN != nil {
 			hn = "unknown"
 		}
 		cm.checkInstanceID = CheckInstanceIDType(fmt.Sprintf("%s:%s", hn, an))
@@ -267,9 +268,9 @@ func NewCheckManager(cfg *Config) (*CheckManager, error) {
 
 	cm.brokerID = 0
 	if cfg.Broker.ID != "" {
-		id, err := strconv.Atoi(cfg.Broker.ID)
-		if err != nil {
-			return nil, err
+		id, errSC := strconv.Atoi(cfg.Broker.ID)
+		if errSC != nil {
+			return nil, errSC
 		}
 		cm.brokerID = api.IDType(id)
 	}

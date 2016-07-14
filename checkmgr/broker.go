@@ -147,7 +147,7 @@ func (cm *CheckManager) isValidBroker(broker *api.Broker) bool {
 		brokerPort = 43191
 
 		// broker must be active
-		if detail.Status != "active" {
+		if detail.Status != statusActive {
 			if cm.Debug {
 				cm.Log.Printf("[DEBUG] Broker '%s' is not active.\n", broker.Name)
 			}

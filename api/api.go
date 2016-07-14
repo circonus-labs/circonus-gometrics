@@ -166,15 +166,20 @@ func (a *API) apiCall(reqMethod string, reqPath string, data []byte) ([]byte, er
 		stdRequest.Header.Add("Accept", "application/json")
 		stdRequest.Header.Add("X-Circonus-Auth-Token", string(a.key))
 		stdRequest.Header.Add("X-Circonus-App-Name", string(a.app))
-		resp, err := stdClient.Do(stdRequest)
-		if resp != nil && resp.Body != nil {
-			defer resp.Body.Close()
-			body, _ := ioutil.ReadAll(resp.Body)
+		res, errSC := stdClient.Do(stdRequest)
+		if errSC != nil {
+			return nil, fmt.Errorf("[ERROR] fetching %s: %s", reqURL, errSC)
+		}
+
+		if res != nil && res.Body != nil {
+			defer res.Body.Close()
+			body, _ := ioutil.ReadAll(res.Body)
 			if a.Debug {
 				a.Log.Printf("[DEBUG] %v\n", string(body))
 			}
 			return nil, fmt.Errorf("[ERROR] %s", string(body))
 		}
+
 		return nil, fmt.Errorf("[ERROR] fetching %s: %s", reqURL, err)
 	}
 	defer resp.Body.Close()
