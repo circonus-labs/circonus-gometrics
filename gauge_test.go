@@ -113,7 +113,7 @@ func TestRemoveGaugeFunc(t *testing.T) {
 	}
 
 	if val != nil {
-		t.Errorf("Expected nil, found %v", val)
+		t.Errorf("Expected nil, found %v", val())
 	}
 
 }

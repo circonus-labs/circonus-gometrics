@@ -17,7 +17,7 @@ func TestSetText(t *testing.T) {
 	}
 
 	if val != "bar" {
-		t.Errorf("Expected 'bar', found '%d'", val)
+		t.Errorf("Expected 'bar', found '%s'", val)
 	}
 }
 
@@ -34,7 +34,7 @@ func TestSetTextValue(t *testing.T) {
 	}
 
 	if val != "bar" {
-		t.Errorf("Expected 'bar', found '%d'", val)
+		t.Errorf("Expected 'bar', found '%s'", val)
 	}
 }
 
@@ -51,7 +51,7 @@ func TestRemoveText(t *testing.T) {
 	}
 
 	if val != "bar" {
-		t.Errorf("Expected 'bar', found '%d'", val)
+		t.Errorf("Expected 'bar', found '%s'", val)
 	}
 
 	cm.RemoveText("foo")
@@ -62,7 +62,7 @@ func TestRemoveText(t *testing.T) {
 	}
 
 	if val != "" {
-		t.Errorf("Expected '', found '%d'", val)
+		t.Errorf("Expected '', found '%s'", val)
 	}
 }
 
@@ -113,7 +113,7 @@ func TestRemoveTextFunc(t *testing.T) {
 	}
 
 	if val != nil {
-		t.Errorf("Expected nil, found %v", val)
+		t.Errorf("Expected nil, found %s", val())
 	}
 
 }

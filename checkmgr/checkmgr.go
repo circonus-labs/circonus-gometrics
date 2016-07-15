@@ -41,6 +41,7 @@ const (
 	defaultTrapMaxURLAge         = "60s"   // 60 seconds
 	defaultBrokerMaxResponseTime = "500ms" // 500 milliseconds
 	defaultForceMetricActivation = "false"
+	statusActive                 = "active"
 )
 
 // CheckConfig options for check
@@ -173,6 +174,7 @@ func NewCheckManager(cfg *Config) (*CheckManager, error) {
 	}
 
 	cm.Debug = cfg.Debug
+
 	cm.Log = cfg.Log
 	if cm.Log == nil {
 		if cm.Debug {
@@ -185,16 +187,18 @@ func NewCheckManager(cfg *Config) (*CheckManager, error) {
 	if cfg.Check.SubmissionURL != "" {
 		cm.checkSubmissionURL = api.URLType(cfg.Check.SubmissionURL)
 	}
-
+	// Blank API Token *disables* check management
 	if cfg.API.TokenKey == "" {
 		if cm.checkSubmissionURL == "" {
 			return nil, errors.New("Invalid check manager configuration (no API token AND no submission url).")
 		}
-		cm.trapURL = cm.checkSubmissionURL
+		if err := cm.initializeTrapURL(); err != nil {
+			return nil, err
+		}
 		return cm, nil
 	}
 
-	// enable check manager (a blank api.Token.Key *disables* check management)
+	// enable check manager
 
 	cm.enabled = true
 
@@ -212,19 +216,23 @@ func NewCheckManager(cfg *Config) (*CheckManager, error) {
 	// initialize check related data
 
 	cm.checkType = defaultCheckType
-	cm.checkID = 0
+
+	idSetting := "0"
 	if cfg.Check.ID != "" {
-		id, err := strconv.Atoi(cfg.Check.ID)
-		if err != nil {
-			return nil, err
-		}
-		cm.checkID = api.IDType(id)
+		idSetting = cfg.Check.ID
 	}
+	id, err := strconv.Atoi(idSetting)
+	if err != nil {
+		return nil, err
+	}
+	cm.checkID = api.IDType(id)
+
 	cm.checkInstanceID = CheckInstanceIDType(cfg.Check.InstanceID)
 	cm.checkDisplayName = CheckDisplayNameType(cfg.Check.DisplayName)
 	cm.checkSearchTag = api.SearchTagType(cfg.Check.SearchTag)
 	cm.checkSecret = CheckSecretType(cfg.Check.Secret)
 	cm.checkTags = cfg.Check.Tags
+
 	fma := defaultForceMetricActivation
 	if cfg.Check.ForceMetricActivation != "" {
 		fma = cfg.Check.ForceMetricActivation
@@ -236,12 +244,11 @@ func NewCheckManager(cfg *Config) (*CheckManager, error) {
 	cm.forceMetricActivation = fm
 
 	_, an := path.Split(os.Args[0])
-
+	hn, err := os.Hostname()
+	if err != nil {
+		hn = "unknown"
+	}
 	if cm.checkInstanceID == "" {
-		hn, err := os.Hostname()
-		if err != nil {
-			hn = "unknown"
-		}
 		cm.checkInstanceID = CheckInstanceIDType(fmt.Sprintf("%s:%s", hn, an))
 	}
 
@@ -265,15 +272,18 @@ func NewCheckManager(cfg *Config) (*CheckManager, error) {
 
 	// setup broker
 
-	cm.brokerID = 0
+	idSetting = "0"
 	if cfg.Broker.ID != "" {
-		id, err := strconv.Atoi(cfg.Broker.ID)
-		if err != nil {
-			return nil, err
-		}
-		cm.brokerID = api.IDType(id)
+		idSetting = cfg.Broker.ID
 	}
+	id, err = strconv.Atoi(idSetting)
+	if err != nil {
+		return nil, err
+	}
+	cm.brokerID = api.IDType(id)
+
 	cm.brokerSelectTag = api.SearchTagType(cfg.Broker.SelectTag)
+
 	dur = cfg.Broker.MaxResponseTime
 	if dur == "" {
 		dur = defaultBrokerMaxResponseTime

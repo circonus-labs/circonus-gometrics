@@ -18,12 +18,12 @@ func TestTiming(t *testing.T) {
 	}
 
 	if hist == nil {
-		t.Errorf("Expected *Histogram, found %d", hist)
+		t.Errorf("Expected *Histogram, found %v", hist)
 	}
 
 	val := hist.hist.DecStrings()
 	if len(val) != 1 {
-		t.Errorf("Expected 1, found '0'", val)
+		t.Errorf("Expected 1, found '%v'", val)
 	}
 
 	expectedVal := "H[1.0e+00]=1"
@@ -45,12 +45,12 @@ func TestRecordValue(t *testing.T) {
 	}
 
 	if hist == nil {
-		t.Errorf("Expected *Histogram, found %d", hist)
+		t.Errorf("Expected *Histogram, found %v", hist)
 	}
 
 	val := hist.hist.DecStrings()
 	if len(val) != 1 {
-		t.Errorf("Expected 1, found '0'", val)
+		t.Errorf("Expected 1, found '%v'", val)
 	}
 
 	expectedVal := "H[1.0e+00]=1"
@@ -72,12 +72,12 @@ func TestSetHistogramValue(t *testing.T) {
 	}
 
 	if hist == nil {
-		t.Errorf("Expected *Histogram, found %d", hist)
+		t.Errorf("Expected *Histogram, found %v", hist)
 	}
 
 	val := hist.hist.DecStrings()
 	if len(val) != 1 {
-		t.Errorf("Expected 1, found '0'", val)
+		t.Errorf("Expected 1, found '%v'", val)
 	}
 
 	expectedVal := "H[1.0e+00]=1"
@@ -99,12 +99,12 @@ func TestRemoveHistogram(t *testing.T) {
 	}
 
 	if hist == nil {
-		t.Errorf("Expected *Histogram, found %d", hist)
+		t.Errorf("Expected *Histogram, found %v", hist)
 	}
 
 	val := hist.hist.DecStrings()
 	if len(val) != 1 {
-		t.Errorf("Expected 1, found '0'", val)
+		t.Errorf("Expected 1, found '%v'", val)
 	}
 
 	expectedVal := "H[1.0e+00]=1"
@@ -120,7 +120,7 @@ func TestRemoveHistogram(t *testing.T) {
 	}
 
 	if hist != nil {
-		t.Errorf("Expected nil, found %d", hist)
+		t.Errorf("Expected nil, found %v", hist)
 	}
 }
 
@@ -175,7 +175,7 @@ func TestHistRecordValue(t *testing.T) {
 
 	val := hist.hist.DecStrings()
 	if len(val) != 1 {
-		t.Errorf("Expected 1, found '0'", val)
+		t.Errorf("Expected 1, found '%v'", val)
 	}
 
 	expectedVal := "H[1.0e+00]=1"

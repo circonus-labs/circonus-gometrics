@@ -46,7 +46,7 @@ func (cm *CheckManager) initializeTrapURL() error {
 	var broker *api.Broker
 
 	if cm.checkSubmissionURL != "" {
-		check, err := cm.apih.FetchCheckBySubmissionURL(cm.checkSubmissionURL)
+		check, err = cm.apih.FetchCheckBySubmissionURL(cm.checkSubmissionURL)
 		if err != nil {
 			return err
 		}
@@ -56,7 +56,8 @@ func (cm *CheckManager) initializeTrapURL() error {
 		// use case: if the broker is changed in the UI metrics would stop flowing
 		// unless the new submission url can be fetched with the API (which is no
 		// longer possible using the original submission url)
-		id, err := strconv.Atoi(strings.Replace(check.Cid, "/check/", "", -1))
+		var id int
+		id, err = strconv.Atoi(strings.Replace(check.Cid, "/check/", "", -1))
 		if err == nil {
 			cm.checkID = api.IDType(id)
 			cm.checkSubmissionURL = ""
@@ -142,7 +143,7 @@ func (cm *CheckManager) checkBundleSearch(criteria string) (*api.CheckBundle, er
 	checkID := -1
 
 	for idx, check := range checkBundles {
-		if check.Status == "active" {
+		if check.Status == statusActive {
 			numActive++
 			checkID = idx
 		}
@@ -179,7 +180,7 @@ func (cm *CheckManager) createNewCheck() (*api.CheckBundle, *api.Broker, error) 
 		MetricLimit: 0,
 		Notes:       "",
 		Period:      60,
-		Status:      "active",
+		Status:      statusActive,
 		Tags:        append([]string{string(cm.checkSearchTag)}, cm.checkTags...),
 		Target:      string(cm.checkInstanceID),
 		Timeout:     10,
