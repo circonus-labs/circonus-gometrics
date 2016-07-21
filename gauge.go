@@ -14,6 +14,35 @@ func (m *CirconusMetrics) Gauge(metric string, val interface{}) {
 	m.SetGauge(metric, val)
 }
 
+// SetGauge sets a gauge to a value
+func (m *CirconusMetrics) SetGauge(metric string, val interface{}) {
+	m.gm.Lock()
+	defer m.gm.Unlock()
+	m.gauges[metric] = m.gaugeValString(val)
+}
+
+// RemoveGauge removes a gauge
+func (m *CirconusMetrics) RemoveGauge(metric string) {
+	m.gm.Lock()
+	defer m.gm.Unlock()
+	delete(m.gauges, metric)
+}
+
+// SetGaugeFunc sets a gauge to a function [called at flush interval]
+func (m *CirconusMetrics) SetGaugeFunc(metric string, fn func() int64) {
+	m.gfm.Lock()
+	defer m.gfm.Unlock()
+	m.gaugeFuncs[metric] = fn
+}
+
+// RemoveGaugeFunc removes a gauge function
+func (m *CirconusMetrics) RemoveGaugeFunc(metric string) {
+	m.gfm.Lock()
+	defer m.gfm.Unlock()
+	delete(m.gaugeFuncs, metric)
+}
+
+// gaugeValString converts an interface value (of a supported type) to a string
 func (m *CirconusMetrics) gaugeValString(val interface{}) string {
 	vs := ""
 	switch v := val.(type) {
@@ -45,32 +74,4 @@ func (m *CirconusMetrics) gaugeValString(val interface{}) string {
 		vs = fmt.Sprintf("%f", v)
 	}
 	return vs
-}
-
-// SetGauge sets a gauge to a value
-func (m *CirconusMetrics) SetGauge(metric string, val interface{}) {
-	m.gm.Lock()
-	defer m.gm.Unlock()
-	m.gauges[metric] = m.gaugeValString(val)
-}
-
-// RemoveGauge removes a gauge
-func (m *CirconusMetrics) RemoveGauge(metric string) {
-	m.gm.Lock()
-	defer m.gm.Unlock()
-	delete(m.gauges, metric)
-}
-
-// SetGaugeFunc sets a gauge to a function [called at flush interval]
-func (m *CirconusMetrics) SetGaugeFunc(metric string, fn func() int64) {
-	m.gfm.Lock()
-	defer m.gfm.Unlock()
-	m.gaugeFuncs[metric] = fn
-}
-
-// RemoveGaugeFunc removes a gauge function
-func (m *CirconusMetrics) RemoveGaugeFunc(metric string) {
-	m.gfm.Lock()
-	defer m.gfm.Unlock()
-	delete(m.gaugeFuncs, metric)
 }
