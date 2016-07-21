@@ -4,6 +4,35 @@ import (
 	"testing"
 )
 
+func TestSet(t *testing.T) {
+	t.Log("Testing counter.Set")
+
+	cm := &CirconusMetrics{}
+	cm.counters = make(map[string]uint64)
+
+	cm.Set("foo", 30)
+
+	val, ok := cm.counters["foo"]
+	if !ok {
+		t.Errorf("Expected to find foo")
+	}
+
+	if val != 30 {
+		t.Errorf("Expected 30, found %d", val)
+	}
+
+	cm.Set("foo", 10)
+
+	val, ok = cm.counters["foo"]
+	if !ok {
+		t.Errorf("Expected to find foo")
+	}
+
+	if val != 10 {
+		t.Errorf("Expected 10, found %d", val)
+	}
+}
+
 func TestIncrement(t *testing.T) {
 	t.Log("Testing counter.Increment")
 
