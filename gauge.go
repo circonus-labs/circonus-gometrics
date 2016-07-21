@@ -5,16 +5,53 @@ package circonusgometrics
 // Use a gauge to track metrics which increase and decrease (e.g., amount of
 // free memory).
 
+import (
+	"fmt"
+)
+
 // Gauge sets a gauge to a value
-func (m *CirconusMetrics) Gauge(metric string, val int64) {
+func (m *CirconusMetrics) Gauge(metric string, val interface{}) {
 	m.SetGauge(metric, val)
 }
 
+func (m *CirconusMetrics) gaugeValString(val interface{}) string {
+	vs := ""
+	switch v := val.(type) {
+	default:
+		// ignore it, unsupported type
+	case int:
+		vs = fmt.Sprintf("%d", v)
+	case int8:
+		vs = fmt.Sprintf("%d", v)
+	case int16:
+		vs = fmt.Sprintf("%d", v)
+	case int32:
+		vs = fmt.Sprintf("%d", v)
+	case int64:
+		vs = fmt.Sprintf("%d", v)
+	case uint:
+		vs = fmt.Sprintf("%d", v)
+	case uint8:
+		vs = fmt.Sprintf("%d", v)
+	case uint16:
+		vs = fmt.Sprintf("%d", v)
+	case uint32:
+		vs = fmt.Sprintf("%d", v)
+	case uint64:
+		vs = fmt.Sprintf("%d", v)
+	case float32:
+		vs = fmt.Sprintf("%f", v)
+	case float64:
+		vs = fmt.Sprintf("%f", v)
+	}
+	return vs
+}
+
 // SetGauge sets a gauge to a value
-func (m *CirconusMetrics) SetGauge(metric string, val int64) {
+func (m *CirconusMetrics) SetGauge(metric string, val interface{}) {
 	m.gm.Lock()
 	defer m.gm.Unlock()
-	m.gauges[metric] = val
+	m.gauges[metric] = m.gaugeValString(val)
 }
 
 // RemoveGauge removes a gauge
