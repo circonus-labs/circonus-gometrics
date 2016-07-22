@@ -13,7 +13,7 @@ func TestReset(t *testing.T) {
 	cm.counterFuncs = make(map[string]func() uint64)
 	cm.Increment("foo")
 
-	cm.gauges = make(map[string]int64)
+	cm.gauges = make(map[string]string)
 	cm.gaugeFuncs = make(map[string]func() int64)
 	cm.Gauge("foo", 1)
 
@@ -68,7 +68,7 @@ func TestSnapshot(t *testing.T) {
 	cm.counterFuncs = make(map[string]func() uint64)
 	cm.Increment("foo")
 
-	cm.gauges = make(map[string]int64)
+	cm.gauges = make(map[string]string)
 	cm.gaugeFuncs = make(map[string]func() int64)
 	cm.Gauge("foo", 1)
 
