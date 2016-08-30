@@ -6,10 +6,23 @@ package api
 
 import (
 	"errors"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"strings"
 	"testing"
 )
+
+func retryServer() *httptest.Server {
+	f := func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(500)
+		w.Header().Set("Content-Type", "application/json")
+		fmt.Fprintln(w, "blah blah blah")
+	}
+
+	return httptest.NewServer(http.HandlerFunc(f))
+}
 
 func TestNewAPI(t *testing.T) {
 	t.Log("Testing correct error return when no API config supplied")
@@ -49,6 +62,33 @@ func TestNewAPI(t *testing.T) {
 	}
 }
 
+func TestApiCall(t *testing.T) {
+	server := retryServer()
+	defer server.Close()
+
+	t.Log("Testing correct error return when API call fails retries")
+
+	ac := &Config{}
+	ac.TokenKey = "foo"
+	ac.TokenApp = "bar"
+	ac.URL = server.URL
+
+	apih, err := NewAPI(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%+v'", err)
+	}
+
+	resp, err := apih.apiCall("GET", "/retrytest", nil)
+	if err == nil {
+		t.Errorf("Expected error, got '%+v'", resp)
+	}
+
+	expected := fmt.Sprintf("[ERROR] fetching: GET %s/retrytest giving up after 4 attempts - last HTTP error: 500 blah blah blah\n", server.URL)
+	if err.Error() != expected {
+		t.Errorf("Expected\n'%s'\ngot\n'%s'\n", expected, err)
+	}
+}
+
 func TestApiGet(t *testing.T) {
 	if os.Getenv("CIRCONUS_API_TOKEN") == "" {
 		t.Skip("skipping test; $CIRCONUS_API_TOKEN not set")
@@ -65,7 +105,7 @@ func TestApiGet(t *testing.T) {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
-	if _, err := apih.Get("/user/current"); err != nil {
+	if _, err = apih.Get("/user/current"); err != nil {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
