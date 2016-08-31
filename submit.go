@@ -120,7 +120,7 @@ func (m *CirconusMetrics) trapCall(payload []byte) (int, error) {
 	resp, err := client.Do(req)
 	if err != nil {
 		if lastHTTPError != nil {
-			return 0, fmt.Errorf("[ERROR] fetching: %+v %+v", err, lastHTTPError)
+			return 0, fmt.Errorf("[ERROR] submitting: %+v %+v", err, lastHTTPError)
 		}
 		if attempts == client.RetryMax {
 			m.check.RefreshTrap()
