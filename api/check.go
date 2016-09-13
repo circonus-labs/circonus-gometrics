@@ -40,7 +40,13 @@ func (a *API) FetchCheckByCID(cid CIDType) (*Check, error) {
 	}
 
 	check := new(Check)
-	json.Unmarshal(result, check)
+	if err := json.Unmarshal(result, check); err != nil {
+		return nil, err
+	}
+
+	if !check.Active {
+		return nil, fmt.Errorf("[ERROR] Check ID %v is not active", cid)
+	}
 
 	return check, nil
 }
