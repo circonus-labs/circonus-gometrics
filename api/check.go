@@ -62,7 +62,7 @@ func (a *API) FetchCheckBySubmissionURL(submissionURL URLType) (*Check, error) {
 	// valid trap url: scheme://host[:port]/module/httptrap/UUID/secret
 
 	// does it smell like a valid trap url path
-	if u.Path[:17] != "/module/httptrap/" {
+	if !strings.Contains(u.Path, "/module/httptrap/") {
 		return nil, fmt.Errorf("[ERROR] Invalid submission URL '%s', unrecognized path", submissionURL)
 	}
 
