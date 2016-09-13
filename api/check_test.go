@@ -17,16 +17,16 @@ import (
 // FetchCheckByCID is called by FetchCheckByID
 // CheckSearch is called by FetchCheckBySubmissionURL
 
-func TestFetchCheckByID(t *testing.T) {
+func TestFetchCheckByID1(t *testing.T) {
 	if os.Getenv("CIRCONUS_API_TOKEN") == "" {
 		t.Skip("skipping test; $CIRCONUS_API_TOKEN not set")
 	}
+
 	if os.Getenv("CIRC_API_TEST_CHECK_ID") == "" {
 		t.Skip("skipping test; $CIRC_API_TEST_CHECK_ID not set")
 	}
 
 	t.Log("Testing correct return from API call")
-
 	ac := &Config{}
 	ac.TokenKey = os.Getenv("CIRCONUS_API_TOKEN")
 	apih, err := NewAPI(ac)
@@ -63,6 +63,45 @@ func TestFetchCheckByID(t *testing.T) {
 	}
 
 	t.Logf("Check returned %s %s", check.CheckUUID, check.Cid)
+
+}
+
+func TestFetchCheckByID2(t *testing.T) {
+	if os.Getenv("CIRCONUS_API_TOKEN") == "" {
+		t.Skip("skipping test; $CIRCONUS_API_TOKEN not set")
+	}
+
+	if os.Getenv("CIRC_API_TEST_DELETED_CHECK_ID") == "" {
+		t.Skip("skipping test; $CIRC_API_TEST_DELETED_CHECK_ID not set")
+	}
+
+	t.Log("Testing correct return from API call with DELETED check ID")
+
+	ac := &Config{}
+	ac.TokenKey = os.Getenv("CIRCONUS_API_TOKEN")
+	apih, err := NewAPI(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	cid := os.Getenv("CIRC_API_TEST_DELETED_CHECK_ID")
+	if cid == "" {
+		t.Fatal("Invalid check id (empty)")
+	}
+
+	id, err := strconv.Atoi(cid)
+	if err != nil {
+		t.Fatalf("Unable to convert check id %s to int", cid)
+	}
+
+	checkID := IDType(id)
+
+	check, err := apih.FetchCheckByID(checkID)
+	if err == nil {
+		t.Fatalf("Expected error, got '%v'", check)
+	}
+	t.Logf("Error returned %v", err)
+
 }
 
 func TestFetchCheckBySubmissionURL(t *testing.T) {
