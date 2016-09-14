@@ -6,6 +6,7 @@ package checkmgr
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"testing"
 )
@@ -145,4 +146,87 @@ func TestNewCheckManager5(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Expected no error, got '%v'", err)
 	}
+}
+
+func TestNewCheckManager6(t *testing.T) {
+	if os.Getenv("CIRCONUS_API_TOKEN") == "" {
+		t.Skip("skipping test; $CIRCONUS_API_TOKEN not set")
+	}
+	if os.Getenv("CIRCONUS_DELETED_CHECK_ID") == "" {
+		t.Skip("skipping test; $CIRCONUS_DELETED_CHECK_ID not set")
+	}
+
+	t.Log("Testing correct error return (from check.initializeTrapURL) with deleted check (by id)")
+
+	cfg := &Config{}
+	cfg.API.TokenKey = os.Getenv("CIRCONUS_API_TOKEN")
+	cfg.Check.ID = os.Getenv("CIRCONUS_DELETED_CHECK_ID")
+
+	cm, err := NewCheckManager(cfg)
+	if err == nil {
+		t.Errorf("Expected error, got '%#v'", cm)
+	}
+
+	expected := fmt.Errorf("[ERROR] Check ID /check/%s is not active", string(cfg.Check.ID))
+
+	if err.Error() != expected.Error() {
+		t.Errorf("Expected '%#v' got '%#v'", expected, err)
+	}
+}
+
+func TestNewCheckManager7(t *testing.T) {
+	if os.Getenv("CIRCONUS_API_TOKEN") == "" {
+		t.Skip("skipping test; $CIRCONUS_API_TOKEN not set")
+	}
+	if os.Getenv("CIRCONUS_DELETED_CHECK_URL") == "" {
+		t.Skip("skipping test; $CIRCONUS_DELETED_CHECK_URL not set")
+	}
+
+	t.Log("Testing correct error return (from check.initializeTrapURL) with deleted check (by url)")
+
+	// note: this never really gets to the check.Active test as the filter does not return a result
+	// a "feature" of "behavior" which may change in the future...
+
+	cfg := &Config{}
+	cfg.API.TokenKey = os.Getenv("CIRCONUS_API_TOKEN")
+	cfg.Check.SubmissionURL = os.Getenv("CIRCONUS_DELETED_CHECK_URL")
+
+	cm, err := NewCheckManager(cfg)
+	if err == nil {
+		t.Errorf("Expected error, got '%#v'", cm)
+	}
+
+	expected := "[ERROR] No checks found with UUID"
+
+	if err.Error()[0:len(expected)] != expected {
+		t.Errorf("Expected '%s' got '%s'", expected, err)
+	}
+}
+
+func TestNewCheckManager8(t *testing.T) {
+	if os.Getenv("CIRCONUS_API_TOKEN") == "" {
+		t.Skip("skipping test; $CIRCONUS_API_TOKEN not set")
+	}
+	if os.Getenv("CIRCONUS_NON_HTTPTRAP_CHECK_ID") == "" {
+		t.Skip("skipping test; $CIRCONUS_NON_HTTPTRAP_CHECK_ID not set")
+	}
+
+	t.Log("Testing correct return (from check.initializeTrapURL) with non-httptrap check id")
+
+	cfg := &Config{}
+	cfg.API.TokenKey = os.Getenv("CIRCONUS_API_TOKEN")
+	cfg.Check.ID = os.Getenv("CIRCONUS_NON_HTTPTRAP_CHECK_ID")
+
+	cm, err := NewCheckManager(cfg)
+	if err != nil {
+		t.Fatalf("Expected no error, got '%s'", err)
+	}
+
+	t.Log("Getting Trap from cm instance")
+	trap, err := cm.GetTrap()
+	if err != nil {
+		t.Fatalf("Expected no error, got '%v'", err)
+	}
+
+	t.Logf("Trap URL: %s", trap.URL.String())
 }
