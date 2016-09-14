@@ -71,8 +71,8 @@ func TestFetchCheckByID2(t *testing.T) {
 		t.Skip("skipping test; $CIRCONUS_API_TOKEN not set")
 	}
 
-	if os.Getenv("CIRC_API_TEST_DELETED_CHECK_ID") == "" {
-		t.Skip("skipping test; $CIRC_API_TEST_DELETED_CHECK_ID not set")
+	if os.Getenv("CIRCONUS_DELETED_CHECK_ID") == "" {
+		t.Skip("skipping test; $CIRCONUS_DELETED_CHECK_ID not set")
 	}
 
 	t.Log("Testing correct return from API call with DELETED check ID")
@@ -84,7 +84,7 @@ func TestFetchCheckByID2(t *testing.T) {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
-	cid := os.Getenv("CIRC_API_TEST_DELETED_CHECK_ID")
+	cid := os.Getenv("CIRCONUS_DELETED_CHECK_ID")
 	if cid == "" {
 		t.Fatal("Invalid check id (empty)")
 	}
@@ -97,11 +97,12 @@ func TestFetchCheckByID2(t *testing.T) {
 	checkID := IDType(id)
 
 	check, err := apih.FetchCheckByID(checkID)
-	if err == nil {
-		t.Fatalf("Expected error, got '%v'", check)
+	if err != nil {
+		t.Fatalf("Expected no error, got '%s'", err)
 	}
-	t.Logf("Error returned %v", err)
-
+	if check.Active {
+		t.Fatalf("Expected non-active check, got '%#v'", check)
+	}
 }
 
 func TestFetchCheckBySubmissionURL(t *testing.T) {

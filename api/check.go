@@ -44,10 +44,6 @@ func (a *API) FetchCheckByCID(cid CIDType) (*Check, error) {
 		return nil, err
 	}
 
-	if !check.Active {
-		return nil, fmt.Errorf("[ERROR] Check ID %v is not active", cid)
-	}
-
 	return check, nil
 }
 
@@ -62,16 +58,15 @@ func (a *API) FetchCheckBySubmissionURL(submissionURL URLType) (*Check, error) {
 	// valid trap url: scheme://host[:port]/module/httptrap/UUID/secret
 
 	// does it smell like a valid trap url path
-	if u.Path[:17] != "/module/httptrap/" {
+	if !strings.Contains(u.Path, "/module/httptrap/") {
 		return nil, fmt.Errorf("[ERROR] Invalid submission URL '%s', unrecognized path", submissionURL)
 	}
 
-	// extract uuid/secret
-	pathParts := strings.Split(u.Path[17:len(u.Path)], "/")
+	// extract uuid
+	pathParts := strings.Split(strings.Replace(u.Path, "/module/httptrap/", "", 1), "/")
 	if len(pathParts) != 2 {
 		return nil, fmt.Errorf("[ERROR] Invalid submission URL '%s', UUID not where expected", submissionURL)
 	}
-
 	uuid := pathParts[0]
 
 	query := SearchQueryType(fmt.Sprintf("f__check_uuid=%s", uuid))
@@ -113,7 +108,9 @@ func (a *API) CheckSearch(query SearchQueryType) ([]Check, error) {
 	}
 
 	var checks []Check
-	json.Unmarshal(result, &checks)
+	if err := json.Unmarshal(result, &checks); err != nil {
+		return nil, err
+	}
 
 	return checks, nil
 }
