@@ -136,9 +136,8 @@ func (m *CirconusMetrics) trapCall(payload []byte) (int, error) {
 	}
 
 	var response map[string]interface{}
-	err = json.Unmarshal(body, &response)
-	if err != nil {
-		m.Log.Printf("[ERROR] parsing body, proceeding. %s\n", err)
+	if err := json.Unmarshal(body, &response); err != nil {
+		m.Log.Printf("[ERROR] parsing body, proceeding. %v (%s)\n", err, body)
 	}
 
 	if resp.StatusCode != 200 {
