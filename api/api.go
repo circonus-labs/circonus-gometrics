@@ -47,8 +47,11 @@ type URLType string
 // SearchQueryType search query
 type SearchQueryType string
 
-// SearchTagType search/select tag type
-type SearchTagType string
+// SearchFilterType search filter
+type SearchFilterType string
+
+// TagType search/select/custom tag(s) type
+type TagType []string
 
 // Config options for Circonus API
 type Config struct {

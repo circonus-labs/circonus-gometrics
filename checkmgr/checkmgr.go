@@ -16,6 +16,7 @@ import (
 	"os"
 	"path"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -58,7 +59,7 @@ type CheckConfig struct {
 	// used to search for a check to use
 	// used as check.target when creating a check
 	InstanceID string
-	// unique check searching tag
+	// unique check searching tag (or tags)
 	// used to search for a check to use (combined with instanceid)
 	// used as a regular tag when creating a check
 	SearchTag string
@@ -68,7 +69,7 @@ type CheckConfig struct {
 	Secret string
 	// additional tags to add to a check (when creating a check)
 	// these tags will not be added to an existing check
-	Tags []string
+	Tags string
 	// max amount of time to to hold on to a submission url
 	// when a given submission fails (due to retries) if the
 	// time the url was last updated is > than this, the trap
@@ -87,8 +88,8 @@ type CheckConfig struct {
 type BrokerConfig struct {
 	// a specific broker id (numeric portion of cid)
 	ID string
-	// a tag that can be used to select 1-n brokers from which to select
-	// when creating a new check (e.g. datacenter:abc)
+	// one or more tags used to select 1-n brokers from which to select
+	// when creating a new check (e.g. datacenter:abc or loc:dfw,dc:abc)
 	SelectTag string
 	// for a broker to be considered viable it must respond to a
 	// connection attempt within this amount of time e.g. 200ms, 2s, 1m
@@ -118,7 +119,7 @@ type CheckInstanceIDType string
 type CheckSecretType string
 
 // CheckTagsType check tags
-type CheckTagsType []string
+type CheckTagsType string
 
 // CheckDisplayNameType check display name
 type CheckDisplayNameType string
@@ -137,16 +138,16 @@ type CheckManager struct {
 	checkType             CheckTypeType
 	checkID               api.IDType
 	checkInstanceID       CheckInstanceIDType
-	checkSearchTag        api.SearchTagType
+	checkSearchTag        api.TagType
 	checkSecret           CheckSecretType
-	checkTags             CheckTagsType
+	checkTags             api.TagType
 	checkSubmissionURL    api.URLType
 	checkDisplayName      CheckDisplayNameType
 	forceMetricActivation bool
 
 	// broker
 	brokerID              api.IDType
-	brokerSelectTag       api.SearchTagType
+	brokerSelectTag       api.TagType
 	brokerMaxResponseTime time.Duration
 
 	// state
@@ -233,9 +234,9 @@ func NewCheckManager(cfg *Config) (*CheckManager, error) {
 
 	cm.checkInstanceID = CheckInstanceIDType(cfg.Check.InstanceID)
 	cm.checkDisplayName = CheckDisplayNameType(cfg.Check.DisplayName)
-	cm.checkSearchTag = api.SearchTagType(cfg.Check.SearchTag)
+	cm.checkSearchTag = strings.Split(strings.Replace(cfg.Check.SearchTag, " ", "", -1), ",")
 	cm.checkSecret = CheckSecretType(cfg.Check.Secret)
-	cm.checkTags = cfg.Check.Tags
+	cm.checkTags = strings.Split(strings.Replace(cfg.Check.Tags, " ", "", -1), ",")
 
 	fma := defaultForceMetricActivation
 	if cfg.Check.ForceMetricActivation != "" {
@@ -256,8 +257,8 @@ func NewCheckManager(cfg *Config) (*CheckManager, error) {
 		cm.checkInstanceID = CheckInstanceIDType(fmt.Sprintf("%s:%s", hn, an))
 	}
 
-	if cm.checkSearchTag == "" {
-		cm.checkSearchTag = api.SearchTagType(fmt.Sprintf("service:%s", an))
+	if len(cm.checkSearchTag) == 0 {
+		cm.checkSearchTag = []string{fmt.Sprintf("service:%s", an)}
 	}
 
 	if cm.checkDisplayName == "" {
@@ -286,7 +287,7 @@ func NewCheckManager(cfg *Config) (*CheckManager, error) {
 	}
 	cm.brokerID = api.IDType(id)
 
-	cm.brokerSelectTag = api.SearchTagType(cfg.Broker.SelectTag)
+	cm.brokerSelectTag = strings.Split(strings.Replace(cfg.Broker.SelectTag, " ", "", -1), ",")
 
 	dur = cfg.Broker.MaxResponseTime
 	if dur == "" {
