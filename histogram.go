@@ -30,11 +30,11 @@ func (m *CirconusMetrics) RecordValue(metric string, val float64) {
 // SetHistogramValue adds a value to a histogram
 func (m *CirconusMetrics) SetHistogramValue(metric string, val float64) {
 	m.NewHistogram(metric)
-
+	m.hm.Lock()
 	m.histograms[metric].rw.Lock()
-	defer m.histograms[metric].rw.Unlock()
-
 	m.histograms[metric].hist.RecordValue(val)
+	m.histograms[metric].rw.Unlock()
+	m.hm.Unlock()
 }
 
 // RemoveHistogram removes a histogram
