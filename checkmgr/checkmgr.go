@@ -234,9 +234,7 @@ func NewCheckManager(cfg *Config) (*CheckManager, error) {
 
 	cm.checkInstanceID = CheckInstanceIDType(cfg.Check.InstanceID)
 	cm.checkDisplayName = CheckDisplayNameType(cfg.Check.DisplayName)
-	cm.checkSearchTag = strings.Split(strings.Replace(cfg.Check.SearchTag, " ", "", -1), ",")
 	cm.checkSecret = CheckSecretType(cfg.Check.Secret)
-	cm.checkTags = strings.Split(strings.Replace(cfg.Check.Tags, " ", "", -1), ",")
 
 	fma := defaultForceMetricActivation
 	if cfg.Check.ForceMetricActivation != "" {
@@ -257,8 +255,14 @@ func NewCheckManager(cfg *Config) (*CheckManager, error) {
 		cm.checkInstanceID = CheckInstanceIDType(fmt.Sprintf("%s:%s", hn, an))
 	}
 
-	if len(cm.checkSearchTag) == 0 {
+	if cfg.Check.SearchTag == "" {
 		cm.checkSearchTag = []string{fmt.Sprintf("service:%s", an)}
+	} else {
+		cm.checkSearchTag = strings.Split(strings.Replace(cfg.Check.SearchTag, " ", "", -1), ",")
+	}
+
+	if cfg.Check.Tags != "" {
+		cm.checkTags = strings.Split(strings.Replace(cfg.Check.Tags, " ", "", -1), ",")
 	}
 
 	if cm.checkDisplayName == "" {
@@ -287,7 +291,9 @@ func NewCheckManager(cfg *Config) (*CheckManager, error) {
 	}
 	cm.brokerID = api.IDType(id)
 
-	cm.brokerSelectTag = strings.Split(strings.Replace(cfg.Broker.SelectTag, " ", "", -1), ",")
+	if cfg.Broker.SelectTag != "" {
+		cm.brokerSelectTag = strings.Split(strings.Replace(cfg.Broker.SelectTag, " ", "", -1), ",")
+	}
 
 	dur = cfg.Broker.MaxResponseTime
 	if dur == "" {
