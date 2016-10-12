@@ -84,7 +84,9 @@ func (m *CirconusMetrics) snapshot() (c map[string]uint64, g map[string]string, 
 
 	h = make(map[string]*circonusllhist.Histogram, len(m.histograms))
 	for n, hist := range m.histograms {
+		hist.rw.Lock()
 		h[n] = hist.hist.CopyAndReset()
+		hist.rw.Unlock()
 	}
 
 	t = make(map[string]string, len(m.text)+len(m.textFuncs))
