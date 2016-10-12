@@ -98,5 +98,24 @@ func (m *CirconusMetrics) snapshot() (c map[string]uint64, g map[string]string, 
 		t[n] = f()
 	}
 
+	if m.resetCounters {
+		m.counters = make(map[string]uint64)
+		m.counterFuncs = make(map[string]func() uint64)
+	}
+
+	if m.resetGauges {
+		m.gauges = make(map[string]string)
+		m.gaugeFuncs = make(map[string]func() int64)
+	}
+
+	if m.resetHistograms {
+		m.histograms = make(map[string]*Histogram)
+	}
+
+	if m.resetText {
+		m.text = make(map[string]string)
+		m.textFuncs = make(map[string]func() string)
+	}
+
 	return
 }
