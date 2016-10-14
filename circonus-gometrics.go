@@ -51,8 +51,8 @@ type Config struct {
 	Log             *log.Logger
 	Debug           bool
 	ResetCounters   string // reset/delete counters on flush (default true)
-	ResetGauges     string // reset/delete gauges on flush (default false)
-	ResetHistograms string // reset/delete histograms on flush (default false)
+	ResetGauges     string // reset/delete gauges on flush (default true)
+	ResetHistograms string // reset/delete histograms on flush (default true)
 	ResetText       string // reset/delete text on flush (default true)
 
 	// API, Check and Broker configuration options
@@ -146,14 +146,14 @@ func NewCirconusMetrics(cfg *Config) (*CirconusMetrics, error) {
 		}
 	}
 
-	cm.resetGauges = false
+	cm.resetGauges = true
 	if cfg.ResetGauges != "" {
 		if setting, err = strconv.ParseBool(cfg.ResetGauges); err == nil {
 			cm.resetGauges = setting
 		}
 	}
 
-	cm.resetHistograms = false
+	cm.resetHistograms = true
 	if cfg.ResetHistograms != "" {
 		if setting, err = strconv.ParseBool(cfg.ResetHistograms); err == nil {
 			cm.resetHistograms = setting
