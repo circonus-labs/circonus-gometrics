@@ -24,9 +24,9 @@ const (
 	// a few sensible defaults
 	defaultAPIURL = "https://api.circonus.com/v2"
 	defaultAPIApp = "circonus-gometrics"
-	minRetryWait  = 10 * time.Millisecond
-	maxRetryWait  = 50 * time.Millisecond
-	maxRetries    = 3
+	minRetryWait  = 100 * time.Millisecond
+	maxRetryWait  = 250 * time.Millisecond
+	maxRetries    = 5
 )
 
 // TokenKeyType - Circonus API Token key
@@ -170,7 +170,8 @@ func (a *API) apiCall(reqMethod string, reqPath string, data []byte) ([]byte, er
 		// the server time to recover, as 500's are typically not permanent
 		// errors and may relate to outages on the server side. This will catch
 		// invalid response codes as well, like 0 and 999.
-		if resp.StatusCode == 0 || resp.StatusCode >= 500 {
+		// Retry on 429 (rate limit) as well.
+		if resp.StatusCode == 0 || resp.StatusCode >= 500 || resp.StatusCode == 429 {
 			body, readErr := ioutil.ReadAll(resp.Body)
 			if readErr != nil {
 				lastHTTPError = fmt.Errorf("- last HTTP error: %d %+v", resp.StatusCode, readErr)
