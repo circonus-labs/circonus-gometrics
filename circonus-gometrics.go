@@ -115,12 +115,10 @@ func NewCirconusMetrics(cfg *Config) (*CirconusMetrics, error) {
 	}
 
 	cm.Debug = cfg.Debug
-	if cm.Debug {
-		if cfg.Log == nil {
-			cm.Log = log.New(os.Stderr, "", log.LstdFlags)
-		} else {
-			cm.Log = cfg.Log
-		}
+	cm.Log = cfg.Log
+
+	if cm.Debug && cfg.Log == nil {
+		cm.Log = log.New(os.Stderr, "", log.LstdFlags)
 	}
 	if cm.Log == nil {
 		cm.Log = log.New(ioutil.Discard, "", log.LstdFlags)
