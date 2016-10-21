@@ -144,6 +144,11 @@ type CheckManager struct {
 	checkSubmissionURL    api.URLType
 	checkDisplayName      CheckDisplayNameType
 	forceMetricActivation bool
+	forceCheckUpdate      bool
+
+	// metric tags
+	metricTags map[string][]string
+	mtmu       sync.Mutex
 
 	// broker
 	brokerID              api.IDType
@@ -152,6 +157,7 @@ type CheckManager struct {
 
 	// state
 	checkBundle      *api.CheckBundle
+	cbmu             sync.Mutex
 	availableMetrics map[string]bool
 	trapURL          api.URLType
 	trapCN           BrokerCNType
@@ -179,14 +185,12 @@ func NewCheckManager(cfg *Config) (*CheckManager, error) {
 	}
 
 	cm.Debug = cfg.Debug
-
 	cm.Log = cfg.Log
+	if cm.Debug && cm.Log == nil {
+		cm.Log = log.New(os.Stderr, "", log.LstdFlags)
+	}
 	if cm.Log == nil {
-		if cm.Debug {
-			cm.Log = log.New(os.Stderr, "", log.LstdFlags)
-		} else {
-			cm.Log = log.New(ioutil.Discard, "", log.LstdFlags)
-		}
+		cm.Log = log.New(ioutil.Discard, "", log.LstdFlags)
 	}
 
 	if cfg.Check.SubmissionURL != "" {
@@ -307,6 +311,7 @@ func NewCheckManager(cfg *Config) (*CheckManager, error) {
 
 	// metrics
 	cm.availableMetrics = make(map[string]bool)
+	cm.metricTags = make(map[string][]string)
 
 	if err := cm.initializeTrapURL(); err != nil {
 		return nil, err
