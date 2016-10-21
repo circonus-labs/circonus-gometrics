@@ -21,9 +21,9 @@ import (
 )
 
 func (m *CirconusMetrics) submit(output map[string]interface{}, newMetrics map[string]*api.CheckBundleMetric) {
-	if len(newMetrics) > 0 {
-		m.check.AddNewMetrics(newMetrics)
-	}
+
+	// update check if there are any new metrics or, if metric tags have been added since last submit
+	m.check.UpdateCheck(newMetrics)
 
 	str, err := json.Marshal(output)
 	if err != nil {
