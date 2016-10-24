@@ -24,9 +24,9 @@ const (
 	// a few sensible defaults
 	defaultAPIURL = "https://api.circonus.com/v2"
 	defaultAPIApp = "circonus-gometrics"
-	minRetryWait  = 100 * time.Millisecond
-	maxRetryWait  = 250 * time.Millisecond
-	maxRetries    = 5
+	minRetryWait  = 1 * time.Second
+	maxRetryWait  = 15 * time.Second
+	maxRetries    = 4 // equating to 1 + maxRetries total attempts
 )
 
 // TokenKeyType - Circonus API Token key
