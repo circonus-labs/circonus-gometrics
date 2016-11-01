@@ -52,18 +52,17 @@ func (cm *CheckManager) AddMetricTags(metricName string, tags []string, appendTa
 				}
 			}
 
-			cm.cbmu.Lock()
-
 			if appendTags {
 				metric.Tags = append(metric.Tags, tags...)
 			} else {
 				metric.Tags = tags
 			}
 
+			cm.cbmu.Lock()
 			cm.checkBundle.Metrics[metricIdx] = metric
-			tagsUpdated = true
-
 			cm.cbmu.Unlock()
+
+			tagsUpdated = true
 		}
 	}
 
