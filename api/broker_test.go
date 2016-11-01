@@ -9,6 +9,7 @@ import (
 	"os"
 	"reflect"
 	"strconv"
+	"strings"
 	"testing"
 )
 
@@ -65,7 +66,7 @@ func TestFetchBrokerByID(t *testing.T) {
 	t.Logf("Broker returned %s %s", broker.Name, broker.Cid)
 }
 
-func TestFetchBrokerListByTag(t *testing.T) {
+func TestFetchBrokerListByTag1(t *testing.T) {
 	if os.Getenv("CIRCONUS_API_TOKEN") == "" {
 		t.Skip("skipping test; $CIRCONUS_API_TOKEN not set")
 	}
@@ -87,7 +88,7 @@ func TestFetchBrokerListByTag(t *testing.T) {
 		t.Fatal("Invalid broker tag (empty)")
 	}
 
-	selectTag := SearchTagType(tag)
+	selectTag := strings.Split(strings.Replace(tag, " ", "", -1), ",")
 
 	brokers, err := apih.FetchBrokerListByTag(selectTag)
 	if err != nil {
@@ -98,6 +99,52 @@ func TestFetchBrokerListByTag(t *testing.T) {
 	expectedType := "[]api.Broker"
 	if actualType.String() != expectedType {
 		t.Errorf("Expected %s, got %s", expectedType, actualType.String())
+	}
+
+	if len(brokers) < 1 {
+		t.Fatalf("Expected at least 1 broker returned, recieved %d", len(brokers))
+	}
+
+	t.Logf("%d brokers returned", len(brokers))
+}
+
+func TestFetchBrokerListByTag2(t *testing.T) {
+	if os.Getenv("CIRCONUS_API_TOKEN") == "" {
+		t.Skip("skipping test; $CIRCONUS_API_TOKEN not set")
+	}
+	if os.Getenv("CIRC_API_TEST_BROKER_MULTI_TAG") == "" {
+		t.Skip("skipping test; $CIRC_API_TEST_BROKER_MULTI_TAG not set")
+	}
+
+	t.Log("Testing correct return from API call")
+
+	ac := &Config{}
+	ac.TokenKey = os.Getenv("CIRCONUS_API_TOKEN")
+	apih, err := NewAPI(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	tag := os.Getenv("CIRC_API_TEST_BROKER_MULTI_TAG")
+	if tag == "" {
+		t.Fatal("Invalid broker tag (empty)")
+	}
+
+	selectTag := strings.Split(strings.Replace(tag, " ", "", -1), ",")
+
+	brokers, err := apih.FetchBrokerListByTag(selectTag)
+	if err != nil {
+		t.Fatalf("Expected no error, got '%v'", err)
+	}
+
+	actualType := reflect.TypeOf(brokers)
+	expectedType := "[]api.Broker"
+	if actualType.String() != expectedType {
+		t.Errorf("Expected %s, got %s", expectedType, actualType.String())
+	}
+
+	if len(brokers) < 1 {
+		t.Fatalf("Expected at least 1 broker returned, recieved %d", len(brokers))
 	}
 
 	t.Logf("%d brokers returned", len(brokers))

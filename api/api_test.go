@@ -83,7 +83,7 @@ func TestApiCall(t *testing.T) {
 		t.Errorf("Expected error, got '%+v'", resp)
 	}
 
-	expected := fmt.Sprintf("[ERROR] fetching: GET %s/retrytest giving up after 4 attempts - last HTTP error: 500 blah blah blah\n", server.URL)
+	expected := fmt.Sprintf("[ERROR] fetching: GET %s/retrytest giving up after 5 attempts - last HTTP error: 500 blah blah blah\n", server.URL)
 	if err.Error() != expected {
 		t.Errorf("Expected\n'%s'\ngot\n'%s'\n", expected, err)
 	}
