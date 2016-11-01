@@ -43,16 +43,17 @@ func (cm *CheckManager) UpdateCheck(newMetrics map[string]*api.CheckBundleMetric
 	}
 
 	if cm.forceCheckUpdate {
-		cm.cbmu.Lock()
 
 		newCheckBundle, err := cm.apih.UpdateCheckBundle(cm.checkBundle)
 		if err != nil {
-			cm.Log.Printf("[ERROR] updating check bundle with new metrics %v", err)
+			cm.Log.Printf("[ERROR] updating check bundle %v", err)
 			return
 		}
 
 		cm.forceCheckUpdate = false
+		cm.cbmu.Lock()
 		cm.checkBundle = newCheckBundle
+		cm.cbmu.Unlock()
 		cm.inventoryMetrics()
 
 		cm.cbmu.Unlock()
