@@ -106,12 +106,13 @@ func NewAPI(ac *Config) (*API, error) {
 
 	a := &API{apiURL, key, app, ac.Debug, ac.Log}
 
+	a.Debug = ac.Debug
+	a.Log = ac.Log
+	if a.Debug && a.Log == nil {
+		a.Log = log.New(os.Stderr, "", log.LstdFlags)
+	}
 	if a.Log == nil {
-		if a.Debug {
-			a.Log = log.New(os.Stderr, "", log.LstdFlags)
-		} else {
-			a.Log = log.New(ioutil.Discard, "", log.LstdFlags)
-		}
+		a.Log = log.New(ioutil.Discard, "", log.LstdFlags)
 	}
 
 	return a, nil
@@ -187,7 +188,14 @@ func (a *API) apiCall(reqMethod string, reqPath string, data []byte) ([]byte, er
 	client.RetryWaitMin = minRetryWait
 	client.RetryWaitMax = maxRetryWait
 	client.RetryMax = maxRetries
-	client.Logger = a.Log
+	// retryablehttp only groks log or no log
+	// but, outputs everything as [DEBUG] messages
+	if a.Debug {
+		client.Logger = a.Log
+	} else {
+		client.Logger = log.New(ioutil.Discard, "", log.LstdFlags)
+	}
+
 	client.CheckRetry = retryPolicy
 
 	resp, err := client.Do(req)
