@@ -201,15 +201,15 @@ func (a *API) apiCall(reqMethod string, reqPath string, data []byte) ([]byte, er
 	resp, err := client.Do(req)
 	if err != nil {
 		if lastHTTPError != nil {
-			return nil, fmt.Errorf("[ERROR] fetching: %+v %+v", err, lastHTTPError)
+			return nil, lastHTTPError
 		}
-		return nil, fmt.Errorf("[ERROR] fetching %s: %+v", reqURL, err)
+		return nil, fmt.Errorf("[ERROR] %s: %+v", reqURL, err)
 	}
 
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("[ERROR] reading body %+v", err)
+		return nil, fmt.Errorf("[ERROR] reading response %+v", err)
 	}
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
