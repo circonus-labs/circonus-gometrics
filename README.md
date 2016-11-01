@@ -50,7 +50,7 @@ func main() {
 
     // Reset histogram metrics after each submission, default: "true"
     // Change to "false" to retain (and continue submitting) the last value.
-    // cmc.ResetHistogramss = "true"
+    // cmc.ResetHistograms = "true"
 
     // Reset text metrics after each submission, default: "true"
     // Change to "false" to retain (and continue submitting) the last value.
