@@ -41,7 +41,7 @@ func testCertServer() *httptest.Server {
 }
 
 func TestLoadCACert(t *testing.T) {
-	t.Log("Testing cert load, default cert")
+	t.Log("default cert, no fetch")
 
 	cm := &CheckManager{
 		enabled: false,
@@ -63,8 +63,6 @@ func TestFetchCert(t *testing.T) {
 	server := testCertServer()
 	defer server.Close()
 
-	t.Log("Testing fetch cert")
-
 	cm := &CheckManager{
 		enabled: true,
 	}
@@ -84,7 +82,7 @@ func TestFetchCert(t *testing.T) {
 		t.Fatalf("Expected no error, got %v", err)
 	}
 
-	t.Log("Testing cert load with fetch")
+	t.Log("load cert w/fetch")
 
 	cm.loadCACert()
 

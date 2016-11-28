@@ -105,7 +105,7 @@ func (cm *CheckManager) initializeTrapURL() error {
 	}
 
 	if !cm.enabled {
-		return errors.New("Unable to initialize trap, check manager is disabled.")
+		return errors.New("unable to initialize trap, check manager is disabled")
 	}
 
 	var err error
@@ -235,7 +235,7 @@ func (cm *CheckManager) checkBundleSearch(criteria string) (*api.CheckBundle, er
 	}
 
 	if numActive > 1 {
-		return nil, fmt.Errorf("[ERROR] Multiple possibilities multiple check bundles match criteria %s\n", criteria)
+		return nil, fmt.Errorf("[ERROR] multiple check bundles match criteria %s", criteria)
 	}
 
 	return &checkBundles[checkID], nil

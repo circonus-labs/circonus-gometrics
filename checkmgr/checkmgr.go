@@ -178,7 +178,7 @@ type Trap struct {
 func NewCheckManager(cfg *Config) (*CheckManager, error) {
 
 	if cfg == nil {
-		return nil, errors.New("Invalid Check Manager configuration (nil).")
+		return nil, errors.New("invalid Check Manager configuration (nil)")
 	}
 
 	cm := &CheckManager{
@@ -200,7 +200,7 @@ func NewCheckManager(cfg *Config) (*CheckManager, error) {
 	// Blank API Token *disables* check management
 	if cfg.API.TokenKey == "" {
 		if cm.checkSubmissionURL == "" {
-			return nil, errors.New("Invalid check manager configuration (no API token AND no submission url).")
+			return nil, errors.New("invalid check manager configuration (no API token AND no submission url)")
 		}
 		if err := cm.initializeTrapURL(); err != nil {
 			return nil, err

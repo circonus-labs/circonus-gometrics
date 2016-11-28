@@ -11,8 +11,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"os"
-	"reflect"
 	"strconv"
 	"strings"
 	"testing"
@@ -161,7 +159,7 @@ func TestBrokerSupportsCheckType(t *testing.T) {
 
 	cm := CheckManager{}
 
-	t.Log("Testing broker supports check type (ok)")
+	t.Log("supports 'httptrap' check type?")
 	{
 		ok := cm.brokerSupportsCheckType("httptrap", detail)
 		if !ok {
@@ -169,9 +167,9 @@ func TestBrokerSupportsCheckType(t *testing.T) {
 		}
 	}
 
-	t.Log("Testing broker supports check type (!ok)")
+	t.Log("supports 'foo' check type?")
 	{
-		ok := cm.brokerSupportsCheckType("xxx", detail)
+		ok := cm.brokerSupportsCheckType("foo", detail)
 		if ok {
 			t.Fatal("Expected not OK")
 		}
@@ -180,7 +178,7 @@ func TestBrokerSupportsCheckType(t *testing.T) {
 
 func TestGetBrokerCN(t *testing.T) {
 
-	t.Log("Testing get broker CN (URL w/IP)")
+	t.Log("URL with IP")
 	{
 		submissionURL := api.URLType("http://127.0.0.1:43191/blah/blah/blah")
 		cm := CheckManager{}
@@ -191,7 +189,7 @@ func TestGetBrokerCN(t *testing.T) {
 		}
 	}
 
-	t.Log("Testing get broker CN (URL w/FQDN)")
+	t.Log("URL with FQDN")
 	{
 		submissionURL := api.URLType("http://test.example.com:43191/blah/blah/blah")
 		cm := CheckManager{}
@@ -202,7 +200,7 @@ func TestGetBrokerCN(t *testing.T) {
 		}
 	}
 
-	t.Log("Testing get broker CN (URL w/invalid IP)")
+	t.Log("URL with invalid IP")
 	{
 		submissionURL := api.URLType("http://127.0.0.2:43191/blah/blah/blah")
 		cm := CheckManager{}
@@ -244,7 +242,7 @@ func TestSelectBroker(t *testing.T) {
 	validBrokerNonEnterprise.Details[0].IP = hostParts[0]
 	validBrokerNonEnterprise.Details[0].Port = hostPort
 
-	t.Log("Testing broker selection")
+	t.Log("default broker selection")
 	{
 		cm := &CheckManager{
 			checkType:             "httptrap",
@@ -267,7 +265,7 @@ func TestSelectBroker(t *testing.T) {
 		}
 	}
 
-	t.Log("Testing broker selection (none with tag)")
+	t.Log("tag, no brokers matching")
 	{
 		cm := &CheckManager{
 			checkType:             "httptrap",
@@ -296,7 +294,7 @@ func TestSelectBroker(t *testing.T) {
 		}
 	}
 
-	t.Log("Testing broker selection (multi w/tag, zero valid)")
+	t.Log("multiple brokers with tag, none valid")
 	{
 		cm := &CheckManager{
 			checkType:             "httptrap",
@@ -350,14 +348,14 @@ func TestIsValidBroker(t *testing.T) {
 		},
 	}
 
-	t.Log("Testing is valid broker (status unprovisioned)")
+	t.Log("status unprovisioned")
 	{
 		if cm.isValidBroker(&broker) {
 			t.Fatal("Expected invalid broker")
 		}
 	}
 
-	t.Log("Testing is valid broker (incorrect module)")
+	t.Log("does not have required module")
 	{
 		broker.Details[0].Modules = []string{"foo"}
 		broker.Details[0].Status = "active"
@@ -366,7 +364,7 @@ func TestIsValidBroker(t *testing.T) {
 		}
 	}
 
-	t.Log("Testing is valid broker (unable to connect, ext port)")
+	t.Log("unable to connect, broker.ExternalPort")
 	{
 		broker.Details[0].Modules = []string{"httptrap"}
 		broker.Details[0].Status = "active"
@@ -375,7 +373,7 @@ func TestIsValidBroker(t *testing.T) {
 		}
 	}
 
-	t.Log("Testing is valid broker (unable to connect, port)")
+	t.Log("unable to connect, broker.Port")
 	{
 		broker.Details[0].ExternalPort = 0
 		broker.Details[0].Modules = []string{"httptrap"}
@@ -385,7 +383,7 @@ func TestIsValidBroker(t *testing.T) {
 		}
 	}
 
-	t.Log("Testing is valid broker (unable to connect, default port)")
+	t.Log("unable to connect, default port")
 	{
 		broker.Details[0].ExternalPort = 0
 		broker.Details[0].Port = 0
@@ -417,7 +415,7 @@ func TestGetBroker(t *testing.T) {
 	validBroker.Details[0].IP = hostParts[0]
 	validBroker.Details[0].Port = hostPort
 
-	t.Log("Testing invalid custom broker")
+	t.Log("invalid custom broker")
 	{
 		cm := &CheckManager{}
 		ac := &api.Config{
@@ -440,7 +438,7 @@ func TestGetBroker(t *testing.T) {
 		}
 	}
 
-	t.Log("Testing valid custom broker")
+	t.Log("valid custom broker")
 	{
 
 		cm := &CheckManager{
@@ -466,40 +464,4 @@ func TestGetBroker(t *testing.T) {
 		}
 	}
 
-}
-
-func TestGetBrokerSelection(t *testing.T) {
-	if os.Getenv("CIRCONUS_API_TOKEN") == "" {
-		t.Skip("skipping test; $CIRCONUS_API_TOKEN not set")
-	}
-
-	t.Log("Testing broker selection")
-
-	cm := &CheckManager{}
-	ac := &api.Config{}
-	ac.TokenKey = os.Getenv("CIRCONUS_API_TOKEN")
-	apih, err := api.NewAPI(ac)
-	if err != nil {
-		t.Errorf("Expected no error, got '%v'", err)
-	}
-	cm.apih = apih
-	cm.brokerMaxResponseTime, _ = time.ParseDuration("5s")
-	cm.checkType = "httptrap"
-
-	broker, err := cm.getBroker()
-	if err != nil {
-		t.Fatalf("Expected no error, got '%v'", err)
-	}
-
-	actualType := reflect.TypeOf(broker)
-	expectedType := "*api.Broker"
-	if actualType.String() != expectedType {
-		t.Errorf("Expected *api.Broker, got %s", actualType.String())
-	}
-
-	if broker.CID[:8] != "/broker/" {
-		t.Errorf("Expected cid to start with '/broker/', found: %s", broker.CID)
-	}
-
-	t.Logf("Selected broker %s %s", broker.Name, broker.CID)
 }

@@ -13,7 +13,7 @@ func TestNewCheckManager(t *testing.T) {
 
 	t.Log("Testing correct error return when no Check Manager config supplied")
 	{
-		expectedError := errors.New("Invalid Check Manager configuration (nil).")
+		expectedError := errors.New("invalid Check Manager configuration (nil)")
 		_, err := NewCheckManager(nil)
 		if err == nil || err.Error() != expectedError.Error() {
 			t.Errorf("Expected an '%#v' error, got '%#v'", expectedError, err)
@@ -22,7 +22,7 @@ func TestNewCheckManager(t *testing.T) {
 
 	t.Log("Testing correct error return when no API Token and no Submission URL supplied")
 	{
-		expectedError := errors.New("Invalid check manager configuration (no API token AND no submission url).")
+		expectedError := errors.New("invalid check manager configuration (no API token AND no submission url)")
 		cfg := &Config{}
 		_, err := NewCheckManager(cfg)
 		if err == nil || err.Error() != expectedError.Error() {
