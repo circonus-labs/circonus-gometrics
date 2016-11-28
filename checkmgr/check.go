@@ -35,7 +35,7 @@ func (cm *CheckManager) UpdateCheck(newMetrics map[string]*api.CheckBundleMetric
 	}
 
 	// refresh check bundle (in case there were changes made by other apps or in UI)
-	checkBundle, err := cm.apih.FetchCheckBundleByCID(api.CIDType(cm.checkBundle.Cid))
+	checkBundle, err := cm.apih.FetchCheckBundleByCID(api.CIDType(cm.checkBundle.CID))
 	if err != nil {
 		cm.Log.Printf("[ERROR] unable to fetch up-to-date check bundle %v", err)
 		return
@@ -119,7 +119,7 @@ func (cm *CheckManager) initializeTrapURL() error {
 			return err
 		}
 		if !check.Active {
-			return fmt.Errorf("[ERROR] Check ID %v is not active", check.Cid)
+			return fmt.Errorf("[ERROR] Check ID %v is not active", check.CID)
 		}
 		// extract check id from check object returned from looking up using submission url
 		// set m.CheckId to the id
@@ -128,14 +128,14 @@ func (cm *CheckManager) initializeTrapURL() error {
 		// unless the new submission url can be fetched with the API (which is no
 		// longer possible using the original submission url)
 		var id int
-		id, err = strconv.Atoi(strings.Replace(check.Cid, "/check/", "", -1))
+		id, err = strconv.Atoi(strings.Replace(check.CID, "/check/", "", -1))
 		if err == nil {
 			cm.checkID = api.IDType(id)
 			cm.checkSubmissionURL = ""
 		} else {
 			cm.Log.Printf(
 				"[WARN] SubmissionUrl check to Check ID: unable to convert %s to int %q\n",
-				check.Cid, err)
+				check.CID, err)
 		}
 	} else if cm.checkID > 0 {
 		check, err = cm.apih.FetchCheckByID(cm.checkID)
@@ -143,7 +143,7 @@ func (cm *CheckManager) initializeTrapURL() error {
 			return err
 		}
 		if !check.Active {
-			return fmt.Errorf("[ERROR] Check ID %v is not active", check.Cid)
+			return fmt.Errorf("[ERROR] Check ID %v is not active", check.CID)
 		}
 	} else {
 		searchCriteria := fmt.Sprintf(
@@ -166,7 +166,7 @@ func (cm *CheckManager) initializeTrapURL() error {
 
 	if checkBundle == nil {
 		if check != nil {
-			checkBundle, err = cm.apih.FetchCheckBundleByCID(api.CIDType(check.CheckBundleCid))
+			checkBundle, err = cm.apih.FetchCheckBundleByCID(api.CIDType(check.CheckBundleCID))
 			if err != nil {
 				return err
 			}
@@ -257,8 +257,8 @@ func (cm *CheckManager) createNewCheck() (*api.CheckBundle, *api.Broker, error) 
 		return nil, nil, err
 	}
 
-	config := api.CheckBundle{
-		Brokers:     []string{broker.Cid},
+	config := &api.CheckBundle{
+		Brokers:     []string{broker.CID},
 		Config:      api.CheckBundleConfig{AsyncMetrics: true, Secret: checkSecret},
 		DisplayName: string(cm.checkDisplayName),
 		Metrics:     []api.CheckBundleMetric{},
