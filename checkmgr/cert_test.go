@@ -5,17 +5,47 @@
 package checkmgr
 
 import (
-	"os"
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/circonus-labs/circonus-gometrics/api"
 )
 
-func TestLoadCertNoToken(t *testing.T) {
-	t.Log("Testing cert load w/o API token")
+var (
+	apiCert = CACert{
+		Contents: string(circonusCA),
+	}
+)
 
-	cm := &CheckManager{}
-	cm.enabled = false
+func testCertServer() *httptest.Server {
+	f := func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/pki/ca.crt":
+			ret, err := json.Marshal(apiCert)
+			if err != nil {
+				panic(err)
+			}
+			w.WriteHeader(200)
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprintln(w, string(ret))
+		default:
+			w.WriteHeader(500)
+			fmt.Fprintln(w, "unsupported")
+		}
+	}
+
+	return httptest.NewServer(http.HandlerFunc(f))
+}
+
+func TestLoadCACert(t *testing.T) {
+	t.Log("Testing cert load, default cert")
+
+	cm := &CheckManager{
+		enabled: false,
+	}
 
 	cm.loadCACert()
 
@@ -29,22 +59,32 @@ func TestLoadCertNoToken(t *testing.T) {
 	}
 }
 
-func TestLoadCertWithToken(t *testing.T) {
-	if os.Getenv("CIRCONUS_API_TOKEN") == "" {
-		t.Skip("skipping test; $CIRCONUS_API_TOKEN not set")
+func TestFetchCert(t *testing.T) {
+	server := testCertServer()
+	defer server.Close()
+
+	t.Log("Testing fetch cert")
+
+	cm := &CheckManager{
+		enabled: true,
 	}
-
-	t.Log("Testing cert load with API token")
-
-	cm := &CheckManager{}
-	ac := &api.Config{}
-	ac.TokenKey = os.Getenv("CIRCONUS_API_TOKEN")
+	ac := &api.Config{
+		TokenApp: "abcd",
+		TokenKey: "1234",
+		URL:      server.URL,
+	}
 	apih, err := api.NewAPI(ac)
 	if err != nil {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 	cm.apih = apih
-	cm.enabled = true
+
+	_, err = cm.fetchCert()
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+
+	t.Log("Testing cert load with fetch")
 
 	cm.loadCACert()
 
@@ -56,4 +96,5 @@ func TestLoadCertWithToken(t *testing.T) {
 	if len(subjs) == 0 {
 		t.Errorf("Expected > 0 certs in pool")
 	}
+
 }

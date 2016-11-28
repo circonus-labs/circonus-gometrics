@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	//	"log"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
