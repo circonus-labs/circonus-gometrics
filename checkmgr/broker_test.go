@@ -64,9 +64,9 @@ func TestGetBrokerValid(t *testing.T) {
 		t.Fatalf("Expected no error, got '%v'", err)
 	}
 
-	expectedCid := fmt.Sprintf("/broker/%d", int(cm.brokerID))
-	if broker.Cid != expectedCid {
-		t.Fatalf("%s != %s", broker.Cid, expectedCid)
+	expectedCID := fmt.Sprintf("/broker/%d", int(cm.brokerID))
+	if broker.CID != expectedCID {
+		t.Fatalf("%s != %s", broker.CID, expectedCID)
 	}
 }
 
@@ -99,9 +99,9 @@ func TestGetBrokerSelection(t *testing.T) {
 		t.Errorf("Expected *api.Broker, got %s", actualType.String())
 	}
 
-	if broker.Cid[:8] != "/broker/" {
-		t.Errorf("Expected cid to start with '/broker/', found: %s", broker.Cid)
+	if broker.CID[:8] != "/broker/" {
+		t.Errorf("Expected cid to start with '/broker/', found: %s", broker.CID)
 	}
 
-	t.Logf("Selected broker %s %s", broker.Name, broker.Cid)
+	t.Logf("Selected broker %s %s", broker.Name, broker.CID)
 }
