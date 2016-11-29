@@ -186,4 +186,9 @@ func TestHistRecordValue(t *testing.T) {
 	if val[0] != expectedVal {
 		t.Errorf("Expected '%s', found '%s'", expectedVal, val[0])
 	}
+
+	hist = cm.NewHistogram("foo")
+	if hist == nil {
+		t.Fatalf("Expected non-nil")
+	}
 }
