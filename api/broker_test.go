@@ -145,196 +145,102 @@ func TestFetchBrokerByCID(t *testing.T) {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
-	t.Log("Testing invalid CID")
-	expectedError := errors.New("Invalid broker CID /1234")
-	_, err = apih.FetchBrokerByCID("/1234")
-	if err == nil {
-		t.Fatalf("Expected error")
-	}
-	if err.Error() != expectedError.Error() {
-		t.Fatalf("Expected %+v got '%+v'", expectedError, err)
-	}
-
-	t.Log("Testing valid CID")
-	broker, err := apih.FetchBrokerByCID(CIDType(testBroker.CID))
-	if err != nil {
-		t.Fatalf("Expected no error, got '%v'", err)
+	t.Log("invalid CID")
+	{
+		expectedError := errors.New("Invalid broker CID /1234")
+		_, err := apih.FetchBrokerByCID("/1234")
+		if err == nil {
+			t.Fatalf("Expected error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
 	}
 
-	actualType := reflect.TypeOf(broker)
-	expectedType := "*api.Broker"
-	if actualType.String() != expectedType {
-		t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+	t.Log("valid CID")
+	{
+		broker, err := apih.FetchBrokerByCID(CIDType(testBroker.CID))
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(broker)
+		expectedType := "*api.Broker"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
+
+		if broker.CID != testBroker.CID {
+			t.Fatalf("CIDs do not match: %+v != %+v\n", broker, testBroker)
+		}
 	}
-
-	if broker.CID != testBroker.CID {
-		t.Fatalf("CIDs do not match: %+v != %+v\n", broker, testBroker)
-	}
-}
-
-/*
-// Implicit tests:
-//
-// FetchBrokerByCID is called by FetchBrokerByID
-// BrokerSearch is called by FetchBrokerListByTag
-
-func TestFetchBrokerByID(t *testing.T) {
-	if os.Getenv("CIRCONUS_API_TOKEN") == "" {
-		t.Skip("skipping test; $CIRCONUS_API_TOKEN not set")
-	}
-	if os.Getenv("CIRC_API_TEST_BROKER_ID") == "" {
-		t.Skip("skipping test; $CIRC_API_TEST_BROKER_ID not set")
-	}
-
-	t.Log("Testing correct return from API call")
-
-	ac := &Config{}
-	ac.TokenKey = os.Getenv("CIRCONUS_API_TOKEN")
-	apih, err := NewAPI(ac)
-	if err != nil {
-		t.Errorf("Expected no error, got '%v'", err)
-	}
-
-	bid := os.Getenv("CIRC_API_TEST_BROKER_ID")
-	if bid == "" {
-		t.Fatal("Invalid broker id (empty)")
-	}
-
-	id, err := strconv.Atoi(bid)
-	if err != nil {
-		t.Fatalf("Unable to convert broker id %s to int", bid)
-	}
-
-	brokerID := IDType(id)
-
-	broker, err := apih.FetchBrokerByID(brokerID)
-	if err != nil {
-		t.Fatalf("Expected no error, got '%v'", err)
-	}
-
-	actualType := reflect.TypeOf(broker)
-	expectedType := "*api.Broker"
-	if actualType.String() != expectedType {
-		t.Errorf("Expected %s, got %s", expectedType, actualType.String())
-	}
-
-	expectedCid := fmt.Sprintf("/broker/%s", strconv.Itoa(int(brokerID)))
-	if broker.Cid != expectedCid {
-		t.Fatalf("%s != %s", broker.Cid, expectedCid)
-	}
-
-	t.Logf("Broker returned %s %s", broker.Name, broker.Cid)
-}
-
-func TestFetchBrokerListByTag1(t *testing.T) {
-	if os.Getenv("CIRCONUS_API_TOKEN") == "" {
-		t.Skip("skipping test; $CIRCONUS_API_TOKEN not set")
-	}
-	if os.Getenv("CIRC_API_TEST_BROKER_TAG") == "" {
-		t.Skip("skipping test; $CIRC_API_TEST_BROKER_TAG not set")
-	}
-
-	t.Log("Testing correct return from API call")
-
-	ac := &Config{}
-	ac.TokenKey = os.Getenv("CIRCONUS_API_TOKEN")
-	apih, err := NewAPI(ac)
-	if err != nil {
-		t.Errorf("Expected no error, got '%v'", err)
-	}
-
-	tag := os.Getenv("CIRC_API_TEST_BROKER_TAG")
-	if tag == "" {
-		t.Fatal("Invalid broker tag (empty)")
-	}
-
-	selectTag := strings.Split(strings.Replace(tag, " ", "", -1), ",")
-
-	brokers, err := apih.FetchBrokerListByTag(selectTag)
-	if err != nil {
-		t.Fatalf("Expected no error, got '%v'", err)
-	}
-
-	actualType := reflect.TypeOf(brokers)
-	expectedType := "[]api.Broker"
-	if actualType.String() != expectedType {
-		t.Errorf("Expected %s, got %s", expectedType, actualType.String())
-	}
-
-	if len(brokers) < 1 {
-		t.Fatalf("Expected at least 1 broker returned, recieved %d", len(brokers))
-	}
-
-	t.Logf("%d brokers returned", len(brokers))
-}
-
-func TestFetchBrokerListByTag2(t *testing.T) {
-	if os.Getenv("CIRCONUS_API_TOKEN") == "" {
-		t.Skip("skipping test; $CIRCONUS_API_TOKEN not set")
-	}
-	if os.Getenv("CIRC_API_TEST_BROKER_MULTI_TAG") == "" {
-		t.Skip("skipping test; $CIRC_API_TEST_BROKER_MULTI_TAG not set")
-	}
-
-	t.Log("Testing correct return from API call")
-
-	ac := &Config{}
-	ac.TokenKey = os.Getenv("CIRCONUS_API_TOKEN")
-	apih, err := NewAPI(ac)
-	if err != nil {
-		t.Errorf("Expected no error, got '%v'", err)
-	}
-
-	tag := os.Getenv("CIRC_API_TEST_BROKER_MULTI_TAG")
-	if tag == "" {
-		t.Fatal("Invalid broker tag (empty)")
-	}
-
-	selectTag := strings.Split(strings.Replace(tag, " ", "", -1), ",")
-
-	brokers, err := apih.FetchBrokerListByTag(selectTag)
-	if err != nil {
-		t.Fatalf("Expected no error, got '%v'", err)
-	}
-
-	actualType := reflect.TypeOf(brokers)
-	expectedType := "[]api.Broker"
-	if actualType.String() != expectedType {
-		t.Errorf("Expected %s, got %s", expectedType, actualType.String())
-	}
-
-	if len(brokers) < 1 {
-		t.Fatalf("Expected at least 1 broker returned, recieved %d", len(brokers))
-	}
-
-	t.Logf("%d brokers returned", len(brokers))
 }
 
 func TestFetchBrokerList(t *testing.T) {
-	if os.Getenv("CIRCONUS_API_TOKEN") == "" {
-		t.Skip("skipping test; $CIRCONUS_API_TOKEN not set")
+	server := testBrokerServer()
+	defer server.Close()
+
+	var apih *API
+	var err error
+
+	ac := &Config{
+		TokenKey: "abc123",
+		TokenApp: "test",
+		URL:      server.URL,
 	}
-
-	t.Log("Testing correct return from API call")
-
-	ac := &Config{}
-	ac.TokenKey = os.Getenv("CIRCONUS_API_TOKEN")
-	apih, err := NewAPI(ac)
+	apih, err = NewAPI(ac)
 	if err != nil {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
-	brokers, err := apih.FetchBrokerList()
+	_, err = apih.FetchBrokerList()
 	if err != nil {
-		t.Fatalf("Expected no error, got '%v'", err)
+		t.Fatalf("Expected no error, got %v", err)
 	}
-
-	actualType := reflect.TypeOf(brokers)
-	expectedType := "[]api.Broker"
-	if actualType.String() != expectedType {
-		t.Errorf("Expected %s, got %s", expectedType, actualType.String())
-	}
-
-	t.Logf("%d brokers returned", len(brokers))
 }
-*/
+
+func TestFetchBrokerListByTag(t *testing.T) {
+	server := testBrokerServer()
+	defer server.Close()
+
+	var apih *API
+	var err error
+
+	ac := &Config{
+		TokenKey: "abc123",
+		TokenApp: "test",
+		URL:      server.URL,
+	}
+	apih, err = NewAPI(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	_, err = apih.FetchBrokerListByTag(TagType([]string{"cat:tag"}))
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+}
+
+func TestBrokerSearch(t *testing.T) {
+	server := testBrokerServer()
+	defer server.Close()
+
+	var apih *API
+	var err error
+
+	ac := &Config{
+		TokenKey: "abc123",
+		TokenApp: "test",
+		URL:      server.URL,
+	}
+	apih, err = NewAPI(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	_, err = apih.BrokerSearch("foo")
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+}
