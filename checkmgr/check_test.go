@@ -114,7 +114,7 @@ func testCheckServer() *httptest.Server {
 		case "/check_bundle":
 			switch r.Method {
 			case "GET": // search
-				if r.URL.String() == "/check_bundle?search=%28active%3A1%29%28host%3A%22test_t%22%29%28type%3A%22%22%29%28tags%3Acat%3Atag%29%28notes%3Acgm_instanceid%3Dtest_id%29" {
+				if strings.HasPrefix(r.URL.String(), "/check_bundle?search=") {
 					r := []api.CheckBundle{testCheckBundle}
 					ret, err := json.Marshal(r)
 					if err != nil {

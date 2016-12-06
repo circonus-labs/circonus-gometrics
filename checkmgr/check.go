@@ -147,8 +147,11 @@ func (cm *CheckManager) initializeTrapURL() error {
 		}
 	} else {
 		searchCriteria := fmt.Sprintf(
-			"(active:1)(host:\"%s\")(type:\"%s\")(tags:%s)(notes:%s)",
-			cm.checkTarget, cm.checkType, strings.Join(cm.checkSearchTag, ","), fmt.Sprintf("cgm_instanceid=%s", cm.checkInstanceID))
+			"(active:1)(display_name:\"%s\")(host:\"%s\")(type:\"%s\")(tags:%s)",
+			cm.checkDisplayName,
+			cm.checkTarget,
+			cm.checkType,
+			strings.Join(cm.checkSearchTag, ","))
 		checkBundle, err = cm.checkBundleSearch(searchCriteria)
 		if err != nil {
 			return err
