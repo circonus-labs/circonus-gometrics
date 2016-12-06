@@ -17,6 +17,8 @@ import (
 	"log"
 	"math/rand"
 	"os"
+    "os/signal"
+    "syscall"
 	"time"
 
 	cgm "github.com/circonus-labs/circonus-gometrics"
@@ -150,7 +152,8 @@ func main() {
 
 	metrics, err := cgm.NewCirconusMetrics(cmc)
 	if err != nil {
-		panic(err)
+        logger.Println(err)
+		os.Exit(1)
 	}
 
 	src := rand.NewSource(time.Now().UnixNano())

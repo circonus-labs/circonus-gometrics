@@ -5,228 +5,317 @@
 package checkmgr
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
+	"io/ioutil"
+	"net/http"
+	"net/http/httptest"
+	"net/url"
+	"strconv"
+	"strings"
 	"testing"
+
+	"github.com/circonus-labs/circonus-gometrics/api"
 )
 
-func TestNewCheckManager1(t *testing.T) {
-	t.Log("Testing correct error return when no Check Manager config supplied")
-
-	expectedError := errors.New("Invalid Check Manager configuration (nil).")
-
-	_, err := NewCheckManager(nil)
-
-	if err == nil || err.Error() != expectedError.Error() {
-		t.Errorf("Expected an '%#v' error, got '%#v'", expectedError, err)
+var (
+	testCMCheck = api.Check{
+		CID:            "/check/1234",
+		Active:         true,
+		BrokerCID:      "/broker/1234",
+		CheckBundleCID: "/check_bundle/1234",
+		CheckUUID:      "abc123-a1b2-c3d4-e5f6-123abc",
+		Details: api.CheckDetails{
+			SubmissionURL: "https://127.0.0.1:43191/module/httptrap/abc123-a1b2-c3d4-e5f6-123abc/blah",
+		},
 	}
+
+	testCMCheckBundle = api.CheckBundle{
+		CheckUUIDs:    []string{"abc123-a1b2-c3d4-e5f6-123abc"},
+		Checks:        []string{"/check/1234"},
+		CID:           "/check_bundle/1234",
+		Created:       0,
+		LastModified:  0,
+		LastModifedBy: "",
+		ReverseConnectURLs: []string{
+			"mtev_reverse://127.0.0.1:43191/check/abc123-a1b2-c3d4-e5f6-123abc",
+		},
+		Brokers:     []string{"/broker/1234"},
+		DisplayName: "test check",
+		Config: api.CheckBundleConfig{
+			SubmissionURL: "https://127.0.0.1:43191/module/httptrap/abc123-a1b2-c3d4-e5f6-123abc/blah",
+			ReverseSecret: "blah",
+		},
+		Metrics: []api.CheckBundleMetric{
+			api.CheckBundleMetric{
+				Name:   "elmo",
+				Type:   "numeric",
+				Status: "active",
+			},
+		},
+		MetricLimit: 0,
+		Notes:       "",
+		Period:      60,
+		Status:      "active",
+		Target:      "127.0.0.1",
+		Timeout:     10,
+		Type:        "httptrap",
+		Tags:        []string{},
+	}
+
+	testCMBroker = api.Broker{
+		CID:  "/broker/1234",
+		Name: "test broker",
+		Type: "enterprise",
+		Details: []api.BrokerDetail{
+			api.BrokerDetail{
+				CN:           "testbroker.example.com",
+				ExternalHost: "",
+				ExternalPort: 43191,
+				IP:           "127.0.0.1",
+				Modules:      []string{"httptrap"},
+				Port:         43191,
+				Status:       "active",
+			},
+		},
+	}
+)
+
+func testCMServer() *httptest.Server {
+	f := func(w http.ResponseWriter, r *http.Request) {
+		// fmt.Printf("%s %s\n", r.Method, r.URL.String())
+		switch r.URL.Path {
+		case "/check_bundle/1234": // handle GET/PUT/DELETE
+			switch r.Method {
+			case "PUT": // update
+				defer r.Body.Close()
+				b, err := ioutil.ReadAll(r.Body)
+				if err != nil {
+					panic(err)
+				}
+				w.WriteHeader(200)
+				w.Header().Set("Content-Type", "application/json")
+				fmt.Fprintln(w, string(b))
+			case "GET": // get by id/cid
+				ret, err := json.Marshal(testCMCheckBundle)
+				if err != nil {
+					panic(err)
+				}
+				w.WriteHeader(200)
+				w.Header().Set("Content-Type", "application/json")
+				fmt.Fprintln(w, string(ret))
+			default:
+				w.WriteHeader(500)
+				fmt.Fprintln(w, "unsupported method")
+			}
+		case "/check_bundle":
+			switch r.Method {
+			case "GET": // search
+				if strings.HasPrefix(r.URL.String(), "/check_bundle?search=") {
+					r := []api.CheckBundle{testCMCheckBundle}
+					ret, err := json.Marshal(r)
+					if err != nil {
+						panic(err)
+					}
+					w.WriteHeader(200)
+					w.Header().Set("Content-Type", "application/json")
+					fmt.Fprintln(w, string(ret))
+				} else {
+					w.WriteHeader(200)
+					w.Header().Set("Content-Type", "application/json")
+					fmt.Fprintln(w, "[]")
+				}
+			case "POST": // create
+				defer r.Body.Close()
+				_, err := ioutil.ReadAll(r.Body)
+				if err != nil {
+					panic(err)
+				}
+				ret, err := json.Marshal(testCheckBundle)
+				if err != nil {
+					panic(err)
+				}
+				w.WriteHeader(200)
+				w.Header().Set("Content-Type", "application/json")
+				fmt.Fprintln(w, string(ret))
+			default:
+				w.WriteHeader(405)
+				fmt.Fprintf(w, "method not allowed %s", r.Method)
+			}
+		case "/broker":
+			switch r.Method {
+			case "GET":
+				r := []api.Broker{testCMBroker}
+				ret, err := json.Marshal(r)
+				if err != nil {
+					panic(err)
+				}
+				w.WriteHeader(200)
+				w.Header().Set("Content-Type", "application/json")
+				fmt.Fprintln(w, string(ret))
+			default:
+				w.WriteHeader(405)
+				fmt.Fprintf(w, "method not allowed %s", r.Method)
+			}
+		case "/broker/1234":
+			switch r.Method {
+			case "GET":
+				ret, err := json.Marshal(testCMBroker)
+				if err != nil {
+					panic(err)
+				}
+				w.WriteHeader(200)
+				w.Header().Set("Content-Type", "application/json")
+				fmt.Fprintln(w, string(ret))
+			default:
+				w.WriteHeader(405)
+				fmt.Fprintf(w, "method not allowed %s", r.Method)
+			}
+		case "/check":
+			switch r.Method {
+			case "GET":
+				r := []api.Check{testCMCheck}
+				ret, err := json.Marshal(r)
+				if err != nil {
+					panic(err)
+				}
+				w.WriteHeader(200)
+				w.Header().Set("Content-Type", "application/json")
+				fmt.Fprintln(w, string(ret))
+			default:
+				w.WriteHeader(405)
+				fmt.Fprintf(w, "method not allowed %s", r.Method)
+			}
+		case "/check/1234":
+			switch r.Method {
+			case "GET":
+				ret, err := json.Marshal(testCMCheck)
+				if err != nil {
+					panic(err)
+				}
+				w.WriteHeader(200)
+				w.Header().Set("Content-Type", "application/json")
+				fmt.Fprintln(w, string(ret))
+			default:
+				w.WriteHeader(405)
+				fmt.Fprintf(w, "method not allowed %s", r.Method)
+			}
+		default:
+			msg := fmt.Sprintf("not found %s", r.URL.Path)
+			w.WriteHeader(404)
+			fmt.Fprintln(w, msg)
+		}
+	}
+
+	return httptest.NewServer(http.HandlerFunc(f))
 }
 
-func TestNewCheckManager2(t *testing.T) {
-	t.Log("Testing correct error return when no API Token and no Submission URL supplied")
+func TestNewCheckManager(t *testing.T) {
 
-	expectedError := errors.New("Invalid check manager configuration (no API token AND no submission url).")
-
-	cfg := &Config{}
-	_, err := NewCheckManager(cfg)
-
-	if err == nil || err.Error() != expectedError.Error() {
-		t.Errorf("Expected an '%#v' error, got '%#v'", expectedError, err)
+	t.Log("no config supplied")
+	{
+		expectedError := errors.New("invalid Check Manager configuration (nil)")
+		_, err := NewCheckManager(nil)
+		if err == nil || err.Error() != expectedError.Error() {
+			t.Errorf("Expected an '%#v' error, got '%#v'", expectedError, err)
+		}
 	}
 
-}
+	t.Log("no API Token and no Submission URL supplied")
+	{
+		expectedError := errors.New("invalid check manager configuration (no API token AND no submission url)")
+		cfg := &Config{}
+		_, err := NewCheckManager(cfg)
+		if err == nil || err.Error() != expectedError.Error() {
+			t.Errorf("Expected an '%#v' error, got '%#v'", expectedError, err)
+		}
+	}
 
-func TestNewCheckManager3(t *testing.T) {
-	t.Log("Testing correct return with Submission URL (http) and no API Token supplied")
+	t.Log("no API Token, Submission URL (http) only")
+	{
+		cfg := &Config{}
+		cfg.Check.SubmissionURL = "http://127.0.0.1:56104"
+		cm, err := NewCheckManager(cfg)
+		if err != nil {
+			t.Errorf("Expected no error, got '%v'", err)
+		}
 
-	cfg := &Config{}
-	cfg.Check.SubmissionURL = "http://127.0.0.1:56104"
+		trap, err := cm.GetTrap()
+		if err != nil {
+			t.Errorf("Expected no error, got '%v'", err)
+		}
 
-	cm, err := NewCheckManager(cfg)
+		if trap.URL.String() != cfg.Check.SubmissionURL {
+			t.Errorf("Expected '%s' == '%s'", trap.URL.String(), cfg.Check.SubmissionURL)
+		}
+
+		if trap.TLS != nil {
+			t.Errorf("Expected nil found %#v", trap.TLS)
+		}
+	}
+
+	t.Log("no API Token, Submission URL (https) only")
+	{
+		cfg := &Config{}
+		cfg.Check.SubmissionURL = "https://127.0.0.1/v2"
+
+		cm, err := NewCheckManager(cfg)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		trap, err := cm.GetTrap()
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		if trap.URL.String() != cfg.Check.SubmissionURL {
+			t.Fatalf("Expected '%s' == '%s'", trap.URL.String(), cfg.Check.SubmissionURL)
+		}
+
+		if trap.TLS == nil {
+			t.Fatalf("Expected a x509 cert pool, found nil")
+		}
+	}
+
+	server := testCMServer()
+	defer server.Close()
+
+	testURL, err := url.Parse(server.URL)
 	if err != nil {
-		t.Errorf("Expected no error, got '%v'", err)
+		t.Fatalf("Error parsing temporary url %v", err)
 	}
 
-	trap, err := cm.GetTrap()
+	hostParts := strings.Split(testURL.Host, ":")
+	hostPort, err := strconv.Atoi(hostParts[1])
 	if err != nil {
-		t.Errorf("Expected no error, got '%v'", err)
+		t.Fatalf("Error converting port to numeric %v", err)
 	}
 
-	if trap.URL.String() != cfg.Check.SubmissionURL {
-		t.Errorf("Expected '%s' == '%s'", trap.URL.String(), cfg.Check.SubmissionURL)
+	testCMBroker.Details[0].ExternalHost = hostParts[0]
+	testCMBroker.Details[0].ExternalPort = hostPort
+
+	t.Log("Defaults")
+	{
+		cfg := &Config{
+			API: api.Config{
+				TokenKey: "1234",
+				TokenApp: "abc",
+				URL:      server.URL,
+			},
+		}
+
+		cm, err := NewCheckManager(cfg)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+		trap, err := cm.GetTrap()
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+		if trap.URL.String() != testCMCheckBundle.Config.SubmissionURL {
+			t.Fatalf("Expected '%s' got '%s'", testCMCheckBundle.Config.SubmissionURL, trap.URL.String())
+		}
 	}
-
-	if trap.TLS != nil {
-		t.Errorf("Expected nil found %#v", trap.TLS)
-	}
-}
-
-func TestNewCheckManager4(t *testing.T) {
-	t.Log("Testing correct return with Submission URL (https) and no API Token supplied")
-
-	cfg := &Config{}
-	cfg.Check.SubmissionURL = "https://127.0.0.1/v2"
-
-	cm, err := NewCheckManager(cfg)
-	if err != nil {
-		t.Fatalf("Expected no error, got '%v'", err)
-	}
-
-	trap, err := cm.GetTrap()
-	if err != nil {
-		t.Fatalf("Expected no error, got '%v'", err)
-	}
-
-	if trap.URL.String() != cfg.Check.SubmissionURL {
-		t.Fatalf("Expected '%s' == '%s'", trap.URL.String(), cfg.Check.SubmissionURL)
-	}
-
-	if trap.TLS == nil {
-		t.Fatalf("Expected a x509 cert pool, found nil")
-	}
-}
-
-func TestNewCheckManager5(t *testing.T) {
-	// flag to indicate whether to do this test
-	if os.Getenv("CIRCONUS_CGM_CMTEST5") == "" {
-		t.Skip("skipping test; $CIRCONUS_CGM_CMTEST5 not set")
-	}
-
-	// !!IMPORTANT!! this test is DESTRUCTIVE it will DELETE the check bundle
-	//
-	// this test expects to CREATE a check then, search (and find) the check.
-	//
-	// ensure there is no existing check which would match the default search criteria
-	// it *will* be deleted at the end of this test...
-	//
-	// the default InstanceId is "os.hostname():program name" e.g. testhost1:checkmgr.test
-	// the default SearchTag is "service:program name" e.g. service:checkmgr.test
-
-	if os.Getenv("CIRCONUS_API_TOKEN") == "" {
-		t.Skip("skipping test; $CIRCONUS_API_TOKEN not set")
-	}
-
-	t.Log("Testing correct check creation and search with API Token only")
-
-	cfg := &Config{}
-	cfg.API.TokenKey = os.Getenv("CIRCONUS_API_TOKEN")
-
-	t.Log("Testing correct check creation - should create a check, if it doesn't exist")
-	cm, err := NewCheckManager(cfg)
-	if err != nil {
-		t.Fatalf("Expected no error, got '%v'", err)
-	}
-
-	t.Log("Getting Trap from cm instance")
-	trap, err := cm.GetTrap()
-	if err != nil {
-		t.Fatalf("Expected no error, got '%v'", err)
-	}
-
-	t.Log("Testing correct check search - should find the check created")
-	cm2, err := NewCheckManager(cfg)
-	if err != nil {
-		t.Fatalf("Expected no error, got '%v'", err)
-	}
-
-	t.Log("Getting Trap from cm2 instance")
-	trap2, err := cm2.GetTrap()
-	if err != nil {
-		t.Fatalf("Expected no error, got '%v'", err)
-	}
-
-	t.Log("Comparing Trap URLs")
-	if trap.URL.String() != trap2.URL.String() {
-		t.Fatalf("Expected '%s' == '%s'", trap.URL.String(), trap2.URL.String())
-	}
-
-	t.Logf("Deleting %s %s", cm2.checkBundle.Cid, cm2.checkBundle.DisplayName)
-	_, err = cm2.apih.Delete(cm2.checkBundle.Cid)
-	if err != nil {
-		t.Fatalf("Expected no error, got '%v'", err)
-	}
-}
-
-func TestNewCheckManager6(t *testing.T) {
-	if os.Getenv("CIRCONUS_API_TOKEN") == "" {
-		t.Skip("skipping test; $CIRCONUS_API_TOKEN not set")
-	}
-	if os.Getenv("CIRCONUS_DELETED_CHECK_ID") == "" {
-		t.Skip("skipping test; $CIRCONUS_DELETED_CHECK_ID not set")
-	}
-
-	t.Log("Testing correct error return (from check.initializeTrapURL) with deleted check (by id)")
-
-	cfg := &Config{}
-	cfg.API.TokenKey = os.Getenv("CIRCONUS_API_TOKEN")
-	cfg.Check.ID = os.Getenv("CIRCONUS_DELETED_CHECK_ID")
-
-	cm, err := NewCheckManager(cfg)
-	if err == nil {
-		t.Errorf("Expected error, got '%#v'", cm)
-	}
-
-	expected := fmt.Errorf("[ERROR] Check ID /check/%s is not active", string(cfg.Check.ID))
-
-	if err.Error() != expected.Error() {
-		t.Errorf("Expected '%#v' got '%#v'", expected, err)
-	}
-}
-
-func TestNewCheckManager7(t *testing.T) {
-	if os.Getenv("CIRCONUS_API_TOKEN") == "" {
-		t.Skip("skipping test; $CIRCONUS_API_TOKEN not set")
-	}
-	if os.Getenv("CIRCONUS_DELETED_CHECK_URL") == "" {
-		t.Skip("skipping test; $CIRCONUS_DELETED_CHECK_URL not set")
-	}
-
-	t.Log("Testing correct error return (from check.initializeTrapURL) with deleted check (by url)")
-
-	// note: this never really gets to the check.Active test as the filter does not return a result
-	// a "feature" of "behavior" which may change in the future...
-
-	cfg := &Config{}
-	cfg.API.TokenKey = os.Getenv("CIRCONUS_API_TOKEN")
-	cfg.Check.SubmissionURL = os.Getenv("CIRCONUS_DELETED_CHECK_URL")
-
-	cm, err := NewCheckManager(cfg)
-	if err == nil {
-		t.Errorf("Expected error, got '%#v'", cm)
-	}
-
-	expected := "[ERROR] No checks found with UUID"
-
-	if err.Error()[0:len(expected)] != expected {
-		t.Errorf("Expected '%s' got '%s'", expected, err)
-	}
-}
-
-func TestNewCheckManager8(t *testing.T) {
-	if os.Getenv("CIRCONUS_API_TOKEN") == "" {
-		t.Skip("skipping test; $CIRCONUS_API_TOKEN not set")
-	}
-	if os.Getenv("CIRCONUS_NON_HTTPTRAP_CHECK_ID") == "" {
-		t.Skip("skipping test; $CIRCONUS_NON_HTTPTRAP_CHECK_ID not set")
-	}
-
-	t.Log("Testing correct return (from check.initializeTrapURL) with non-httptrap check id")
-
-	cfg := &Config{}
-	cfg.API.TokenKey = os.Getenv("CIRCONUS_API_TOKEN")
-	cfg.Check.ID = os.Getenv("CIRCONUS_NON_HTTPTRAP_CHECK_ID")
-
-	cm, err := NewCheckManager(cfg)
-	if err != nil {
-		t.Fatalf("Expected no error, got '%s'", err)
-	}
-
-	t.Log("Getting Trap from cm instance")
-	trap, err := cm.GetTrap()
-	if err != nil {
-		t.Fatalf("Expected no error, got '%v'", err)
-	}
-
-	t.Logf("Trap URL: %s", trap.URL.String())
 }

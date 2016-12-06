@@ -68,17 +68,21 @@ func TestSnapshot(t *testing.T) {
 
 	cm := &CirconusMetrics{}
 
+	cm.resetCounters = true
 	cm.counters = make(map[string]uint64)
 	cm.counterFuncs = make(map[string]func() uint64)
 	cm.Increment("foo")
 
+	cm.resetGauges = true
 	cm.gauges = make(map[string]string)
 	cm.gaugeFuncs = make(map[string]func() int64)
 	cm.Gauge("foo", 1)
 
+	cm.resetHistograms = true
 	cm.histograms = make(map[string]*Histogram)
 	cm.Timing("foo", 1)
 
+	cm.resetText = true
 	cm.text = make(map[string]string)
 	cm.textFuncs = make(map[string]func() string)
 	cm.SetText("foo", "bar")
