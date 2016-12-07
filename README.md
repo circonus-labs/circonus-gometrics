@@ -85,14 +85,25 @@ func main() {
 	// httptrap check by using the circonus api to search for a check matching the following criteria:
 	//      an active check,
 	//      of type httptrap,
-	//      where the target/host is equal to InstanceId - see below
+	//      where the target/host is equal to TargetHost - see below
 	//      and the check has a tag equal to SearchTag - see below
+    //      and the check has InstanceID in the notes field
+
 	// Instance ID - an identifier for the 'group of metrics emitted by this process or service'
-	//               this is used as the value for check.target (aka host)
 	// default: 'hostname':'program name'
 	// note: for a persistent instance that is ephemeral or transient where metric continuity is
 	//       desired set this explicitly so that the current hostname will not be used.
 	// cmc.CheckManager.Check.InstanceID = ""
+
+    // custom display name for check, default: InstanceID
+	// cmc.CheckManager.Check.DisplayName = ""
+
+    // explicitly setting check.target, default: InstanceID
+    // cmc.CheckManager.Check.TargetHost = ""
+    // e.g.
+    //  if hn, err := os.Hostname(); err == nil {
+    //      cmc.CheckManager.Check.TargetHost = hn
+    //  }
 
 	// Search tag - specific tag(s) used in conjunction with isntanceId to search for an
     // existing check. comma separated string of tags (spaces will be removed, no commas
@@ -115,9 +126,6 @@ func main() {
 	// url will be refreshed (e.g. if the broker is changed
 	// in the UI) default 5 minutes
 	// cmc.CheckManager.Check.MaxURLAge = "5m"
-
-	// custom display name for check, default: "InstanceId /cgm"
-	// cmc.CheckManager.Check.DisplayName = ""
 
     // force metric activation - if a metric has been disabled via the UI
 	// the default behavior is to *not* re-activate the metric; this setting
