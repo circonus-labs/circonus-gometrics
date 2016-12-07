@@ -146,12 +146,25 @@ func (cm *CheckManager) initializeTrapURL() error {
 			return fmt.Errorf("[ERROR] Check ID %v is not active", check.CID)
 		}
 	} else {
-		searchCriteria := fmt.Sprintf(
-			"(active:1)(type:\"%s\")(tags:%s)", cm.checkType, strings.Join(cm.checkSearchTag, ","))
-		filterCriteria := map[string]string{"f_notes": cm.getNotes()}
-		checkBundle, err = cm.checkBundleSearch(searchCriteria, filterCriteria)
-		if err != nil {
-			return err
+		if checkBundle == nil {
+			// old search (instanceid as check.target)
+			searchCriteria := fmt.Sprintf(
+				"(active:1)(type:\"%s\")(host:\"%s\")(tags:%s)", cm.checkType, cm.checkTarget, strings.Join(cm.checkSearchTag, ","))
+			checkBundle, err = cm.checkBundleSearch(searchCriteria, map[string]string{})
+			if err != nil {
+				return err
+			}
+		}
+
+		if checkBundle == nil {
+			// new search (check.target != instanceid, instanceid encoded in notes field)
+			searchCriteria := fmt.Sprintf(
+				"(active:1)(type:\"%s\")(tags:%s)", cm.checkType, strings.Join(cm.checkSearchTag, ","))
+			filterCriteria := map[string]string{"f_notes": cm.getNotes()}
+			checkBundle, err = cm.checkBundleSearch(searchCriteria, filterCriteria)
+			if err != nil {
+				return err
+			}
 		}
 
 		if checkBundle == nil {
