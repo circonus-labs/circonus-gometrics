@@ -30,7 +30,7 @@ func main() {
 
     // API
     cfg.CheckManager.API.TokenKey = ""
-    cfg.CheckManager.API.TokenApp = ""
+    cfg.CheckManager.API.TokenApp = "circonus-gometrics"
     cfg.CheckManager.API.TokenURL = "https://api.circonus.com/v2"
 
     // Check
@@ -63,14 +63,14 @@ func main() {
 | General ||
 | `cfg.Log` | none | log.Logger instance to send logging messages. Default is to discard messages. If Debug is turned on and no instance is specified, messages will go to stderr. |
 | `cfg.Debug` | false | Turn on debugging messages. |
-| `cfg.Interval` | "10s" | Interval at which metrics are flushed and send to Circonus. |
+| `cfg.Interval` | "10s" | Interval at which metrics are flushed and sent to Circonus. |
 | `cfg.ResetCounters` | "true" | Reset counter metrics after each submission. |
 | `cfg.ResetGauges` | "true" | Reset gauge metrics after each submission. |
 | `cfg.ResetHistograms` | "true" | Reset histogram metrics after each submission. |
 | `cfg.ResetText` | "true" | Reset text metrics after each submission. |
 |API||
 | `cfg.CheckManager.API.TokenKey` | "" | [Circonus API Token key](https://login.circonus.com/user/tokens) |
-| `cfg.CheckManager.API.TokenApp` | "" | App associated with API token |
+| `cfg.CheckManager.API.TokenApp` | "circonus-gometrics" | App associated with API token |
 | `cfg.CheckManager.API.URL` | "https://api.circonus.com/v2" | Circonus API URL |
 |Check||
 | `cfg.CheckManager.Check.ID` | "" | Check ID of previously created check. (*Note: **check id** not **check bundle id**.*) |
@@ -95,4 +95,4 @@ func main() {
    * `cfg.Debug` - a boolean true|false.
 * At a minimum, one of either `API.TokenKey` or `Check.SubmissionURL` is **required** for cgm to function.
 * Check management can be disabled by providing a `Check.SubmissionURL` without an `API.TokenKey`. Note: the supplied URL needs to be http or the broker needs to be running with a cert which can be verified. Otherwise, the `API.TokenKey` will be required to retrieve the correct CA certificate to validate the broker's cert for the SSL connection.
-* A note on `Check.InstanceID`, the instance id is used to consistently identify a check. The display name can be changed in the UI. The hostname may be ephemeral. For metric continuity, the instance id is used to locate existing checks. Since the check.target is never actually used by an httptrap check it is more decorative than functional, a valid FQDN is not required for an httptrap check.target. But, using instance id as the target can pollute the Host list in the UI.
+* A note on `Check.InstanceID`, the instance id is used to consistently identify a check. The display name can be changed in the UI. The hostname may be ephemeral. For metric continuity, the instance id is used to locate existing checks. Since the check.target is never actually used by an httptrap check it is more decorative than functional, a valid FQDN is not required for an httptrap check.target. But, using instance id as the target can pollute the Host list in the UI with host:application specific entries.

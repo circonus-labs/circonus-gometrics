@@ -1,14 +1,93 @@
 # Circonus metrics tracking for Go applications
 
-This library supports named counters, gauges and histograms.
-It also provides convenience wrappers for registering latency
-instrumented functions with Go's builtin http server.
+This library supports named counters, gauges and histograms. It also provides convenience wrappers for registering latency instrumented functions with Go's builtin http server.
 
-Initializing only requires setting an ApiToken.
+Initializing only requires setting an [API Token](https://login.circonus.com/user/tokens) at a minimum.
+
+## Options
+
+See [OPTIONS.md](OPTIONS.md) for information on all of the available cgm options.
 
 ## Example
 
-**rough and simple**
+### Bare bones minimum
+
+A working cut-n-past example. Simply set the required environment variable `CIRCONUS_API_TOKEN` and run.
+
+```go
+package main
+
+import (
+	"log"
+	"math/rand"
+	"os"
+    "os/signal"
+    "syscall"
+	"time"
+
+	cgm "github.com/circonus-labs/circonus-gometrics"
+)
+
+func main() {
+
+    logger := log.New(os.Stdout, "", log.LstdFlags)
+
+	logger.Println("Configuring cgm")
+
+	cmc := &cgm.Config{}
+    cmc.Debug := false // set to true for debug messages
+	cmc.Log = logger
+
+	// Circonus API Token key (https://login.circonus.com/user/tokens)
+	cmc.CheckManager.API.TokenKey = os.Getenv("CIRCONUS_API_TOKEN")
+
+	logger.Println("Creating new cgm instance")
+
+	metrics, err := cgm.NewCirconusMetrics(cmc)
+	if err != nil {
+        logger.Println(err)
+		os.Exit(1)
+	}
+
+	src := rand.NewSource(time.Now().UnixNano())
+	rnd := rand.New(src)
+
+	logger.Println("Starting cgm internal auto-flush timer")
+	metrics.Start()
+
+    logger.Println("Adding ctrl-c trap")
+	c := make(chan os.Signal, 2)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-c
+		logger.Println("Received CTRL-C, flushing outstanding metrics before exit")
+		metrics.Flush()
+		os.Exit(0)
+	}()
+
+	logger.Println("Starting to send metrics")
+
+	// number of "sets" of metrics to send
+	max := 60
+
+	for i := 1; i < max; i++ {
+		logger.Printf("\tmetric set %d of %d", i, 60)
+		metrics.Timing("foo", rnd.Float64()*10)
+		metrics.Increment("bar")
+		metrics.Gauge("baz", 10)
+        time.Sleep(time.Second)
+	}
+
+    metrics.SetText("fini", "complete")
+
+	logger.Println("Flushing any outstanding metrics manually")
+	metrics.Flush()
+}
+```
+
+### A more complete example
+
+A working, cut-n-paste example with all options available for modification. Also, demonstrates metric tagging.
 
 ```go
 package main
@@ -212,13 +291,13 @@ func main() {
 
 ### HTTP Handler wrapping
 
-```
+```go
 http.HandleFunc("/", metrics.TrackHTTPLatency("/", handler_func))
 ```
 
 ### HTTP latency example
 
-```
+```go
 package main
 
 import (
