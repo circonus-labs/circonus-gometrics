@@ -91,7 +91,7 @@ func (a *API) FetchCheckBundleByCID(cid CIDType) (*CheckBundle, error) {
 }
 
 // CheckBundleSearch returns list of check bundles matching a search query
-//    - a search query not a filter (see: https://login.circonus.com/resources/api#searching)
+//    - a search query (see: https://login.circonus.com/resources/api#searching)
 func (a *API) CheckBundleSearch(searchCriteria SearchQueryType) ([]CheckBundle, error) {
 	reqURL := url.URL{
 		Path: baseCheckBundlePath,
@@ -117,7 +117,8 @@ func (a *API) CheckBundleSearch(searchCriteria SearchQueryType) ([]CheckBundle, 
 }
 
 // CheckBundleFilterSearch returns list of check bundles matching a search query and filter
-//    - a search query not a filter (see: https://login.circonus.com/resources/api#searching)
+//    - a search query (see: https://login.circonus.com/resources/api#searching)
+//    - a filter (see: https://login.circonus.com/resources/api#filtering)
 func (a *API) CheckBundleFilterSearch(searchCriteria SearchQueryType, filterCriteria map[string]string) ([]CheckBundle, error) {
 	reqURL := url.URL{
 		Path: baseCheckBundlePath,
