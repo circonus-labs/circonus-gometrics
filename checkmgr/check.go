@@ -147,10 +147,7 @@ func (cm *CheckManager) initializeTrapURL() error {
 		}
 	} else {
 		searchCriteria := fmt.Sprintf(
-			"(active:1)(host:\"%s\")(type:\"%s\")(tags:%s)",
-			cm.checkTarget,
-			cm.checkType,
-			strings.Join(cm.checkSearchTag, ","))
+			"(active:1)(type:\"%s\")(tags:%s)", cm.checkType, strings.Join(cm.checkSearchTag, ","))
 		filterCriteria := map[string]string{"f_notes": cm.getNotes()}
 		checkBundle, err = cm.checkBundleSearch(searchCriteria, filterCriteria)
 		if err != nil {
