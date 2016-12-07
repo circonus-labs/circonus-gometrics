@@ -218,7 +218,7 @@ func (cm *CheckManager) initializeTrapURL() error {
 
 // Search for a check bundle given a predetermined set of criteria
 func (cm *CheckManager) checkBundleSearch(criteria string, filter map[string]string) (*api.CheckBundle, error) {
-	checkBundles, err := cm.apih.CheckBundleSearch(api.SearchQueryType(criteria), filter)
+	checkBundles, err := cm.apih.CheckBundleFilterSearch(api.SearchQueryType(criteria), filter)
 	if err != nil {
 		return nil, err
 	}
