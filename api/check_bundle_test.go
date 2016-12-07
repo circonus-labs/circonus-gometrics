@@ -203,7 +203,7 @@ func TestCheckBundleSearch(t *testing.T) {
 
 	t.Log("Testing w/o search criteria")
 	{
-		bundles, err := apih.CheckBundleSearch("")
+		bundles, err := apih.CheckBundleSearch("", map[string]string{})
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
@@ -217,7 +217,7 @@ func TestCheckBundleSearch(t *testing.T) {
 
 	t.Log("Testing with search criteria")
 	{
-		bundles, err := apih.CheckBundleSearch("test")
+		bundles, err := apih.CheckBundleSearch("test", map[string]string{"f_notes": "foo"})
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
