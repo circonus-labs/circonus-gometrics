@@ -146,15 +146,25 @@ func (cm *CheckManager) initializeTrapURL() error {
 			return fmt.Errorf("[ERROR] Check ID %v is not active", check.CID)
 		}
 	} else {
-		searchCriteria := fmt.Sprintf(
-			"(active:1)(display_name:\"%s\")(host:\"%s\")(type:\"%s\")(tags:%s)",
-			cm.checkDisplayName,
-			cm.checkTarget,
-			cm.checkType,
-			strings.Join(cm.checkSearchTag, ","))
-		checkBundle, err = cm.checkBundleSearch(searchCriteria)
-		if err != nil {
-			return err
+		if checkBundle == nil {
+			// old search (instanceid as check.target)
+			searchCriteria := fmt.Sprintf(
+				"(active:1)(type:\"%s\")(host:\"%s\")(tags:%s)", cm.checkType, cm.checkTarget, strings.Join(cm.checkSearchTag, ","))
+			checkBundle, err = cm.checkBundleSearch(searchCriteria, map[string]string{})
+			if err != nil {
+				return err
+			}
+		}
+
+		if checkBundle == nil {
+			// new search (check.target != instanceid, instanceid encoded in notes field)
+			searchCriteria := fmt.Sprintf(
+				"(active:1)(type:\"%s\")(tags:%s)", cm.checkType, strings.Join(cm.checkSearchTag, ","))
+			filterCriteria := map[string]string{"f_notes": cm.getNotes()}
+			checkBundle, err = cm.checkBundleSearch(searchCriteria, filterCriteria)
+			if err != nil {
+				return err
+			}
 		}
 
 		if checkBundle == nil {
@@ -217,8 +227,8 @@ func (cm *CheckManager) initializeTrapURL() error {
 }
 
 // Search for a check bundle given a predetermined set of criteria
-func (cm *CheckManager) checkBundleSearch(criteria string) (*api.CheckBundle, error) {
-	checkBundles, err := cm.apih.CheckBundleSearch(api.SearchQueryType(criteria))
+func (cm *CheckManager) checkBundleSearch(criteria string, filter map[string]string) (*api.CheckBundle, error) {
+	checkBundles, err := cm.apih.CheckBundleFilterSearch(api.SearchQueryType(criteria), filter)
 	if err != nil {
 		return nil, err
 	}
@@ -266,11 +276,11 @@ func (cm *CheckManager) createNewCheck() (*api.CheckBundle, *api.Broker, error) 
 		DisplayName: string(cm.checkDisplayName),
 		Metrics:     []api.CheckBundleMetric{},
 		MetricLimit: 0,
-		Notes:       fmt.Sprintf("cgm_instanceid=%s", cm.checkInstanceID),
+		Notes:       cm.getNotes(),
 		Period:      60,
 		Status:      statusActive,
 		Tags:        append(cm.checkSearchTag, cm.checkTags...),
-		Target:      cm.checkTarget,
+		Target:      string(cm.checkTarget),
 		Timeout:     10,
 		Type:        string(cm.checkType),
 	}
@@ -292,4 +302,8 @@ func (cm *CheckManager) makeSecret() (string, error) {
 	}
 	hash.Write(x)
 	return hex.EncodeToString(hash.Sum(nil))[0:16], nil
+}
+
+func (cm *CheckManager) getNotes() string {
+	return fmt.Sprintf("cgm_instanceid|%s", cm.checkInstanceID)
 }

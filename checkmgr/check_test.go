@@ -114,7 +114,17 @@ func testCheckServer() *httptest.Server {
 		case "/check_bundle":
 			switch r.Method {
 			case "GET": // search
-				if strings.HasPrefix(r.URL.String(), "/check_bundle?search=") {
+				//fmt.Println(r.URL.String())
+				if strings.HasPrefix(r.URL.String(), "/check_bundle?f_notes=") && strings.Contains(r.URL.String(), "found_notes") {
+					r := []api.CheckBundle{testCheckBundle}
+					ret, err := json.Marshal(r)
+					if err != nil {
+						panic(err)
+					}
+					w.WriteHeader(200)
+					w.Header().Set("Content-Type", "application/json")
+					fmt.Fprintln(w, string(ret))
+				} else if strings.HasPrefix(r.URL.String(), "/check_bundle?search=") && strings.Contains(r.URL.String(), "found_target") {
 					r := []api.CheckBundle{testCheckBundle}
 					ret, err := json.Marshal(r)
 					if err != nil {
@@ -421,10 +431,25 @@ func TestInitializeTrapURL(t *testing.T) {
 	cm.checkID = 0
 	cm.checkTarget = "test_t"
 	cm.checkInstanceID = "test_id"
-	cm.checkSearchTag = api.TagType([]string{"cat:tag"})
+	cm.checkSearchTag = api.TagType([]string{"s:found_target"})
 	cm.checkDisplayName = "test_dn"
 
-	t.Log("cm enabled, search [found]")
+	t.Log("cm enabled, search [found by target]")
+	{
+		if err := cm.initializeTrapURL(); err != nil {
+			t.Fatalf("Expected no error, got %v", err)
+		}
+	}
+
+	cm.trapURL = ""
+	cm.checkSubmissionURL = ""
+	cm.checkID = 0
+	cm.checkTarget = "test_t"
+	cm.checkInstanceID = "test_id"
+	cm.checkSearchTag = api.TagType([]string{"s:found_notes"})
+	cm.checkDisplayName = "test_dn"
+
+	t.Log("cm enabled, search [found by notes]")
 	{
 		if err := cm.initializeTrapURL(); err != nil {
 			t.Fatalf("Expected no error, got %v", err)
