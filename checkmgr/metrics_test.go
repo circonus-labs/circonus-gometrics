@@ -168,6 +168,11 @@ func TestAddMetricTags(t *testing.T) {
 			Status: "active",
 		},
 		api.CheckBundleMetric{
+			Name:   "foo",
+			Type:   "numeric",
+			Status: "active",
+		},
+		api.CheckBundleMetric{
 			Name:   "baz",
 			Type:   "numeric",
 			Status: "active",
@@ -177,25 +182,60 @@ func TestAddMetricTags(t *testing.T) {
 
 	t.Log("metric named 'bar', add tag")
 	{
+		cm.metricTags = make(map[string][]string)
 		// append, zero current
 		if !cm.AddMetricTags("bar", []string{"cat:tag"}, true) {
 			t.Fatalf("Expected true")
 		}
-		// replace any existing
-		if !cm.AddMetricTags("bar", []string{"cat:tag"}, false) {
-			t.Fatalf("Expected true")
+		if cm.metricTags["bar"][0] != "cat:tag" {
+			t.Fatalf("expected cat:tag")
+		}
+		// tag already exists, no need to add
+		if cm.AddMetricTags("bar", []string{"cat:tag"}, true) {
+			t.Fatalf("Expected false")
+		}
+		// append, zero tags
+		if cm.AddMetricTags("bar", []string{}, true) {
+			t.Fatalf("Expected false")
 		}
 	}
 
 	t.Log("metric named 'baz', add tag")
 	{
+		cm.metricTags = make(map[string][]string)
 		// append, one current
-		if !cm.AddMetricTags("baz", []string{"cat:tag"}, true) {
+		if !cm.AddMetricTags("baz", []string{"cat2:tag2"}, true) {
 			t.Fatalf("Expected true")
 		}
 		// append, tag already exists
-		if cm.AddMetricTags("baz", []string{"cat:tag"}, true) {
+		if cm.AddMetricTags("baz", []string{"cat2:tag2"}, true) {
 			t.Fatalf("Expected false")
+		}
+	}
+
+	t.Log("metric named 'foo', set tag")
+	{
+		cm.metricTags = make(map[string][]string)
+
+		// set tag
+		if !cm.AddMetricTags("foo", []string{"cat:tag"}, false) {
+			t.Fatalf("Expected true")
+		}
+		// set, reset (pass 0 tags)
+		if !cm.AddMetricTags("foo", []string{}, false) {
+			t.Fatalf("Expected true")
+		}
+		// set tag
+		if !cm.AddMetricTags("foo", []string{"cat:tag"}, false) {
+			t.Fatalf("Expected true")
+		}
+		// set, no update (same tag)
+		if cm.AddMetricTags("foo", []string{"cat:tag"}, false) {
+			t.Fatalf("Expected false")
+		}
+		// replace any existing
+		if !cm.AddMetricTags("foo", []string{"cat:newtag"}, false) {
+			t.Fatalf("Expected true")
 		}
 	}
 }
