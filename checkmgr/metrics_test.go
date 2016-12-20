@@ -264,8 +264,13 @@ func TestAddMetricTags(t *testing.T) {
 			t.Fatalf("Expected true")
 		}
 
-		if _, found := cm.metricTags["foo"]; found {
-			t.Fatal("expected not found")
+		if _, found := cm.metricTags["foo"]; !found {
+			t.Fatal("expected found")
+		}
+
+		expected["foo"] = []string{}
+		if !reflect.DeepEqual(cm.metricTags, expected) {
+			t.Fatalf("expected %v got %+v", expected, cm.metricTags)
 		}
 
 		// set tag
