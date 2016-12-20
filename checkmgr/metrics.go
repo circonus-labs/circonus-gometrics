@@ -54,7 +54,7 @@ func (cm *CheckManager) AddMetricTags(metricName string, tags []string, appendTa
 		}
 	}
 
-	action := "no new"
+	action := ""
 	if appendTags {
 		numNewTags := countNewTags(currentTags, tags)
 		if numNewTags > 0 {
@@ -63,15 +63,14 @@ func (cm *CheckManager) AddMetricTags(metricName string, tags []string, appendTa
 			tagsUpdated = true
 		}
 	} else {
-		action = "Set"
-		if len(tags) == 0 {
-			if len(currentTags) > 0 {
-				currentTags = []string{}
-				tagsUpdated = true
-			}
+		if len(tags) != len(currentTags) {
+			action = "Set"
+			currentTags = tags
+			tagsUpdated = true
 		} else {
 			numNewTags := countNewTags(currentTags, tags)
 			if numNewTags > 0 {
+				action = "Set"
 				currentTags = tags
 				tagsUpdated = true
 			}
@@ -79,16 +78,10 @@ func (cm *CheckManager) AddMetricTags(metricName string, tags []string, appendTa
 	}
 
 	if tagsUpdated {
-		if len(currentTags) == 0 {
-			if _, exists := cm.metricTags[metricName]; exists {
-				delete(cm.metricTags, metricName)
-			}
-		} else {
-			cm.metricTags[metricName] = currentTags
-		}
+		cm.metricTags[metricName] = currentTags
 	}
 
-	if cm.Debug {
+	if cm.Debug && action != "" {
 		cm.Log.Printf("[DEBUG] %s metric tag(s) %s %v\n", action, metricName, tags)
 	}
 
