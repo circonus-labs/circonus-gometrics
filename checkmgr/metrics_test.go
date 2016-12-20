@@ -17,6 +17,7 @@ func TestIsMetricActive(t *testing.T) {
 
 	cm.availableMetrics = map[string]bool{
 		"foo": true,
+		"baz": false,
 	}
 
 	t.Log("'foo' in active metric list")
@@ -29,6 +30,13 @@ func TestIsMetricActive(t *testing.T) {
 	t.Log("'bar' not in active metric list")
 	{
 		if cm.IsMetricActive("bar") {
+			t.Error("Expected false")
+		}
+	}
+
+	t.Log("'baz' in active metric list, not active")
+	{
+		if cm.IsMetricActive("baz") {
 			t.Error("Expected false")
 		}
 	}
