@@ -28,7 +28,7 @@ type Check struct {
 	Details        CheckDetails `json:"_details"`
 }
 
-var baseCheckPath = "/check"
+const baseCheckPath = "/check"
 
 // FetchCheckByID fetch a check configuration by id
 func (a *API) FetchCheckByID(id IDType) (*Check, error) {

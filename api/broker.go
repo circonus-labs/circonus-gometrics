@@ -37,7 +37,7 @@ type Broker struct {
 	Type      string         `json:"_type"`
 }
 
-var baseBrokerPath = "/broker"
+const baseBrokerPath = "/broker"
 
 // FetchBrokerByID fetch a broker configuration by [group]id
 func (a *API) FetchBrokerByID(id IDType) (*Broker, error) {

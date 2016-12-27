@@ -57,7 +57,7 @@ type CheckBundle struct {
 	Type               string              `json:"type"`
 }
 
-var baseCheckBundlePath = "/check_bundle"
+const baseCheckBundlePath = "/check_bundle"
 
 // FetchCheckBundleByID fetch a check bundle configuration by id
 func (a *API) FetchCheckBundleByID(id IDType) (*CheckBundle, error) {

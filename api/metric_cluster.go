@@ -28,7 +28,7 @@ type MetricCluster struct {
 	Tags                []string            `json:"tags"`
 }
 
-var baseMetricClusterPath = "/metric_cluster"
+const baseMetricClusterPath = "/metric_cluster"
 
 // FetchMetricClusterByID fetch a metric cluster configuration by id
 func (a *API) FetchMetricClusterByID(id IDType, extras string) (*MetricCluster, error) {
