@@ -11,20 +11,6 @@ import (
 	"regexp"
 )
 
-// CheckBundleConfig configuration specific to check type
-type CheckBundleConfig struct {
-	AsyncMetrics  bool   `json:"async_metrics"`
-	Secret        string `json:"secret"`
-	SubmissionURL string `json:"submission_url"`
-	ReverseSecret string `json:"reverse:secret_key"`
-	HTTPVersion   string `json:"http_version,omitempty"`
-	Method        string `json:"method,omitempty"`
-	Payload       string `json:"payload,omitempty"`
-	Port          string `json:"port,omitempty"`
-	ReadLimit     string `json:"read_limit,omitempty"`
-	URL           string `json:"url,omitempty"`
-}
-
 // CheckBundleMetric individual metric configuration
 type CheckBundleMetric struct {
 	Name   string   `json:"name"`
@@ -42,9 +28,9 @@ type CheckBundle struct {
 	Created            int                 `json:"_created,omitempty"`
 	LastModified       int                 `json:"_last_modified,omitempty"`
 	LastModifedBy      string              `json:"_last_modifed_by,omitempty"`
-	ReverseConnectURLs []string            `json:"_reverse_connection_urls"`
+	ReverseConnectURLs []string            `json:"_reverse_connection_urls,omitempty"`
 	Brokers            []string            `json:"brokers"`
-	Config             CheckBundleConfig   `json:"config"`
+	Config             map[string]string   `json:"config"`
 	DisplayName        string              `json:"display_name"`
 	Metrics            []CheckBundleMetric `json:"metrics"`
 	MetricLimit        int                 `json:"metric_limit"`

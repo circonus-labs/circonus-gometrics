@@ -46,9 +46,9 @@ var (
 		},
 		Brokers:     []string{"/broker/1234"},
 		DisplayName: "test check",
-		Config: api.CheckBundleConfig{
-			SubmissionURL: "http://127.0.0.1:43191/module/httptrap/abc123-a1b2-c3d4-e5f6-123abc/blah",
-			ReverseSecret: "blah",
+		Config: map[string]string{
+			"submission_url":     "https://127.0.0.1:43191/module/httptrap/abc123-a1b2-c3d4-e5f6-123abc/blah",
+			"reverse:secret_key": "blah",
 		},
 		Metrics: []api.CheckBundleMetric{
 			api.CheckBundleMetric{
@@ -140,13 +140,17 @@ func testCheckServer() *httptest.Server {
 				}
 			case "POST": // create
 				defer r.Body.Close()
-				b, err := ioutil.ReadAll(r.Body)
+				_, err := ioutil.ReadAll(r.Body)
+				if err != nil {
+					panic(err)
+				}
+				ret, err := json.Marshal(testCheckBundle)
 				if err != nil {
 					panic(err)
 				}
 				w.WriteHeader(200)
 				w.Header().Set("Content-Type", "application/json")
-				fmt.Fprintln(w, string(b))
+				fmt.Fprintln(w, string(ret))
 			default:
 				w.WriteHeader(405)
 				fmt.Fprintf(w, "method not allowed %s", r.Method)
