@@ -47,13 +47,13 @@ type CheckBundle struct {
 	Config             CheckBundleConfig   `json:"config"`
 	DisplayName        string              `json:"display_name"`
 	Metrics            []CheckBundleMetric `json:"metrics"`
-	MetricLimit        int                 `json:"metric_limit"`
-	Notes              string              `json:"notes"`
-	Period             int                 `json:"period"`
-	Status             string              `json:"status"`
-	Tags               []string            `json:"tags"`
+	MetricLimit        int                 `json:"metric_limit,omitempty"`
+	Notes              string              `json:"notes,omitempty"`
+	Period             int                 `json:"period,omitempty"`
+	Status             string              `json:"status,omitempty"`
+	Tags               []string            `json:"tags,omitempty"`
 	Target             string              `json:"target"`
-	Timeout            int                 `json:"timeout"`
+	Timeout            int                 `json:"timeout,omitempty"`
 	Type               string              `json:"type"`
 }
 
