@@ -313,38 +313,6 @@ func TestUpdateCheckBundle(t *testing.T) {
 	}
 }
 
-func TestDeleteCheckBundleByID(t *testing.T) {
-	server := testCheckBundleServer()
-	defer server.Close()
-
-	ac := &Config{
-		TokenKey: "abc123",
-		TokenApp: "test",
-		URL:      server.URL,
-	}
-	apih, err := NewAPI(ac)
-	if err != nil {
-		t.Errorf("Expected no error, got '%v'", err)
-	}
-
-	cid := "1234"
-	id, err := strconv.Atoi(cid)
-	if err != nil {
-		t.Fatalf("Unable to convert id %s to int", cid)
-	}
-
-	cbID := IDType(id)
-
-	success, err := apih.DeleteCheckBundleByID(cbID)
-	if err != nil {
-		t.Fatalf("Expected no error, got '%v'", err)
-	}
-
-	if !success {
-		t.Fatalf("Expected success to be true")
-	}
-}
-
 func TestDeleteCheckBundleByCID(t *testing.T) {
 	server := testCheckBundleServer()
 	defer server.Close()

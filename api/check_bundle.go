@@ -200,12 +200,6 @@ func (a *API) DeleteCheckBundle(bundle *CheckBundle) (bool, error) {
 	return a.DeleteCheckBundleByCID(cid)
 }
 
-// DeleteCheckBundleByID delete a check bundle by id
-func (a *API) DeleteCheckBundleByID(id IDType) (bool, error) {
-	cid := CIDType(fmt.Sprintf("%s/%d", baseCheckBundlePath, id))
-	return a.DeleteCheckBundleByCID(cid)
-}
-
 // DeleteCheckBundleByCID delete a check bundle by cid
 func (a *API) DeleteCheckBundleByCID(cid CIDType) (bool, error) {
 	if matched, err := regexp.MatchString("^"+baseCheckBundlePath+"/[0-9]+$", string(cid)); err != nil {
