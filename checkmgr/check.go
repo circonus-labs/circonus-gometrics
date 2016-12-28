@@ -201,13 +201,14 @@ func (cm *CheckManager) initializeTrapURL() error {
 
 	// determine the trap url to which metrics should be PUT
 	if checkBundle.Type == "httptrap" {
-		if turl, found := checkBundle.Config["submission_url"]; found {
+		cfgKey := api.CheckBundleConfigKey("submission_url")
+		if turl, found := checkBundle.Config[cfgKey]; found {
 			cm.trapURL = api.URLType(turl)
 		} else {
 			if cm.Debug {
-				cm.Log.Printf("Missing config.submission_url %+v", checkBundle)
+				cm.Log.Printf("Missing config.%s %+v", cfgKey, checkBundle)
 			}
-			return fmt.Errorf("[ERROR] Unable to use check, no submission_url in config")
+			return fmt.Errorf("[ERROR] Unable to use check, no %s in config", cfgKey)
 		}
 	} else {
 		// build a submission_url for non-httptrap checks out of mtev_reverse url
@@ -217,13 +218,14 @@ func (cm *CheckManager) initializeTrapURL() error {
 		mtevURL := checkBundle.ReverseConnectURLs[0]
 		mtevURL = strings.Replace(mtevURL, "mtev_reverse", "https", 1)
 		mtevURL = strings.Replace(mtevURL, "check", "module/httptrap", 1)
-		if rs, found := checkBundle.Config["reverse:secret_key"]; found {
+		cfgKey := api.CheckBundleConfigKey("reverse:secret_key")
+		if rs, found := checkBundle.Config[cfgKey]; found {
 			cm.trapURL = api.URLType(fmt.Sprintf("%s/%s", mtevURL, rs))
 		} else {
 			if cm.Debug {
-				cm.Log.Printf("Missing config.reverse:secret_key %+v", checkBundle)
+				cm.Log.Printf("Missing config.%s %+v", cfgKey, checkBundle)
 			}
-			return fmt.Errorf("[ERROR] Unable to use check, no reverse:secret_key in config")
+			return fmt.Errorf("[ERROR] Unable to use check, no %s in config", cfgKey)
 		}
 	}
 
@@ -286,7 +288,7 @@ func (cm *CheckManager) createNewCheck() (*api.CheckBundle, *api.Broker, error) 
 
 	config := &api.CheckBundle{
 		Brokers: []string{broker.CID},
-		Config: map[string]string{
+		Config: map[api.CheckBundleConfigKey]string{
 			"async_metrics": "true",
 			"secret":        checkSecret,
 		},

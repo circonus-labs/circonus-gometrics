@@ -25,7 +25,7 @@ var (
 		LastModified:       0,
 		LastModifedBy:      "",
 		ReverseConnectURLs: []string{""},
-		Config:             map[string]string{},
+		Config:             map[CheckBundleConfigKey]string{},
 		Brokers:            []string{"/broker/1234"},
 		DisplayName:        "test check",
 		Metrics:            []CheckBundleMetric{},

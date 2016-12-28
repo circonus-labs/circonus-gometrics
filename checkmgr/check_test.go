@@ -46,7 +46,7 @@ var (
 		},
 		Brokers:     []string{"/broker/1234"},
 		DisplayName: "test check",
-		Config: map[string]string{
+		Config: map[api.CheckBundleConfigKey]string{
 			"submission_url":     "https://127.0.0.1:43191/module/httptrap/abc123-a1b2-c3d4-e5f6-123abc/blah",
 			"reverse:secret_key": "blah",
 		},

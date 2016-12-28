@@ -20,6 +20,14 @@ type CheckBundleMetric struct {
 	Tags   []string `json:"tags"`
 }
 
+// CheckBundleConfigKey key for CheckBundleConfig
+type CheckBundleConfigKey string
+
+// CheckBundleConfig contains the check type specific configuration settings
+// as k/v pairs (see https://login.circonus.com/resources/api/calls/check_bundle
+// for the specific settings available for each distinct check type)
+type CheckBundleConfig map[CheckBundleConfigKey]string
+
 // CheckBundle definition
 type CheckBundle struct {
 	CheckUUIDs         []string            `json:"_check_uuids,omitempty"`
@@ -30,7 +38,7 @@ type CheckBundle struct {
 	LastModifedBy      string              `json:"_last_modifed_by,omitempty"`
 	ReverseConnectURLs []string            `json:"_reverse_connection_urls,omitempty"`
 	Brokers            []string            `json:"brokers"`
-	Config             map[string]string   `json:"config"`
+	Config             CheckBundleConfig   `json:"config"`
 	DisplayName        string              `json:"display_name"`
 	Metrics            []CheckBundleMetric `json:"metrics"`
 	MetricLimit        int                 `json:"metric_limit"`
