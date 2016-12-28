@@ -59,7 +59,7 @@ func (a *API) FetchCheckBundleByID(id IDType) (*CheckBundle, error) {
 	return a.FetchCheckBundleByCID(cid)
 }
 
-// FetchCheckBundleByCID fetch a check bundle configuration by id
+// FetchCheckBundleByCID fetch a check bundle configuration by cid
 func (a *API) FetchCheckBundleByCID(cid CIDType) (*CheckBundle, error) {
 	if matched, err := regexp.MatchString("^"+baseCheckBundlePath+"/[0-9]+$", string(cid)); err != nil {
 		return nil, err
@@ -192,4 +192,36 @@ func (a *API) UpdateCheckBundle(config *CheckBundle) (*CheckBundle, error) {
 	}
 
 	return checkBundle, nil
+}
+
+// DeleteCheckBundle delete a check bundle
+func (a *API) DeleteCheckBundle(bundle *CheckBundle) (bool, error) {
+	cid := CIDType(bundle.CID)
+	return a.DeleteCheckBundleByCID(cid)
+}
+
+// DeleteCheckBundleByID delete a check bundle by id
+func (a *API) DeleteCheckBundleByID(id IDType) (bool, error) {
+	cid := CIDType(fmt.Sprintf("%s/%d", baseCheckBundlePath, id))
+	return a.DeleteCheckBundleByCID(cid)
+}
+
+// DeleteCheckBundleByCID delete a check bundle by cid
+func (a *API) DeleteCheckBundleByCID(cid CIDType) (bool, error) {
+	if matched, err := regexp.MatchString("^"+baseCheckBundlePath+"/[0-9]+$", string(cid)); err != nil {
+		return false, err
+	} else if !matched {
+		return false, fmt.Errorf("Invalid check bundle CID %v", cid)
+	}
+
+	reqURL := url.URL{
+		Path: string(cid),
+	}
+
+	_, err := a.Delete(reqURL.String())
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
 }

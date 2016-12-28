@@ -303,14 +303,109 @@ func TestUpdateCheckBundle(t *testing.T) {
 
 	t.Log("Test with invalid CID")
 	expectedError := errors.New("Invalid check bundle CID xxx")
-	x := &CheckBundle{}
-	x = &testCheckBundle
-	x.CID = "xxx"
+	x := &CheckBundle{CID: "xxx"}
 	_, err = apih.UpdateCheckBundle(x)
 	if err == nil {
 		t.Fatal("Expected an error")
 	}
 	if err.Error() != expectedError.Error() {
 		t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+	}
+}
+
+func TestDeleteCheckBundleByID(t *testing.T) {
+	server := testCheckBundleServer()
+	defer server.Close()
+
+	ac := &Config{
+		TokenKey: "abc123",
+		TokenApp: "test",
+		URL:      server.URL,
+	}
+	apih, err := NewAPI(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	cid := "1234"
+	id, err := strconv.Atoi(cid)
+	if err != nil {
+		t.Fatalf("Unable to convert id %s to int", cid)
+	}
+
+	cbID := IDType(id)
+
+	success, err := apih.DeleteCheckBundleByID(cbID)
+	if err != nil {
+		t.Fatalf("Expected no error, got '%v'", err)
+	}
+
+	if !success {
+		t.Fatalf("Expected success to be true")
+	}
+}
+
+func TestDeleteCheckBundleByCID(t *testing.T) {
+	server := testCheckBundleServer()
+	defer server.Close()
+
+	var apih *API
+	var err error
+
+	ac := &Config{
+		TokenKey: "abc123",
+		TokenApp: "test",
+		URL:      server.URL,
+	}
+	apih, err = NewAPI(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	t.Log("Testing invalid CID")
+	expectedError := errors.New("Invalid check bundle CID /1234")
+	_, err = apih.DeleteCheckBundleByCID("/1234")
+	if err == nil {
+		t.Fatalf("Expected error")
+	}
+	if err.Error() != expectedError.Error() {
+		t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+	}
+
+	t.Log("Testing valid CID")
+	success, err := apih.DeleteCheckBundleByCID(CIDType(testCheckBundle.CID))
+	if err != nil {
+		t.Fatalf("Expected no error, got '%v'", err)
+	}
+
+	if !success {
+		t.Fatalf("Expected success to be true")
+	}
+}
+
+func TestDeleteCheckBundle(t *testing.T) {
+	server := testCheckBundleServer()
+	defer server.Close()
+
+	var apih *API
+	var err error
+
+	ac := &Config{
+		TokenKey: "abc123",
+		TokenApp: "test",
+		URL:      server.URL,
+	}
+	apih, err = NewAPI(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	success, err := apih.DeleteCheckBundle(&testCheckBundle)
+	if err != nil {
+		t.Fatalf("Expected no error, got '%v'", err)
+	}
+
+	if !success {
+		t.Fatalf("Expected success to be true")
 	}
 }
