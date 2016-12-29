@@ -10,6 +10,8 @@
 ### Helpers (for currently supported API objects)
 
 * [Account](https://login.circonus.com/resources/api/calls/account)
+    * FetchAccount
+    * UpdateAccount
 * [Annotation](https://login.circonus.com/resources/api/calls/annotation)
 * [Broker](https://login.circonus.com/resources/api/calls/broker)
 * [Check](https://login.circonus.com/resources/api/calls/check)
