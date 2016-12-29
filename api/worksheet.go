@@ -158,3 +158,43 @@ func (a *API) DeleteWorksheetByCID(cid CIDType) (bool, error) {
 
 	return true, nil
 }
+
+// WorksheetSearch returns list of worksheets matching a search query and/or filter
+//    - a search query (see: https://login.circonus.com/resources/api#searching)
+//    - a filter (see: https://login.circonus.com/resources/api#filtering)
+func (a *API) WorksheetSearch(searchCriteria SearchQueryType, filterCriteria map[string]string) ([]Worksheet, error) {
+
+	if searchCriteria == "" && len(filterCriteria) == 0 {
+		return a.FetchWorksheets()
+	}
+
+	reqURL := url.URL{
+		Path: baseWorksheetPath,
+	}
+
+	q := url.Values{}
+
+	if searchCriteria != "" {
+		q.Set("search", string(searchCriteria))
+	}
+
+	if len(filterCriteria) > 0 {
+		for filter, criteria := range filterCriteria {
+			q.Set(filter, criteria)
+		}
+	}
+
+	reqURL.RawQuery = q.Encode()
+
+	resp, err := a.Get(reqURL.String())
+	if err != nil {
+		return nil, fmt.Errorf("[ERROR] API call error %+v", err)
+	}
+
+	var results []Worksheet
+	if err := json.Unmarshal(resp, &results); err != nil {
+		return nil, err
+	}
+
+	return results, nil
+}
