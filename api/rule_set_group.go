@@ -33,8 +33,8 @@ type RulesetGroupFormula struct {
 
 // RulesetGroupCondition defines conditions for raising alerts
 type RulesetGroupCondition struct {
-	MatchingSeverities interface{} `json:"matching_serverities"` // can be either []string or just string
-	RulesetCID         string      `json:"rule_set"`
+	MatchingSeverities []string `json:"matching_serverities"`
+	RulesetCID         string   `json:"rule_set"`
 }
 
 // RulesetGroup defines a ruleset group
