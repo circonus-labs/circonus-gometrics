@@ -10,6 +10,7 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"regexp"
 )
 
@@ -153,11 +154,14 @@ type Graph struct {
 	Title          string                     `json:"title,omitempty"`
 }
 
-const baseGraphPath = "/graph"
+const (
+	baseGraphPath = "/graph"
+	graphCIDRegex = "^" + baseGraphPath + "/[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{8,12}$"
+)
 
 // FetchGraph retrieves a user definition
 func (a *API) FetchGraph(cid CIDType) (*Graph, error) {
-	if matched, err := regexp.MatchString("^"+baseGraphPath+"/[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{8,12}$", string(cid)); err != nil {
+	if matched, err := regexp.MatchString(graphCIDRegex, string(cid)); err != nil {
 		return nil, err
 	} else if !matched {
 		return nil, fmt.Errorf("Invalid graph CID %v", cid)
@@ -189,4 +193,84 @@ func (a *API) FetchGraphs() ([]Graph, error) {
 	}
 
 	return graphs, nil
+}
+
+// UpdateGraph update graph definition
+func (a *API) UpdateGraph(config *Graph) (*Graph, error) {
+	if matched, err := regexp.MatchString(graphCIDRegex, string(config.CID)); err != nil {
+		return nil, err
+	} else if !matched {
+		return nil, fmt.Errorf("Invalid graph CID %v", config.CID)
+	}
+
+	reqURL := url.URL{
+		Path: config.CID,
+	}
+
+	cfg, err := json.Marshal(config)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := a.Put(reqURL.String(), cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	graph := &Graph{}
+	if err := json.Unmarshal(resp, graph); err != nil {
+		return nil, err
+	}
+
+	return graph, nil
+}
+
+// CreateGraph create a new graph
+func (a *API) CreateGraph(config *Graph) (*Graph, error) {
+	reqURL := url.URL{
+		Path: baseGraphPath,
+	}
+
+	cfg, err := json.Marshal(config)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := a.Post(reqURL.String(), cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	graph := &Graph{}
+	if err := json.Unmarshal(resp, graph); err != nil {
+		return nil, err
+	}
+
+	return graph, nil
+}
+
+// DeleteGraph delete a graph
+func (a *API) DeleteGraph(bundle *Graph) (bool, error) {
+	cid := CIDType(bundle.CID)
+	return a.DeleteGraphByCID(cid)
+}
+
+// DeleteGraphByCID delete a graph by cid
+func (a *API) DeleteGraphByCID(cid CIDType) (bool, error) {
+	if matched, err := regexp.MatchString(graphCIDRegex, string(cid)); err != nil {
+		return false, err
+	} else if !matched {
+		return false, fmt.Errorf("Invalid graph CID %v", cid)
+	}
+
+	reqURL := url.URL{
+		Path: string(cid),
+	}
+
+	_, err := a.Delete(reqURL.String())
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
 }

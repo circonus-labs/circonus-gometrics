@@ -67,7 +67,7 @@ func testGraphServer() *httptest.Server {
 		path := r.URL.Path
 		if path == "/graph/01234567-89ab-cdef-0123-456789abcdef" {
 			switch r.Method {
-			case "GET": // get by id/cid
+			case "GET":
 				ret, err := json.Marshal(testGraph)
 				if err != nil {
 					panic(err)
@@ -84,9 +84,12 @@ func testGraphServer() *httptest.Server {
 				w.WriteHeader(200)
 				w.Header().Set("Content-Type", "application/json")
 				fmt.Fprintln(w, string(b))
+			case "DELETE":
+				w.WriteHeader(200)
+				w.Header().Set("Content-Type", "application/json")
 			default:
 				w.WriteHeader(404)
-				fmt.Fprintln(w, "not found")
+				fmt.Fprintln(w, fmt.Sprintf("not found: %s %s", r.Method, path))
 			}
 		} else if path == "/graph" {
 			switch r.Method {
@@ -99,13 +102,26 @@ func testGraphServer() *httptest.Server {
 				w.WriteHeader(200)
 				w.Header().Set("Content-Type", "application/json")
 				fmt.Fprintln(w, string(ret))
+			case "POST":
+				defer r.Body.Close()
+				_, err := ioutil.ReadAll(r.Body)
+				if err != nil {
+					panic(err)
+				}
+				ret, err := json.Marshal(testGraph)
+				if err != nil {
+					panic(err)
+				}
+				w.WriteHeader(200)
+				w.Header().Set("Content-Type", "application/json")
+				fmt.Fprintln(w, string(ret))
 			default:
 				w.WriteHeader(404)
-				fmt.Fprintln(w, "not found")
+				fmt.Fprintln(w, fmt.Sprintf("not found: %s %s", r.Method, path))
 			}
 		} else {
 			w.WriteHeader(404)
-			fmt.Fprintln(w, "not found")
+			fmt.Fprintln(w, fmt.Sprintf("not found: %s %s", r.Method, path))
 		}
 	}
 
@@ -197,48 +213,112 @@ func TestFetchGraphs(t *testing.T) {
 
 }
 
-/*
-func TestUpdateGraph(t *testing.T) {
-    server := testGraphServer()
-    defer server.Close()
+func TestCreateGraph(t *testing.T) {
+	server := testGraphServer()
+	defer server.Close()
 
-    var apih *API
+	var apih *API
 
-    ac := &Config{
-        TokenKey: "abc123",
-        TokenApp: "test",
-        URL:      server.URL,
-    }
-    apih, err := NewAPI(ac)
-    if err != nil {
-        t.Errorf("Expected no error, got '%v'", err)
-    }
+	ac := &Config{
+		TokenKey: "abc123",
+		TokenApp: "test",
+		URL:      server.URL,
+	}
+	apih, err := NewAPI(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
 
-    t.Log("valid Graph")
-    {
-        Graph, err := apih.UpdateGraph(&testGraph)
-        if err != nil {
-            t.Fatalf("Expected no error, got '%v'", err)
-        }
+	graph, err := apih.CreateGraph(&testGraph)
+	if err != nil {
+		t.Fatalf("Expected no error, got '%v'", err)
+	}
 
-        actualType := reflect.TypeOf(Graph)
-        expectedType := "*api.Graph"
-        if actualType.String() != expectedType {
-            t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
-        }
-    }
-
-    t.Log("Test with invalid CID")
-    {
-        expectedError := errors.New("Invalid graph CID /invalid")
-        x := &Graph{CID: "/invalid"}
-        _, err := apih.UpdateGraph(x)
-        if err == nil {
-            t.Fatal("Expected an error")
-        }
-        if err.Error() != expectedError.Error() {
-            t.Fatalf("Expected %+v got '%+v'", expectedError, err)
-        }
-    }
+	actualType := reflect.TypeOf(graph)
+	expectedType := "*api.Graph"
+	if actualType.String() != expectedType {
+		t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+	}
 }
-*/
+
+func TestUpdateGraph(t *testing.T) {
+	server := testGraphServer()
+	defer server.Close()
+
+	var apih *API
+
+	ac := &Config{
+		TokenKey: "abc123",
+		TokenApp: "test",
+		URL:      server.URL,
+	}
+	apih, err := NewAPI(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	t.Log("valid Graph")
+	{
+		graph, err := apih.UpdateGraph(&testGraph)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(graph)
+		expectedType := "*api.Graph"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
+	}
+
+	t.Log("Test with invalid CID")
+	{
+		expectedError := errors.New("Invalid graph CID /invalid")
+		x := &Graph{CID: "/invalid"}
+		_, err := apih.UpdateGraph(x)
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+}
+
+func TestDeleteGraph(t *testing.T) {
+	server := testGraphServer()
+	defer server.Close()
+
+	var apih *API
+
+	ac := &Config{
+		TokenKey: "abc123",
+		TokenApp: "test",
+		URL:      server.URL,
+	}
+	apih, err := NewAPI(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	t.Log("valid Graph")
+	{
+		_, err := apih.DeleteGraph(&testGraph)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+	}
+
+	t.Log("Test with invalid CID")
+	{
+		expectedError := errors.New("Invalid graph CID /invalid")
+		x := &Graph{CID: "/invalid"}
+		_, err := apih.UpdateGraph(x)
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+}
