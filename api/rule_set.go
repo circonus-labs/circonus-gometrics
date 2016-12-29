@@ -3,7 +3,7 @@
 // license that can be found in the LICENSE file.
 
 // Ruleset API support - Fetch, Create, Delete, Search, and Update
-// See: https://login.circonus.com/resources/api/calls/ruleset
+// See: https://login.circonus.com/resources/api/calls/rule_set
 
 package api
 
