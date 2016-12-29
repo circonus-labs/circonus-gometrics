@@ -73,6 +73,11 @@ type API struct {
 
 // NewAPI returns a new Circonus API
 func NewAPI(ac *Config) (*API, error) {
+	return New(ac)
+}
+
+// New returns a new Circonus API
+func New(ac *Config) (*API, error) {
 
 	if ac == nil {
 		return nil, errors.New("Invalid API configuration (nil)")
