@@ -54,21 +54,28 @@ type Account struct {
 	Usage         []AccountLimit  `json:"_usage,omitempty"`
 }
 
-const baseAccountPath = "/account"
+const (
+	baseAccountPath = "/account"
+	accountCIDRegex = "^" + baseAccountPath + "/([0-9]+|current)$"
+)
 
 // FetchAccount retrieves an account definition
-func (a *API) FetchAccount(cid CIDType) (*Account, error) {
-	if cid == "" {
-		cid = CIDType(baseAccountPath + "/current")
+func (a *API) FetchAccount(cid *CIDType) (*Account, error) {
+	var accountCID string
+
+	if cid == nil || *cid == "" {
+		accountCID = baseAccountPath + "/current"
+	} else {
+		accountCID = string(*cid)
 	}
 
-	if matched, err := regexp.MatchString("^"+baseAccountPath+"/([0-9]+|current)$", string(cid)); err != nil {
+	if matched, err := regexp.MatchString(accountCIDRegex, accountCID); err != nil {
 		return nil, err
 	} else if !matched {
-		return nil, fmt.Errorf("Invalid account CID %v", cid)
+		return nil, fmt.Errorf("Invalid account CID [%s]", accountCID)
 	}
 
-	result, err := a.Get(string(cid))
+	result, err := a.Get(accountCID)
 	if err != nil {
 		return nil, err
 	}
@@ -83,14 +90,20 @@ func (a *API) FetchAccount(cid CIDType) (*Account, error) {
 
 // UpdateAccount update account configuration
 func (a *API) UpdateAccount(config *Account) (*Account, error) {
-	if matched, err := regexp.MatchString("^"+baseAccountPath+"/[0-9]+$", string(config.CID)); err != nil {
+	if config == nil {
+		return nil, fmt.Errorf("Invalid account config [nil]")
+	}
+
+	accountCID := string(config.CID)
+
+	if matched, err := regexp.MatchString(accountCIDRegex, accountCID); err != nil {
 		return nil, err
 	} else if !matched {
-		return nil, fmt.Errorf("Invalid account CID %v", config.CID)
+		return nil, fmt.Errorf("Invalid account CID [%s]", accountCID)
 	}
 
 	reqURL := url.URL{
-		Path: config.CID,
+		Path: accountCID,
 	}
 
 	cfg, err := json.Marshal(config)

@@ -122,9 +122,24 @@ func TestFetchAccount(t *testing.T) {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
-	t.Log("without CID")
+	t.Log("without CID (nil)")
 	{
-		account, err := apih.FetchAccount(CIDType(""))
+		account, err := apih.FetchAccount(nil)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(account)
+		expectedType := "*api.Account"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
+	}
+
+	t.Log("without CID (\"\")")
+	{
+		cid := CIDType("")
+		account, err := apih.FetchAccount(&cid)
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
@@ -139,7 +154,7 @@ func TestFetchAccount(t *testing.T) {
 	t.Log("with valid CID")
 	{
 		cid := CIDType("/account/1234")
-		account, err := apih.FetchAccount(cid)
+		account, err := apih.FetchAccount(&cid)
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
@@ -157,8 +172,9 @@ func TestFetchAccount(t *testing.T) {
 
 	t.Log("with invalid CID")
 	{
-		expectedError := errors.New("Invalid account CID /invalid")
-		_, err := apih.FetchAccount(CIDType("/invalid"))
+		cid := CIDType("/invalid")
+		expectedError := errors.New("Invalid account CID [/invalid]")
+		_, err := apih.FetchAccount(&cid)
 		if err == nil {
 			t.Fatalf("Expected error")
 		}
@@ -200,7 +216,7 @@ func TestUpdateAccount(t *testing.T) {
 
 	t.Log("Test with invalid CID")
 	{
-		expectedError := errors.New("Invalid account CID /invalid")
+		expectedError := errors.New("Invalid account CID [/invalid]")
 		x := &Account{CID: "/invalid"}
 		_, err := apih.UpdateAccount(x)
 		if err == nil {
