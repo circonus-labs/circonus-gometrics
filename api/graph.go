@@ -159,7 +159,7 @@ const (
 	graphCIDRegex = "^" + baseGraphPath + "/[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{8,12}$"
 )
 
-// FetchGraph retrieves a user definition
+// FetchGraph retrieves a graph definition
 func (a *API) FetchGraph(cid CIDType) (*Graph, error) {
 	if matched, err := regexp.MatchString(graphCIDRegex, string(cid)); err != nil {
 		return nil, err
@@ -180,7 +180,7 @@ func (a *API) FetchGraph(cid CIDType) (*Graph, error) {
 	return graph, nil
 }
 
-// FetchGraphs retrieves users for current account
+// FetchGraphs retrieves all graphs
 func (a *API) FetchGraphs() ([]Graph, error) {
 	result, err := a.Get(baseGraphPath)
 	if err != nil {
