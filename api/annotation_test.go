@@ -110,8 +110,9 @@ func TestFetchAnnotation(t *testing.T) {
 
 	t.Log("without CID")
 	{
-		expectedError := errors.New("Invalid annotation CID ")
-		_, err := apih.FetchAnnotation(CIDType(""))
+		cid := CIDType("")
+		expectedError := errors.New("Invalid annotation CID [none]")
+		_, err := apih.FetchAnnotation(&cid)
 		if err == nil {
 			t.Fatalf("Expected error")
 		}
@@ -123,7 +124,7 @@ func TestFetchAnnotation(t *testing.T) {
 	t.Log("with valid CID")
 	{
 		cid := CIDType("/annotation/1234")
-		annotation, err := apih.FetchAnnotation(cid)
+		annotation, err := apih.FetchAnnotation(&cid)
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
@@ -141,8 +142,9 @@ func TestFetchAnnotation(t *testing.T) {
 
 	t.Log("with invalid CID")
 	{
-		expectedError := errors.New("Invalid annotation CID /invalid")
-		_, err := apih.FetchAnnotation(CIDType("/invalid"))
+		cid := CIDType("/invalid")
+		expectedError := errors.New("Invalid annotation CID [/invalid]")
+		_, err := apih.FetchAnnotation(&cid)
 		if err == nil {
 			t.Fatalf("Expected error")
 		}
@@ -172,7 +174,7 @@ func TestFetchAnnotations(t *testing.T) {
 	}
 
 	actualType := reflect.TypeOf(annotations)
-	expectedType := "[]api.Annotation"
+	expectedType := "*[]api.Annotation"
 	if actualType.String() != expectedType {
 		t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 	}
@@ -239,7 +241,7 @@ func TestUpdateAnnotation(t *testing.T) {
 
 	t.Log("Test with invalid CID")
 	{
-		expectedError := errors.New("Invalid annotation CID /invalid")
+		expectedError := errors.New("Invalid annotation CID [/invalid]")
 		x := &Annotation{CID: "/invalid"}
 		_, err := apih.UpdateAnnotation(x)
 		if err == nil {
@@ -277,7 +279,7 @@ func TestDeleteAnnotation(t *testing.T) {
 
 	t.Log("Test with invalid CID")
 	{
-		expectedError := errors.New("Invalid annotation CID /invalid")
+		expectedError := errors.New("Invalid annotation CID [/invalid]")
 		x := &Annotation{CID: "/invalid"}
 		_, err := apih.UpdateAnnotation(x)
 		if err == nil {

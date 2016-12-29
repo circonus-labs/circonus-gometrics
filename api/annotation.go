@@ -34,19 +34,25 @@ const (
 )
 
 // FetchAnnotation retrieves a annotation definition
-func (a *API) FetchAnnotation(cid CIDType) (*Annotation, error) {
-	if matched, err := regexp.MatchString(annotationCIDRegex, string(cid)); err != nil {
-		return nil, err
-	} else if !matched {
-		return nil, fmt.Errorf("Invalid annotation CID %v", cid)
+func (a *API) FetchAnnotation(cid *CIDType) (*Annotation, error) {
+	if cid == nil || *cid == "" {
+		return nil, fmt.Errorf("Invalid annotation CID [none]")
 	}
 
-	result, err := a.Get(string(cid))
+	annotationCID := string(*cid)
+
+	if matched, err := regexp.MatchString(annotationCIDRegex, annotationCID); err != nil {
+		return nil, err
+	} else if !matched {
+		return nil, fmt.Errorf("Invalid annotation CID [%s]", annotationCID)
+	}
+
+	result, err := a.Get(annotationCID)
 	if err != nil {
 		return nil, err
 	}
 
-	annotation := new(Annotation)
+	annotation := &Annotation{}
 	if err := json.Unmarshal(result, annotation); err != nil {
 		return nil, err
 	}
@@ -55,7 +61,7 @@ func (a *API) FetchAnnotation(cid CIDType) (*Annotation, error) {
 }
 
 // FetchAnnotations retrieves all annotations
-func (a *API) FetchAnnotations() ([]Annotation, error) {
+func (a *API) FetchAnnotations() (*[]Annotation, error) {
 	result, err := a.Get(baseAnnotationPath)
 	if err != nil {
 		return nil, err
@@ -66,19 +72,25 @@ func (a *API) FetchAnnotations() ([]Annotation, error) {
 		return nil, err
 	}
 
-	return annotations, nil
+	return &annotations, nil
 }
 
 // UpdateAnnotation update annotation definition
 func (a *API) UpdateAnnotation(config *Annotation) (*Annotation, error) {
-	if matched, err := regexp.MatchString(annotationCIDRegex, string(config.CID)); err != nil {
+	if config == nil {
+		return nil, fmt.Errorf("Invalid annotation config [nil]")
+	}
+
+	annotationCID := string(config.CID)
+
+	if matched, err := regexp.MatchString(annotationCIDRegex, annotationCID); err != nil {
 		return nil, err
 	} else if !matched {
-		return nil, fmt.Errorf("Invalid annotation CID %v", config.CID)
+		return nil, fmt.Errorf("Invalid annotation CID [%s]", annotationCID)
 	}
 
 	reqURL := url.URL{
-		Path: config.CID,
+		Path: annotationCID,
 	}
 
 	cfg, err := json.Marshal(config)
@@ -101,6 +113,10 @@ func (a *API) UpdateAnnotation(config *Annotation) (*Annotation, error) {
 
 // CreateAnnotation create a new annotation
 func (a *API) CreateAnnotation(config *Annotation) (*Annotation, error) {
+	if config == nil {
+		return nil, fmt.Errorf("Invalid annotation config [nil]")
+	}
+
 	reqURL := url.URL{
 		Path: baseAnnotationPath,
 	}
@@ -124,21 +140,31 @@ func (a *API) CreateAnnotation(config *Annotation) (*Annotation, error) {
 }
 
 // DeleteAnnotation delete a annotation
-func (a *API) DeleteAnnotation(bundle *Annotation) (bool, error) {
-	cid := CIDType(bundle.CID)
-	return a.DeleteAnnotationByCID(cid)
+func (a *API) DeleteAnnotation(config *Annotation) (bool, error) {
+	if config == nil {
+		return false, fmt.Errorf("Invalid annotation config [nil]")
+	}
+
+	cid := CIDType(config.CID)
+	return a.DeleteAnnotationByCID(&cid)
 }
 
 // DeleteAnnotationByCID delete a annotation by cid
-func (a *API) DeleteAnnotationByCID(cid CIDType) (bool, error) {
-	if matched, err := regexp.MatchString(annotationCIDRegex, string(cid)); err != nil {
+func (a *API) DeleteAnnotationByCID(cid *CIDType) (bool, error) {
+	if cid == nil || *cid == "" {
+		return false, fmt.Errorf("Invalid annotation CID [%v]", *cid)
+	}
+
+	annotationCID := string(*cid)
+
+	if matched, err := regexp.MatchString(annotationCIDRegex, annotationCID); err != nil {
 		return false, err
 	} else if !matched {
-		return false, fmt.Errorf("Invalid annotation CID %v", cid)
+		return false, fmt.Errorf("Invalid annotation CID [%s]", annotationCID)
 	}
 
 	reqURL := url.URL{
-		Path: string(cid),
+		Path: annotationCID,
 	}
 
 	_, err := a.Delete(reqURL.String())
@@ -149,12 +175,12 @@ func (a *API) DeleteAnnotationByCID(cid CIDType) (bool, error) {
 	return true, nil
 }
 
-// AnnotationSearch returns list of annotations matching a search query and/or filter
+// SearchAnnotations returns list of annotations matching a search query and/or filter
 //    - a search query (see: https://login.circonus.com/resources/api#searching)
 //    - a filter (see: https://login.circonus.com/resources/api#filtering)
-func (a *API) AnnotationSearch(searchCriteria SearchQueryType, filterCriteria map[string]string) ([]Annotation, error) {
+func (a *API) SearchAnnotations(searchCriteria *SearchQueryType, filterCriteria *map[string]string) (*[]Annotation, error) {
 
-	if searchCriteria == "" && len(filterCriteria) == 0 {
+	if *searchCriteria == "" && len(*filterCriteria) == 0 {
 		return a.FetchAnnotations()
 	}
 
@@ -164,12 +190,12 @@ func (a *API) AnnotationSearch(searchCriteria SearchQueryType, filterCriteria ma
 
 	q := url.Values{}
 
-	if searchCriteria != "" {
-		q.Set("search", string(searchCriteria))
+	if *searchCriteria != "" {
+		q.Set("search", string(*searchCriteria))
 	}
 
-	if len(filterCriteria) > 0 {
-		for filter, criteria := range filterCriteria {
+	if len(*filterCriteria) > 0 {
+		for filter, criteria := range *filterCriteria {
 			q.Set(filter, criteria)
 		}
 	}
@@ -186,5 +212,5 @@ func (a *API) AnnotationSearch(searchCriteria SearchQueryType, filterCriteria ma
 		return nil, err
 	}
 
-	return results, nil
+	return &results, nil
 }

@@ -13,6 +13,13 @@
     * FetchAccount
     * UpdateAccount
 * [Annotation](https://login.circonus.com/resources/api/calls/annotation)
+    * FetchAnnotation
+    * FetchAnnotations
+    * UpdateAnnotation
+    * CreateAnnotation
+    * DeleteAnnotation
+    * DeleteAnnotationByCID
+    * SearchAnnotations
 * [Broker](https://login.circonus.com/resources/api/calls/broker)
 * [Check](https://login.circonus.com/resources/api/calls/check)
 * [Check Bundle](https://login.circonus.com/resources/api/calls/check_bundle)
