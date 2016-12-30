@@ -6,6 +6,11 @@ type Key string
 // Constants per type as defined in
 // https://login.circonus.com/resources/api/calls/check_bundle
 const (
+	DefaultCheckBundleMetricLimit = -1 // unlimited
+	DefaultCheckBundleStatus      = "active"
+	DefaultCheckBundlePeriod      = 60
+	DefaultCheckBundleTimeout     = 10
+
 	AsyncMetrics     = Key("async_metrics")
 	ReverseSecretKey = Key("reverse:secret_key")
 	SecretKey        = Key("secret")
