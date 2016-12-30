@@ -27,6 +27,11 @@ const (
 	minRetryWait  = 1 * time.Second
 	maxRetryWait  = 15 * time.Second
 	maxRetries    = 4 // equating to 1 + maxRetries total attempts
+
+	AsyncMetrics     = CheckBundleConfigKey("async_metrics")
+	ReverseSecretKey = CheckBundleConfigKey("reverse:secret_key")
+	SecretKey        = CheckBundleConfigKey("secret")
+	SubmissionURL    = CheckBundleConfigKey("submission_url")
 )
 
 // TokenKeyType - Circonus API Token key
