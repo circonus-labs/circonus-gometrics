@@ -180,7 +180,7 @@ func (a *API) DeleteAnnotationByCID(cid *CIDType) (bool, error) {
 //    - a filter (see: https://login.circonus.com/resources/api#filtering)
 func (a *API) SearchAnnotations(searchCriteria *SearchQueryType, filterCriteria *map[string]string) (*[]Annotation, error) {
 
-	if *searchCriteria == "" && len(*filterCriteria) == 0 {
+	if (searchCriteria == nil || *searchCriteria == "") && (filterCriteria == nil || len(*filterCriteria) == 0) {
 		return a.FetchAnnotations()
 	}
 
@@ -190,11 +190,11 @@ func (a *API) SearchAnnotations(searchCriteria *SearchQueryType, filterCriteria 
 
 	q := url.Values{}
 
-	if *searchCriteria != "" {
+	if searchCriteria != nil && *searchCriteria != "" {
 		q.Set("search", string(*searchCriteria))
 	}
 
-	if len(*filterCriteria) > 0 {
+	if filterCriteria != nil && len(*filterCriteria) > 0 {
 		for filter, criteria := range *filterCriteria {
 			q.Set(filter, criteria)
 		}
