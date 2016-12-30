@@ -137,8 +137,9 @@ func TestFetchRulesetGroup(t *testing.T) {
 
 	t.Log("without CID")
 	{
+		cid := ""
 		expectedError := errors.New("Invalid rule set group CID ")
-		_, err := apih.FetchRulesetGroup(CIDType(""))
+		_, err := apih.FetchRulesetGroup(CIDType(&cid))
 		if err == nil {
 			t.Fatalf("Expected error")
 		}
@@ -149,8 +150,8 @@ func TestFetchRulesetGroup(t *testing.T) {
 
 	t.Log("with valid CID")
 	{
-		cid := CIDType("/rule_set_group/1234")
-		ruleset, err := apih.FetchRulesetGroup(cid)
+		cid := "/rule_set_group/1234"
+		ruleset, err := apih.FetchRulesetGroup(CIDType(&cid))
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
@@ -168,8 +169,9 @@ func TestFetchRulesetGroup(t *testing.T) {
 
 	t.Log("with invalid CID")
 	{
+		cid := "/invalid"
 		expectedError := errors.New("Invalid rule set group CID /invalid")
-		_, err := apih.FetchRulesetGroup(CIDType("/invalid"))
+		_, err := apih.FetchRulesetGroup(CIDType(&cid))
 		if err == nil {
 			t.Fatalf("Expected error")
 		}

@@ -133,8 +133,9 @@ func TestFetchRuleset(t *testing.T) {
 
 	t.Log("without CID")
 	{
+		cid := ""
 		expectedError := errors.New("Invalid ruleset CID ")
-		_, err := apih.FetchRuleset(CIDType(""))
+		_, err := apih.FetchRuleset(CIDType(&cid))
 		if err == nil {
 			t.Fatalf("Expected error")
 		}
@@ -145,8 +146,8 @@ func TestFetchRuleset(t *testing.T) {
 
 	t.Log("with valid CID")
 	{
-		cid := CIDType("/ruleset/1234_tt_firstbyte")
-		ruleset, err := apih.FetchRuleset(cid)
+		cid := "/ruleset/1234_tt_firstbyte"
+		ruleset, err := apih.FetchRuleset(CIDType(&cid))
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
@@ -164,8 +165,9 @@ func TestFetchRuleset(t *testing.T) {
 
 	t.Log("with invalid CID")
 	{
+		cid := "/invalid"
 		expectedError := errors.New("Invalid ruleset CID /invalid")
-		_, err := apih.FetchRuleset(CIDType("/invalid"))
+		_, err := apih.FetchRuleset(CIDType(&cid))
 		if err == nil {
 			t.Fatalf("Expected error")
 		}

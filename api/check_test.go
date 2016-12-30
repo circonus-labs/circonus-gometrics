@@ -91,9 +91,9 @@ func TestFetchCheck(t *testing.T) {
 
 	t.Log("invalid CID")
 	{
-		cid := CIDType("/invalid")
+		cid := "/invalid"
 		expectedError := errors.New("Invalid check CID [/invalid]")
-		_, err = apih.FetchCheck(&cid)
+		_, err = apih.FetchCheck(CIDType(&cid))
 		if err == nil {
 			t.Fatalf("Expected error")
 		}
@@ -104,8 +104,8 @@ func TestFetchCheck(t *testing.T) {
 
 	t.Log("valid CID")
 	{
-		cid := CIDType(testCheck.CID)
-		check, err := apih.FetchCheck(&cid)
+		cid := CIDType(&testCheck.CID)
+		check, err := apih.FetchCheck(cid)
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}

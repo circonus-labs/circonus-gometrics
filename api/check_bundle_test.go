@@ -137,9 +137,9 @@ func TestFetchCheckBundle(t *testing.T) {
 
 	t.Log("Testing invalid CID")
 	{
-		cid := CIDType("/invalid")
+		cid := "/invalid"
 		expectedError := errors.New("Invalid check bundle CID [/invalid]")
-		_, err := apih.FetchCheckBundle(&cid)
+		_, err := apih.FetchCheckBundle(CIDType(&cid))
 		if err == nil {
 			t.Fatalf("Expected error")
 		}
@@ -151,8 +151,8 @@ func TestFetchCheckBundle(t *testing.T) {
 
 	t.Log("Testing valid CID")
 	{
-		cid := CIDType(testCheckBundle.CID)
-		bundle, err := apih.FetchCheckBundle(&cid)
+		cid := CIDType(&testCheckBundle.CID)
+		bundle, err := apih.FetchCheckBundle(cid)
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
@@ -317,9 +317,9 @@ func TestDeleteCheckBundleByCID(t *testing.T) {
 
 	t.Log("Testing invalid CID")
 	{
-		cid := CIDType("/invalid")
+		cid := "/invalid"
 		expectedError := errors.New("Invalid check bundle CID [/invalid]")
-		_, err := apih.DeleteCheckBundleByCID(&cid)
+		_, err := apih.DeleteCheckBundleByCID(CIDType(&cid))
 		if err == nil {
 			t.Fatalf("Expected error")
 		}
@@ -330,8 +330,8 @@ func TestDeleteCheckBundleByCID(t *testing.T) {
 
 	t.Log("Testing valid CID")
 	{
-		cid := CIDType(testCheckBundle.CID)
-		success, err := apih.DeleteCheckBundleByCID(&cid)
+		cid := CIDType(&testCheckBundle.CID)
+		success, err := apih.DeleteCheckBundleByCID(cid)
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}

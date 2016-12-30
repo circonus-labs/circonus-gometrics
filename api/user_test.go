@@ -94,7 +94,8 @@ func TestFetchUser(t *testing.T) {
 
 	t.Log("without CID")
 	{
-		user, err := apih.FetchUser(CIDType(""))
+		cid := ""
+		user, err := apih.FetchUser(CIDType(&cid))
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
@@ -108,8 +109,8 @@ func TestFetchUser(t *testing.T) {
 
 	t.Log("with valid CID")
 	{
-		cid := CIDType("/user/1234")
-		user, err := apih.FetchUser(cid)
+		cid := "/user/1234"
+		user, err := apih.FetchUser(CIDType(&cid))
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
@@ -127,8 +128,9 @@ func TestFetchUser(t *testing.T) {
 
 	t.Log("with invalid CID")
 	{
+		cid := "/invalid"
 		expectedError := errors.New("Invalid user CID /invalid")
-		_, err := apih.FetchUser(CIDType("/invalid"))
+		_, err := apih.FetchUser(CIDType(&cid))
 		if err == nil {
 			t.Fatalf("Expected error")
 		}

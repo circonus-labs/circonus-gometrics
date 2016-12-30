@@ -120,8 +120,9 @@ func TestFetchWorksheet(t *testing.T) {
 
 	t.Log("without CID")
 	{
+		cid := ""
 		expectedError := errors.New("Invalid worksheet CID ")
-		_, err := apih.FetchWorksheet(CIDType(""))
+		_, err := apih.FetchWorksheet(CIDType(&cid))
 		if err == nil {
 			t.Fatalf("Expected error")
 		}
@@ -132,8 +133,8 @@ func TestFetchWorksheet(t *testing.T) {
 
 	t.Log("with valid CID")
 	{
-		cid := CIDType("/worksheet/01234567-89ab-cdef-0123-456789abcdef")
-		worksheet, err := apih.FetchWorksheet(cid)
+		cid := "/worksheet/01234567-89ab-cdef-0123-456789abcdef"
+		worksheet, err := apih.FetchWorksheet(CIDType(&cid))
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
@@ -151,8 +152,9 @@ func TestFetchWorksheet(t *testing.T) {
 
 	t.Log("with invalid CID")
 	{
+		cid := "/invalid"
 		expectedError := errors.New("Invalid worksheet CID /invalid")
-		_, err := apih.FetchWorksheet(CIDType("/invalid"))
+		_, err := apih.FetchWorksheet(CIDType(&cid))
 		if err == nil {
 			t.Fatalf("Expected error")
 		}

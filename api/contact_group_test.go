@@ -158,8 +158,8 @@ func TestFetchContactGroup(t *testing.T) {
 
 	t.Log("with valid CID")
 	{
-		cid := CIDType("/contact_group/1234")
-		contactGroup, err := apih.FetchContactGroup(&cid)
+		cid := "/contact_group/1234"
+		contactGroup, err := apih.FetchContactGroup(CIDType(&cid))
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
@@ -177,9 +177,9 @@ func TestFetchContactGroup(t *testing.T) {
 
 	t.Log("with invalid CID")
 	{
-		cid := CIDType("/invalid")
+		cid := "/invalid"
 		expectedError := errors.New("Invalid contact group CID [/invalid]")
-		_, err := apih.FetchContactGroup(&cid)
+		_, err := apih.FetchContactGroup(CIDType(&cid))
 		if err == nil {
 			t.Fatalf("Expected error")
 		}

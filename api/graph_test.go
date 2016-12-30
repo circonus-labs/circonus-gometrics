@@ -156,8 +156,8 @@ func TestFetchGraph(t *testing.T) {
 
 	t.Log("with valid CID")
 	{
-		cid := CIDType("/graph/01234567-89ab-cdef-0123-456789abcdef")
-		graph, err := apih.FetchGraph(&cid)
+		cid := "/graph/01234567-89ab-cdef-0123-456789abcdef"
+		graph, err := apih.FetchGraph(CIDType(&cid))
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
@@ -175,9 +175,9 @@ func TestFetchGraph(t *testing.T) {
 
 	t.Log("with invalid CID")
 	{
-		cid := CIDType("/invalid")
+		cid := "/invalid"
 		expectedError := errors.New("Invalid graph CID [/invalid]")
-		_, err := apih.FetchGraph(&cid)
+		_, err := apih.FetchGraph(CIDType(&cid))
 		if err == nil {
 			t.Fatalf("Expected error")
 		}

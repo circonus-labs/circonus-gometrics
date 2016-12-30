@@ -57,7 +57,7 @@ func (a *API) FetchRulesetGroup(cid CIDType) (*RulesetGroup, error) {
 	if matched, err := regexp.MatchString(rulesetGroupCIDRegex, string(*cid)); err != nil {
 		return nil, err
 	} else if !matched {
-		return nil, fmt.Errorf("Invalid rule set group CID %v", cid)
+		return nil, fmt.Errorf("Invalid rule set group CID %v", *cid)
 	}
 
 	result, err := a.Get(string(*cid))
