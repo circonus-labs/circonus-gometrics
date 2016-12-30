@@ -45,13 +45,13 @@ const (
 
 // FetchWorksheet retrieves a worksheet definition
 func (a *API) FetchWorksheet(cid CIDType) (*Worksheet, error) {
-	if matched, err := regexp.MatchString(worksheetCIDRegex, string(cid)); err != nil {
+	if matched, err := regexp.MatchString(worksheetCIDRegex, string(*cid)); err != nil {
 		return nil, err
 	} else if !matched {
-		return nil, fmt.Errorf("Invalid worksheet CID %v", cid)
+		return nil, fmt.Errorf("Invalid worksheet CID %v", *cid)
 	}
 
-	result, err := a.Get(string(cid))
+	result, err := a.Get(string(*cid))
 	if err != nil {
 		return nil, err
 	}
@@ -135,20 +135,20 @@ func (a *API) CreateWorksheet(config *Worksheet) (*Worksheet, error) {
 
 // DeleteWorksheet delete a worksheet
 func (a *API) DeleteWorksheet(bundle *Worksheet) (bool, error) {
-	cid := CIDType(bundle.CID)
+	cid := CIDType(&bundle.CID)
 	return a.DeleteWorksheetByCID(cid)
 }
 
 // DeleteWorksheetByCID delete a worksheet by cid
 func (a *API) DeleteWorksheetByCID(cid CIDType) (bool, error) {
-	if matched, err := regexp.MatchString(worksheetCIDRegex, string(cid)); err != nil {
+	if matched, err := regexp.MatchString(worksheetCIDRegex, string(*cid)); err != nil {
 		return false, err
 	} else if !matched {
-		return false, fmt.Errorf("Invalid worksheet CID %v", cid)
+		return false, fmt.Errorf("Invalid worksheet CID %v", *cid)
 	}
 
 	reqURL := url.URL{
-		Path: string(cid),
+		Path: string(*cid),
 	}
 
 	_, err := a.Delete(reqURL.String())

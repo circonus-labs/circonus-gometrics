@@ -60,7 +60,7 @@ const (
 )
 
 // FetchAccount retrieves an account definition
-func (a *API) FetchAccount(cid *CIDType) (*Account, error) {
+func (a *API) FetchAccount(cid CIDType) (*Account, error) {
 	var accountCID string
 
 	if cid == nil || *cid == "" {

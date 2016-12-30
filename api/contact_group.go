@@ -68,7 +68,7 @@ const (
 )
 
 // FetchContactGroup retrieves a contact group definition
-func (a *API) FetchContactGroup(cid *CIDType) (*ContactGroup, error) {
+func (a *API) FetchContactGroup(cid CIDType) (*ContactGroup, error) {
 	if cid == nil || *cid == "" {
 		return nil, fmt.Errorf("Invalid contact group CID [none]")
 	}
@@ -170,13 +170,11 @@ func (a *API) DeleteContactGroup(config *ContactGroup) (bool, error) {
 	if config == nil {
 		return false, fmt.Errorf("Invalid contact group config [nil]")
 	}
-
-	cid := CIDType(config.CID)
-	return a.DeleteContactGroupByCID(&cid)
+	return a.DeleteContactGroupByCID(CIDType(&config.CID))
 }
 
 // DeleteContactGroupByCID delete a contact group by cid
-func (a *API) DeleteContactGroupByCID(cid *CIDType) (bool, error) {
+func (a *API) DeleteContactGroupByCID(cid CIDType) (bool, error) {
 	if cid == nil || *cid == "" {
 		return false, fmt.Errorf("Invalid contact group CID [none]")
 	}

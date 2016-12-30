@@ -110,9 +110,9 @@ func TestFetchAnnotation(t *testing.T) {
 
 	t.Log("without CID")
 	{
-		cid := CIDType("")
+		cid := ""
 		expectedError := errors.New("Invalid annotation CID [none]")
-		_, err := apih.FetchAnnotation(&cid)
+		_, err := apih.FetchAnnotation(CIDType(&cid))
 		if err == nil {
 			t.Fatalf("Expected error")
 		}
@@ -123,8 +123,8 @@ func TestFetchAnnotation(t *testing.T) {
 
 	t.Log("with valid CID")
 	{
-		cid := CIDType("/annotation/1234")
-		annotation, err := apih.FetchAnnotation(&cid)
+		cid := "/annotation/1234"
+		annotation, err := apih.FetchAnnotation(CIDType(&cid))
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
@@ -142,9 +142,9 @@ func TestFetchAnnotation(t *testing.T) {
 
 	t.Log("with invalid CID")
 	{
-		cid := CIDType("/invalid")
+		cid := "/invalid"
 		expectedError := errors.New("Invalid annotation CID [/invalid]")
-		_, err := apih.FetchAnnotation(&cid)
+		_, err := apih.FetchAnnotation(CIDType(&cid))
 		if err == nil {
 			t.Fatalf("Expected error")
 		}

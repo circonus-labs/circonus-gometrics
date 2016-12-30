@@ -69,7 +69,7 @@ func (a *API) NewCheckBundle() *CheckBundle {
 }
 
 // FetchCheckBundle fetch a check bundle configuration by cid
-func (a *API) FetchCheckBundle(cid *CIDType) (*CheckBundle, error) {
+func (a *API) FetchCheckBundle(cid CIDType) (*CheckBundle, error) {
 	if cid == nil || *cid == "" {
 		return nil, fmt.Errorf("Invalid check bundle CID [none]")
 	}
@@ -173,13 +173,11 @@ func (a *API) DeleteCheckBundle(config *CheckBundle) (bool, error) {
 	if config == nil {
 		return false, fmt.Errorf("Invalid check bundle config [nil]")
 	}
-
-	cid := CIDType(config.CID)
-	return a.DeleteCheckBundleByCID(&cid)
+	return a.DeleteCheckBundleByCID(CIDType(&config.CID))
 }
 
 // DeleteCheckBundleByCID delete a check bundle by cid
-func (a *API) DeleteCheckBundleByCID(cid *CIDType) (bool, error) {
+func (a *API) DeleteCheckBundleByCID(cid CIDType) (bool, error) {
 
 	if cid == nil || *cid == "" {
 		return false, fmt.Errorf("Invalid check bundle CID [none]")

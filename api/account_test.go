@@ -138,8 +138,8 @@ func TestFetchAccount(t *testing.T) {
 
 	t.Log("without CID (\"\")")
 	{
-		cid := CIDType("")
-		account, err := apih.FetchAccount(&cid)
+		cid := ""
+		account, err := apih.FetchAccount(CIDType(&cid))
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
@@ -153,8 +153,8 @@ func TestFetchAccount(t *testing.T) {
 
 	t.Log("with valid CID")
 	{
-		cid := CIDType("/account/1234")
-		account, err := apih.FetchAccount(&cid)
+		cid := "/account/1234"
+		account, err := apih.FetchAccount(CIDType(&cid))
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
@@ -172,9 +172,9 @@ func TestFetchAccount(t *testing.T) {
 
 	t.Log("with invalid CID")
 	{
-		cid := CIDType("/invalid")
+		cid := "/invalid"
 		expectedError := errors.New("Invalid account CID [/invalid]")
-		_, err := apih.FetchAccount(&cid)
+		_, err := apih.FetchAccount(CIDType(&cid))
 		if err == nil {
 			t.Fatalf("Expected error")
 		}

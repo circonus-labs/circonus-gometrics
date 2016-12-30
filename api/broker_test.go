@@ -128,9 +128,9 @@ func TestFetchBroker(t *testing.T) {
 
 	t.Log("invalid CID [/invalid]")
 	{
-		cid := CIDType("/invalid")
+		cid := "/invalid"
 		expectedError := errors.New("Invalid broker CID [/invalid]")
-		_, err := apih.FetchBroker(&cid)
+		_, err := apih.FetchBroker(CIDType(&cid))
 		if err == nil {
 			t.Fatalf("Expected error")
 		}
@@ -141,8 +141,8 @@ func TestFetchBroker(t *testing.T) {
 
 	t.Log("valid CID")
 	{
-		cid := CIDType(testBroker.CID)
-		broker, err := apih.FetchBroker(&cid)
+		cid := CIDType(&testBroker.CID)
+		broker, err := apih.FetchBroker(cid)
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}

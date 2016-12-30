@@ -35,7 +35,7 @@ const (
 )
 
 // FetchCheck fetch a check configuration by cid
-func (a *API) FetchCheck(cid *CIDType) (*Check, error) {
+func (a *API) FetchCheck(cid CIDType) (*Check, error) {
 	if cid == nil || *cid == "" {
 		return nil, fmt.Errorf("Invalid check CID [none]")
 	}

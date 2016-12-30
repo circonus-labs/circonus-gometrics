@@ -35,11 +35,8 @@ type TokenKeyType string
 // TokenAppType - Circonus API Token app name
 type TokenAppType string
 
-// IDType Circonus object id (numeric portion of cid)
-type IDType int
-
 // CIDType Circonus object cid
-type CIDType string
+type CIDType *string
 
 // URLType submission url type
 type URLType string

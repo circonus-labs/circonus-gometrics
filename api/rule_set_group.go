@@ -54,13 +54,13 @@ const (
 
 // FetchRulesetGroup retrieves a rulesetGroup definition
 func (a *API) FetchRulesetGroup(cid CIDType) (*RulesetGroup, error) {
-	if matched, err := regexp.MatchString(rulesetGroupCIDRegex, string(cid)); err != nil {
+	if matched, err := regexp.MatchString(rulesetGroupCIDRegex, string(*cid)); err != nil {
 		return nil, err
 	} else if !matched {
 		return nil, fmt.Errorf("Invalid rule set group CID %v", cid)
 	}
 
-	result, err := a.Get(string(cid))
+	result, err := a.Get(string(*cid))
 	if err != nil {
 		return nil, err
 	}
@@ -144,20 +144,20 @@ func (a *API) CreateRulesetGroup(config *RulesetGroup) (*RulesetGroup, error) {
 
 // DeleteRulesetGroup delete a rulesetGroup
 func (a *API) DeleteRulesetGroup(bundle *RulesetGroup) (bool, error) {
-	cid := CIDType(bundle.CID)
+	cid := CIDType(&bundle.CID)
 	return a.DeleteRulesetGroupByCID(cid)
 }
 
 // DeleteRulesetGroupByCID delete a rulesetGroup by cid
 func (a *API) DeleteRulesetGroupByCID(cid CIDType) (bool, error) {
-	if matched, err := regexp.MatchString(rulesetGroupCIDRegex, string(cid)); err != nil {
+	if matched, err := regexp.MatchString(rulesetGroupCIDRegex, string(*cid)); err != nil {
 		return false, err
 	} else if !matched {
 		return false, fmt.Errorf("Invalid rule set group CID %v", cid)
 	}
 
 	reqURL := url.URL{
-		Path: string(cid),
+		Path: string(*cid),
 	}
 
 	_, err := a.Delete(reqURL.String())

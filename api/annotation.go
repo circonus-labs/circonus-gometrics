@@ -34,7 +34,7 @@ const (
 )
 
 // FetchAnnotation retrieves a annotation definition
-func (a *API) FetchAnnotation(cid *CIDType) (*Annotation, error) {
+func (a *API) FetchAnnotation(cid CIDType) (*Annotation, error) {
 	if cid == nil || *cid == "" {
 		return nil, fmt.Errorf("Invalid annotation CID [none]")
 	}
@@ -141,12 +141,12 @@ func (a *API) DeleteAnnotation(config *Annotation) (bool, error) {
 		return false, fmt.Errorf("Invalid annotation config [nil]")
 	}
 
-	cid := CIDType(config.CID)
-	return a.DeleteAnnotationByCID(&cid)
+	cid := CIDType(&config.CID)
+	return a.DeleteAnnotationByCID(cid)
 }
 
 // DeleteAnnotationByCID delete a annotation by cid
-func (a *API) DeleteAnnotationByCID(cid *CIDType) (bool, error) {
+func (a *API) DeleteAnnotationByCID(cid CIDType) (bool, error) {
 	if cid == nil || *cid == "" {
 		return false, fmt.Errorf("Invalid annotation CID [%v]", *cid)
 	}

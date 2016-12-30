@@ -45,7 +45,7 @@ const (
 )
 
 // FetchBroker fetch a broker configuration by cid
-func (a *API) FetchBroker(cid *CIDType) (*Broker, error) {
+func (a *API) FetchBroker(cid CIDType) (*Broker, error) {
 	if cid == nil || *cid == "" {
 		return nil, fmt.Errorf("Invalid broker CID [none]")
 	}

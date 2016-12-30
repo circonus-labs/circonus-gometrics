@@ -160,7 +160,7 @@ const (
 )
 
 // FetchGraph retrieves a graph definition
-func (a *API) FetchGraph(cid *CIDType) (*Graph, error) {
+func (a *API) FetchGraph(cid CIDType) (*Graph, error) {
 	if cid == nil || *cid == "" {
 		return nil, fmt.Errorf("Invalid graph CID [none]")
 	}
@@ -259,24 +259,30 @@ func (a *API) CreateGraph(config *Graph) (*Graph, error) {
 }
 
 // DeleteGraph delete a graph
-func (a *API) DeleteGraph(bundle *Graph) (bool, error) {
-	cid := CIDType(bundle.CID)
-	return a.DeleteGraphByCID(cid)
+func (a *API) DeleteGraph(config *Graph) (bool, error) {
+	if config == nil {
+		return false, fmt.Errorf("Invalid graph config [nil]")
+	}
+	return a.DeleteGraphByCID(CIDType(&config.CID))
 }
 
 // DeleteGraphByCID delete a graph by cid
 func (a *API) DeleteGraphByCID(cid CIDType) (bool, error) {
-	if matched, err := regexp.MatchString(graphCIDRegex, string(cid)); err != nil {
+	if cid == nil || *cid == "" {
+		return false, fmt.Errorf("Invalid graph CID [none]")
+	}
+
+	graphCID := string(*cid)
+
+	matched, err := regexp.MatchString(graphCIDRegex, graphCID)
+	if err != nil {
 		return false, err
-	} else if !matched {
-		return false, fmt.Errorf("Invalid graph CID %v", cid)
+	}
+	if !matched {
+		return false, fmt.Errorf("Invalid graph CID [%s]", graphCID)
 	}
 
-	reqURL := url.URL{
-		Path: string(cid),
-	}
-
-	_, err := a.Delete(reqURL.String())
+	_, err = a.Delete(graphCID)
 	if err != nil {
 		return false, err
 	}

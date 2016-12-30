@@ -30,25 +30,16 @@ type MetricCluster struct {
 
 const baseMetricClusterPath = "/metric_cluster"
 
-// FetchMetricClusterByID fetch a metric cluster configuration by id
-func (a *API) FetchMetricClusterByID(id IDType, extras string) (*MetricCluster, error) {
-	reqURL := url.URL{
-		Path: fmt.Sprintf("%s/%d", baseMetricClusterPath, id),
-	}
-	cid := CIDType(reqURL.String())
-	return a.FetchMetricClusterByCID(cid, extras)
-}
-
 // FetchMetricClusterByCID fetch a check bundle configuration by id
 func (a *API) FetchMetricClusterByCID(cid CIDType, extras string) (*MetricCluster, error) {
-	if matched, err := regexp.MatchString("^"+baseMetricClusterPath+"/[0-9]+$", string(cid)); err != nil {
+	if matched, err := regexp.MatchString("^"+baseMetricClusterPath+"/[0-9]+$", string(*cid)); err != nil {
 		return nil, err
 	} else if !matched {
-		return nil, fmt.Errorf("Invalid metric cluster CID %v", cid)
+		return nil, fmt.Errorf("Invalid metric cluster CID %v", *cid)
 	}
 
 	reqURL := url.URL{
-		Path: string(cid),
+		Path: string(*cid),
 	}
 
 	extra := ""

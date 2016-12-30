@@ -36,17 +36,18 @@ const baseUserPath = "/user"
 
 // FetchUser retrieves a user definition
 func (a *API) FetchUser(cid CIDType) (*User, error) {
-	if cid == "" {
-		cid = CIDType(baseUserPath + "/current")
+	if *cid == "" {
+		userCID := baseUserPath + "/current"
+		cid = CIDType(&userCID)
 	}
 
-	if matched, err := regexp.MatchString("^"+baseUserPath+"/([0-9]+|current)$", string(cid)); err != nil {
+	if matched, err := regexp.MatchString("^"+baseUserPath+"/([0-9]+|current)$", string(*cid)); err != nil {
 		return nil, err
 	} else if !matched {
-		return nil, fmt.Errorf("Invalid user CID %v", cid)
+		return nil, fmt.Errorf("Invalid user CID %v", *cid)
 	}
 
-	result, err := a.Get(string(cid))
+	result, err := a.Get(string(*cid))
 	if err != nil {
 		return nil, err
 	}
