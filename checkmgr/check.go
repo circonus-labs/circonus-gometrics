@@ -189,7 +189,8 @@ func (cm *CheckManager) initializeTrapURL() error {
 	}
 
 	if broker == nil {
-		broker, err = cm.apih.FetchBrokerByCID(api.CIDType(checkBundle.Brokers[0]))
+		cid := api.CIDType(checkBundle.Brokers[0])
+		broker, err = cm.apih.FetchBroker(&cid)
 		if err != nil {
 			return err
 		}

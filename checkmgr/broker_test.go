@@ -125,9 +125,9 @@ func testBrokerServer() *httptest.Server {
 			switch r.Method {
 			case "GET": // search or filter
 				var c []api.Broker
-				if strings.Contains(r.URL.String(), "f__tags_has=no:broker") {
+				if strings.Contains(r.URL.String(), "f__tags_has=no%3Abroker") {
 					c = []api.Broker{}
-				} else if strings.Contains(r.URL.String(), "f__tags_has=multi:broker") {
+				} else if strings.Contains(r.URL.String(), "f__tags_has=multi%3Abroker") {
 					c = []api.Broker{invalidBroker, invalidBroker}
 				} else {
 					c = []api.Broker{validBroker, validBrokerNonEnterprise}
@@ -253,7 +253,7 @@ func TestSelectBroker(t *testing.T) {
 			TokenKey: "1234",
 			URL:      server.URL,
 		}
-		apih, err := api.NewAPI(ac)
+		apih, err := api.New(ac)
 		if err != nil {
 			t.Errorf("Expected no error, got '%v'", err)
 		}
@@ -277,7 +277,7 @@ func TestSelectBroker(t *testing.T) {
 			TokenKey: "1234",
 			URL:      server.URL,
 		}
-		apih, err := api.NewAPI(ac)
+		apih, err := api.New(ac)
 		if err != nil {
 			t.Errorf("Expected no error, got '%v'", err)
 		}
