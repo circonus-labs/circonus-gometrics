@@ -218,7 +218,7 @@ func TestCheckBundleSearch(t *testing.T) {
 	t.Log("Testing with search and filter criteria")
 	{
 		search := SearchQueryType("test")
-		filter := map[string]string{"f_notes": "foo"}
+		filter := map[string][]string{"f_notes": []string{"foo"}}
 		bundles, err := apih.SearchCheckBundles(&search, &filter)
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)

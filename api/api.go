@@ -48,7 +48,7 @@ type URLType string
 type SearchQueryType string
 
 // SearchFilterType search filter
-type SearchFilterType string
+type SearchFilterType map[string][]string
 
 // TagType search/select/custom tag(s) type
 type TagType []string

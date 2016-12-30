@@ -2,6 +2,9 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// Check bundle API support - Fetch, Create, Delete, Search, and Update
+// See: https://login.circonus.com/resources/api/calls/check_bundle
+
 package api
 
 import (
@@ -201,15 +204,7 @@ func (a *API) DeleteCheckBundleByCID(cid *CIDType) (bool, error) {
 // SearchCheckBundles returns list of annotations matching a search query and/or filter
 //    - a search query (see: https://login.circonus.com/resources/api#searching)
 //    - a filter (see: https://login.circonus.com/resources/api#filtering)
-func (a *API) SearchCheckBundles(searchCriteria *SearchQueryType, filterCriteria *map[string]string) (*[]CheckBundle, error) {
-
-	if (searchCriteria == nil || *searchCriteria == "") && (filterCriteria == nil || len(*filterCriteria) == 0) {
-		return a.FetchCheckBundles()
-	}
-
-	reqURL := url.URL{
-		Path: baseCheckBundlePath,
-	}
+func (a *API) SearchCheckBundles(searchCriteria *SearchQueryType, filterCriteria *map[string][]string) (*[]CheckBundle, error) {
 
 	q := url.Values{}
 
@@ -219,11 +214,20 @@ func (a *API) SearchCheckBundles(searchCriteria *SearchQueryType, filterCriteria
 
 	if filterCriteria != nil && len(*filterCriteria) > 0 {
 		for filter, criteria := range *filterCriteria {
-			q.Set(filter, criteria)
+			for _, val := range criteria {
+				q.Add(filter, val)
+			}
 		}
 	}
 
-	reqURL.RawQuery = q.Encode()
+	if q.Encode() == "" {
+		return a.FetchCheckBundles()
+	}
+
+	reqURL := url.URL{
+		Path:     baseCheckBundlePath,
+		RawQuery: q.Encode(),
+	}
 
 	resp, err := a.Get(reqURL.String())
 	if err != nil {
@@ -237,61 +241,3 @@ func (a *API) SearchCheckBundles(searchCriteria *SearchQueryType, filterCriteria
 
 	return &results, nil
 }
-
-/*
-// CheckBundleSearch returns list of check bundles matching a search query
-//    - a search query (see: https://login.circonus.com/resources/api#searching)
-func (a *API) CheckBundleSearch(searchCriteria SearchQueryType) ([]CheckBundle, error) {
-    reqURL := url.URL{
-        Path: baseCheckBundlePath,
-    }
-
-    if searchCriteria != "" {
-        q := url.Values{}
-        q.Set("search", string(searchCriteria))
-        reqURL.RawQuery = q.Encode()
-    }
-
-    resp, err := a.Get(reqURL.String())
-    if err != nil {
-        return nil, fmt.Errorf("[ERROR] API call error %+v", err)
-    }
-
-    var results []CheckBundle
-    if err := json.Unmarshal(resp, &results); err != nil {
-        return nil, err
-    }
-
-    return results, nil
-}
-
-// CheckBundleFilterSearch returns list of check bundles matching a search query and filter
-//    - a search query (see: https://login.circonus.com/resources/api#searching)
-//    - a filter (see: https://login.circonus.com/resources/api#filtering)
-func (a *API) CheckBundleFilterSearch(searchCriteria SearchQueryType, filterCriteria map[string]string) ([]CheckBundle, error) {
-    reqURL := url.URL{
-        Path: baseCheckBundlePath,
-    }
-
-    if searchCriteria != "" {
-        q := url.Values{}
-        q.Set("search", string(searchCriteria))
-        for field, val := range filterCriteria {
-            q.Set(field, val)
-        }
-        reqURL.RawQuery = q.Encode()
-    }
-
-    resp, err := a.Get(reqURL.String())
-    if err != nil {
-        return nil, fmt.Errorf("[ERROR] API call error %+v", err)
-    }
-
-    var results []CheckBundle
-    if err := json.Unmarshal(resp, &results); err != nil {
-        return nil, err
-    }
-
-    return results, nil
-}
-*/

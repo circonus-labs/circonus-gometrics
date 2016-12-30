@@ -42,8 +42,8 @@ var (
 
 func testBrokerServer() *httptest.Server {
 	f := func(w http.ResponseWriter, r *http.Request) {
-		switch r.URL.Path {
-		case "/broker/1234": // handle GET/PUT/DELETE
+		path := r.URL.Path
+		if path == "/broker/1234" {
 			switch r.Method {
 			case "GET": // get by id/cid
 				ret, err := json.Marshal(testBroker)
@@ -54,10 +54,10 @@ func testBrokerServer() *httptest.Server {
 				w.Header().Set("Content-Type", "application/json")
 				fmt.Fprintln(w, string(ret))
 			default:
-				w.WriteHeader(500)
-				fmt.Fprintln(w, "unsupported")
+				w.WriteHeader(404)
+				fmt.Fprintln(w, fmt.Sprintf("not found: %s %s", r.Method, path))
 			}
-		case "/broker":
+		} else if path == "/broker" {
 			switch r.Method {
 			case "GET": // search or filter
 				var c []Broker
@@ -85,12 +85,12 @@ func testBrokerServer() *httptest.Server {
 				w.Header().Set("Content-Type", "application/json")
 				fmt.Fprintln(w, string(ret))
 			default:
-				w.WriteHeader(500)
-				fmt.Fprintln(w, "unsupported")
+				w.WriteHeader(404)
+				fmt.Fprintln(w, fmt.Sprintf("not found: %s %s", r.Method, path))
 			}
-		default:
-			w.WriteHeader(500)
-			fmt.Fprintln(w, "unsupported")
+		} else {
+			w.WriteHeader(404)
+			fmt.Fprintln(w, fmt.Sprintf("not found: %s %s", r.Method, path))
 		}
 	}
 
@@ -249,7 +249,7 @@ func TestSearchBrokers(t *testing.T) {
 
 	t.Log("search [search, filter, found]")
 	{
-		filter := map[string]string{"f__tags_has": "Found"}
+		filter := SearchFilterType{"f__tags_has": []string{"Found"}}
 		search := SearchQueryType("Found")
 		brokers, err := apih.SearchBrokers(&search, &filter)
 		if err != nil {
@@ -265,7 +265,7 @@ func TestSearchBrokers(t *testing.T) {
 
 	t.Log("search [search, filter, not found]")
 	{
-		filter := map[string]string{"f__tags_has": "NotFound"}
+		filter := SearchFilterType{"f__tags_has": []string{"NotFound"}}
 		search := SearchQueryType("NotFound")
 		brokers, err := apih.SearchBrokers(&search, &filter)
 		if err != nil {

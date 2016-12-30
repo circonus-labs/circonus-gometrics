@@ -2,6 +2,9 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// Broker API support - Fetch and Search
+// See: https://login.circonus.com/resources/api/calls/broker
+
 package api
 
 import (
@@ -106,16 +109,7 @@ func (a *API) FetchBrokers() (*[]Broker, error) {
 // SearchBrokers returns list of annotations matching a search query and/or filter
 //    - a search query (see: https://login.circonus.com/resources/api#searching)
 //    - a filter (see: https://login.circonus.com/resources/api#filtering)
-func (a *API) SearchBrokers(searchCriteria *SearchQueryType, filterCriteria *map[string]string) (*[]Broker, error) {
-
-	if (searchCriteria == nil || *searchCriteria == "") && (filterCriteria == nil || len(*filterCriteria) == 0) {
-		return a.FetchBrokers()
-	}
-
-	reqURL := url.URL{
-		Path: baseBrokerPath,
-	}
-
+func (a *API) SearchBrokers(searchCriteria *SearchQueryType, filterCriteria *SearchFilterType) (*[]Broker, error) {
 	q := url.Values{}
 
 	if searchCriteria != nil && *searchCriteria != "" {
@@ -124,11 +118,20 @@ func (a *API) SearchBrokers(searchCriteria *SearchQueryType, filterCriteria *map
 
 	if filterCriteria != nil && len(*filterCriteria) > 0 {
 		for filter, criteria := range *filterCriteria {
-			q.Set(filter, criteria)
+			for _, val := range criteria {
+				q.Add(filter, val)
+			}
 		}
 	}
 
-	reqURL.RawQuery = q.Encode()
+	if q.Encode() == "" {
+		return a.FetchBrokers()
+	}
+
+	reqURL := url.URL{
+		Path:     baseBrokerPath,
+		RawQuery: q.Encode(),
+	}
 
 	result, err := a.Get(reqURL.String())
 	if err != nil {
