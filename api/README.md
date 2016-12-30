@@ -21,6 +21,11 @@
     * DeleteAnnotationByCID
     * SearchAnnotations
 * [Broker](https://login.circonus.com/resources/api/calls/broker)
+    * FetchBroker
+    * FetchBrokerByID
+    * FetchBrokers
+    * FetchBrokersByTag
+    * SearchBrokers
 * [Check](https://login.circonus.com/resources/api/calls/check)
 * [Check Bundle](https://login.circonus.com/resources/api/calls/check_bundle)
 * [Contact Group](https://login.circonus.com/resources/api/calls/contact_group)
