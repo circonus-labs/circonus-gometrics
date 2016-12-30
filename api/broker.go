@@ -42,15 +42,6 @@ const (
 	brokerCIDRegex = "^" + baseBrokerPath + "/[0-9]+$"
 )
 
-// FetchBrokerByID fetch a broker configuration by [group]id
-func (a *API) FetchBrokerByID(id IDType) (*Broker, error) {
-	if id <= 0 {
-		return nil, fmt.Errorf("Invalid broker ID [%d]", id)
-	}
-	cid := CIDType(fmt.Sprintf("%s/%d", baseBrokerPath, id))
-	return a.FetchBroker(&cid)
-}
-
 // FetchBroker fetch a broker configuration by cid
 func (a *API) FetchBroker(cid *CIDType) (*Broker, error) {
 	if cid == nil || *cid == "" {
@@ -85,6 +76,30 @@ func (a *API) FetchBroker(cid *CIDType) (*Broker, error) {
 
 }
 
+// FetchBrokerByID fetch a broker configuration by [group]id
+func (a *API) FetchBrokerByID(id IDType) (*Broker, error) {
+	if id <= 0 {
+		return nil, fmt.Errorf("Invalid broker ID [%d]", id)
+	}
+	cid := CIDType(fmt.Sprintf("%s/%d", baseBrokerPath, id))
+	return a.FetchBroker(&cid)
+}
+
+// FetchBrokers return list of all brokers available to the api token/app
+func (a *API) FetchBrokers() (*[]Broker, error) {
+	result, err := a.Get("/broker")
+	if err != nil {
+		return nil, err
+	}
+
+	var response []Broker
+	if err := json.Unmarshal(result, &response); err != nil {
+		return nil, err
+	}
+
+	return &response, nil
+}
+
 // FetchBrokersByTag return list of brokers with a specific tag
 func (a *API) FetchBrokersByTag(searchTags TagType) (*[]Broker, error) {
 	if len(searchTags) == 0 {
@@ -97,23 +112,6 @@ func (a *API) FetchBrokersByTag(searchTags TagType) (*[]Broker, error) {
 
 	return a.SearchBrokers(nil, &filter)
 }
-
-// // BrokerSearch return a list of brokers matching a query/filter
-// func (a *API) BrokerSearch(query SearchQueryType) ([]Broker, error) {
-// 	queryURL := fmt.Sprintf("/broker?%s", string(query))
-//
-// 	result, err := a.Get(queryURL)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-//
-// 	var brokers []Broker
-// 	if err := json.Unmarshal(result, &brokers); err != nil {
-// 		return nil, err
-// 	}
-//
-// 	return brokers, nil
-// }
 
 // SearchBrokers returns list of annotations matching a search query and/or filter
 //    - a search query (see: https://login.circonus.com/resources/api#searching)
@@ -153,19 +151,4 @@ func (a *API) SearchBrokers(searchCriteria *SearchQueryType, filterCriteria *map
 	}
 
 	return &results, nil
-}
-
-// FetchBrokers return list of all brokers available to the api token/app
-func (a *API) FetchBrokers() (*[]Broker, error) {
-	result, err := a.Get("/broker")
-	if err != nil {
-		return nil, err
-	}
-
-	var response []Broker
-	if err := json.Unmarshal(result, &response); err != nil {
-		return nil, err
-	}
-
-	return &response, nil
 }
