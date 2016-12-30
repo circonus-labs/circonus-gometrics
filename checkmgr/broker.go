@@ -24,7 +24,8 @@ func init() {
 // Get Broker to use when creating a check
 func (cm *CheckManager) getBroker() (*api.Broker, error) {
 	if cm.brokerID != 0 {
-		broker, err := cm.apih.FetchBrokerByID(cm.brokerID)
+		cid := api.CIDType(fmt.Sprintf("/broker/%d", cm.brokerID))
+		broker, err := cm.apih.FetchBroker(&cid)
 		if err != nil {
 			return nil, err
 		}
@@ -81,7 +82,10 @@ func (cm *CheckManager) selectBroker() (*api.Broker, error) {
 	var err error
 
 	if len(cm.brokerSelectTag) > 0 {
-		brokerList, err = cm.apih.FetchBrokersByTag(cm.brokerSelectTag)
+		filter := map[string]string{
+			"f__tags_has": strings.Replace(strings.Join(cm.brokerSelectTag, ","), ",", "&f__tags_has=", -1),
+		}
+		brokerList, err = cm.apih.SearchBrokers(nil, &filter)
 		if err != nil {
 			return nil, err
 		}

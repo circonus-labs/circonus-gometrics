@@ -97,55 +97,6 @@ func testBrokerServer() *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(f))
 }
 
-func TestFetchBrokerByID(t *testing.T) {
-	server := testBrokerServer()
-	defer server.Close()
-
-	ac := &Config{
-		TokenKey: "abc123",
-		TokenApp: "test",
-		URL:      server.URL,
-	}
-	apih, err := New(ac)
-	if err != nil {
-		t.Errorf("Expected no error, got '%v'", err)
-	}
-
-	t.Log("valid ID")
-	{
-		brokerID := IDType(1234)
-
-		broker, err := apih.FetchBrokerByID(brokerID)
-		if err != nil {
-			t.Fatalf("Expected no error, got '%v'", err)
-		}
-
-		actualType := reflect.TypeOf(broker)
-		expectedType := "*api.Broker"
-		if actualType.String() != expectedType {
-			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
-		}
-
-		if broker.CID != testBroker.CID {
-			t.Fatalf("CIDs do not match: %+v != %+v\n", broker, testBroker)
-		}
-	}
-
-	t.Log("invalid ID")
-	{
-		brokerID := IDType(-1)
-
-		expectedError := errors.New("Invalid broker ID [-1]")
-		_, err := apih.FetchBrokerByID(brokerID)
-		if err == nil {
-			t.Fatalf("Expected error")
-		}
-		if err.Error() != expectedError.Error() {
-			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
-		}
-	}
-}
-
 func TestFetchBroker(t *testing.T) {
 	server := testBrokerServer()
 	defer server.Close()
@@ -231,66 +182,6 @@ func TestFetchBrokers(t *testing.T) {
 	expectedType := "*[]api.Broker"
 	if actualType.String() != expectedType {
 		t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
-	}
-}
-
-func TestFetchBrokersByTag(t *testing.T) {
-	server := testBrokerServer()
-	defer server.Close()
-
-	ac := &Config{
-		TokenKey: "abc123",
-		TokenApp: "test",
-		URL:      server.URL,
-	}
-	apih, err := New(ac)
-	if err != nil {
-		t.Errorf("Expected no error, got '%v'", err)
-	}
-
-	t.Log("no tags")
-	{
-		brokers, err := apih.FetchBrokersByTag(TagType([]string{}))
-		if err != nil {
-			t.Fatalf("Expected no error, got %v", err)
-		}
-		actualType := reflect.TypeOf(brokers)
-		expectedType := "*[]api.Broker"
-		if actualType.String() != expectedType {
-			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
-		}
-	}
-
-	t.Log("tag(s) [found]")
-	{
-		brokers, err := apih.FetchBrokersByTag(TagType([]string{"cat:tag"}))
-		if err != nil {
-			t.Fatalf("Expected no error, got %v", err)
-		}
-		actualType := reflect.TypeOf(brokers)
-		expectedType := "*[]api.Broker"
-		if actualType.String() != expectedType {
-			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
-		}
-		if len(*brokers) == 0 {
-			t.Fatal("Expected >0 brokers, got 0")
-		}
-	}
-
-	t.Log("tag(s) [not found]")
-	{
-		brokers, err := apih.FetchBrokersByTag(TagType([]string{"cat:not_found"}))
-		if err != nil {
-			t.Fatalf("Expected no error, got %v", err)
-		}
-		actualType := reflect.TypeOf(brokers)
-		expectedType := "*[]api.Broker"
-		if actualType.String() != expectedType {
-			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
-		}
-		if len(*brokers) != 0 {
-			t.Fatalf("Expected 0 brokers, got %d", len(*brokers))
-		}
 	}
 }
 

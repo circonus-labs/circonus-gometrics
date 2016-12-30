@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"net/url"
 	"regexp"
-	"strings"
 )
 
 // BrokerDetail instance attributes
@@ -76,15 +75,6 @@ func (a *API) FetchBroker(cid *CIDType) (*Broker, error) {
 
 }
 
-// FetchBrokerByID fetch a broker configuration by [group]id
-func (a *API) FetchBrokerByID(id IDType) (*Broker, error) {
-	if id <= 0 {
-		return nil, fmt.Errorf("Invalid broker ID [%d]", id)
-	}
-	cid := CIDType(fmt.Sprintf("%s/%d", baseBrokerPath, id))
-	return a.FetchBroker(&cid)
-}
-
 // FetchBrokers return list of all brokers available to the api token/app
 func (a *API) FetchBrokers() (*[]Broker, error) {
 	result, err := a.Get("/broker")
@@ -100,18 +90,18 @@ func (a *API) FetchBrokers() (*[]Broker, error) {
 	return &response, nil
 }
 
-// FetchBrokersByTag return list of brokers with a specific tag
-func (a *API) FetchBrokersByTag(searchTags TagType) (*[]Broker, error) {
-	if len(searchTags) == 0 {
-		return a.FetchBrokers()
-	}
-
-	filter := map[string]string{
-		"f__tags_has": strings.Replace(strings.Join(searchTags, ","), ",", "&f__tags_has=", -1),
-	}
-
-	return a.SearchBrokers(nil, &filter)
-}
+// // FetchBrokersByTag return list of brokers with a specific tag
+// func (a *API) FetchBrokersByTag(searchTags TagType) (*[]Broker, error) {
+// 	if len(searchTags) == 0 {
+// 		return a.FetchBrokers()
+// 	}
+//
+// 	filter := map[string]string{
+// 		"f__tags_has": strings.Replace(strings.Join(searchTags, ","), ",", "&f__tags_has=", -1),
+// 	}
+//
+// 	return a.SearchBrokers(nil, &filter)
+// }
 
 // SearchBrokers returns list of annotations matching a search query and/or filter
 //    - a search query (see: https://login.circonus.com/resources/api#searching)
