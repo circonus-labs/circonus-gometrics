@@ -10,6 +10,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -118,7 +119,7 @@ func (cm *CheckManager) initializeTrapURL() error {
 	var broker *api.Broker
 
 	if cm.checkSubmissionURL != "" {
-		check, err = cm.apih.FetchCheckBySubmissionURL(cm.checkSubmissionURL)
+		check, err = cm.fetchCheckBySubmissionURL(cm.checkSubmissionURL)
 		if err != nil {
 			return err
 		}
@@ -142,7 +143,8 @@ func (cm *CheckManager) initializeTrapURL() error {
 				check.CID, err)
 		}
 	} else if cm.checkID > 0 {
-		check, err = cm.apih.FetchCheckByID(cm.checkID)
+		cid := api.CIDType(fmt.Sprintf("/check/%d", cm.checkID))
+		check, err = cm.apih.FetchCheck(&cid)
 		if err != nil {
 			return err
 		}
@@ -154,7 +156,7 @@ func (cm *CheckManager) initializeTrapURL() error {
 			// old search (instanceid as check.target)
 			searchCriteria := fmt.Sprintf(
 				"(active:1)(type:\"%s\")(host:\"%s\")(tags:%s)", cm.checkType, cm.checkTarget, strings.Join(cm.checkSearchTag, ","))
-			checkBundle, err = cm.checkBundleSearch(searchCriteria, map[string]string{})
+			checkBundle, err = cm.checkBundleSearch(searchCriteria, map[string][]string{})
 			if err != nil {
 				return err
 			}
@@ -164,7 +166,7 @@ func (cm *CheckManager) initializeTrapURL() error {
 			// new search (check.target != instanceid, instanceid encoded in notes field)
 			searchCriteria := fmt.Sprintf(
 				"(active:1)(type:\"%s\")(tags:%s)", cm.checkType, strings.Join(cm.checkSearchTag, ","))
-			filterCriteria := map[string]string{"f_notes": cm.getNotes()}
+			filterCriteria := map[string][]string{"f_notes": []string{cm.getNotes()}}
 			checkBundle, err = cm.checkBundleSearch(searchCriteria, filterCriteria)
 			if err != nil {
 				return err
@@ -247,7 +249,7 @@ func (cm *CheckManager) initializeTrapURL() error {
 }
 
 // Search for a check bundle given a predetermined set of criteria
-func (cm *CheckManager) checkBundleSearch(criteria string, filter map[string]string) (*api.CheckBundle, error) {
+func (cm *CheckManager) checkBundleSearch(criteria string, filter map[string][]string) (*api.CheckBundle, error) {
 	search := api.SearchQueryType(criteria)
 	checkBundles, err := cm.apih.SearchCheckBundles(&search, &filter)
 	if err != nil {
@@ -332,4 +334,60 @@ func (cm *CheckManager) makeSecret() (string, error) {
 
 func (cm *CheckManager) getNotes() string {
 	return fmt.Sprintf("cgm_instanceid|%s", cm.checkInstanceID)
+}
+
+// FetchCheckBySubmissionURL fetch a check configuration by submission_url
+func (cm *CheckManager) fetchCheckBySubmissionURL(submissionURL api.URLType) (*api.Check, error) {
+	if string(submissionURL) == "" {
+		return nil, errors.New("[ERROR] Invalid submission URL (blank)")
+	}
+
+	u, err := url.Parse(string(submissionURL))
+	if err != nil {
+		return nil, err
+	}
+
+	// valid trap url: scheme://host[:port]/module/httptrap/UUID/secret
+
+	// does it smell like a valid trap url path
+	if !strings.Contains(u.Path, "/module/httptrap/") {
+		return nil, fmt.Errorf("[ERROR] Invalid submission URL '%s', unrecognized path", submissionURL)
+	}
+
+	// extract uuid
+	pathParts := strings.Split(strings.Replace(u.Path, "/module/httptrap/", "", 1), "/")
+	if len(pathParts) != 2 {
+		return nil, fmt.Errorf("[ERROR] Invalid submission URL '%s', UUID not where expected", submissionURL)
+	}
+	uuid := pathParts[0]
+
+	filter := api.SearchFilterType{"f__check_uuid": []string{uuid}}
+
+	checks, err := cm.apih.SearchChecks(nil, &filter)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(*checks) == 0 {
+		return nil, fmt.Errorf("[ERROR] No checks found with UUID %s", uuid)
+	}
+
+	numActive := 0
+	checkID := -1
+
+	for idx, check := range *checks {
+		if check.Active {
+			numActive++
+			checkID = idx
+		}
+	}
+
+	if numActive > 1 {
+		return nil, fmt.Errorf("[ERROR] Multiple checks with same UUID %s", uuid)
+	}
+
+	check := (*checks)[checkID]
+
+	return &check, nil
+
 }
