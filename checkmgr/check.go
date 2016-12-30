@@ -201,14 +201,13 @@ func (cm *CheckManager) initializeTrapURL() error {
 
 	// determine the trap url to which metrics should be PUT
 	if checkBundle.Type == "httptrap" {
-		cfgKey := api.CheckBundleConfigKey("submission_url")
-		if turl, found := checkBundle.Config[cfgKey]; found {
+		if turl, found := checkBundle.Config[api.SubmissionURL]; found {
 			cm.trapURL = api.URLType(turl)
 		} else {
 			if cm.Debug {
-				cm.Log.Printf("Missing config.%s %+v", cfgKey, checkBundle)
+				cm.Log.Printf("Missing config.%s %+v", api.SubmissionURL, checkBundle)
 			}
-			return fmt.Errorf("[ERROR] Unable to use check, no %s in config", cfgKey)
+			return fmt.Errorf("[ERROR] Unable to use check, no %s in config", api.SubmissionURL)
 		}
 	} else {
 		// build a submission_url for non-httptrap checks out of mtev_reverse url
@@ -218,14 +217,13 @@ func (cm *CheckManager) initializeTrapURL() error {
 		mtevURL := checkBundle.ReverseConnectURLs[0]
 		mtevURL = strings.Replace(mtevURL, "mtev_reverse", "https", 1)
 		mtevURL = strings.Replace(mtevURL, "check", "module/httptrap", 1)
-		cfgKey := api.CheckBundleConfigKey("reverse:secret_key")
-		if rs, found := checkBundle.Config[cfgKey]; found {
+		if rs, found := checkBundle.Config[api.ReverseSecretKey]; found {
 			cm.trapURL = api.URLType(fmt.Sprintf("%s/%s", mtevURL, rs))
 		} else {
 			if cm.Debug {
-				cm.Log.Printf("Missing config.%s %+v", cfgKey, checkBundle)
+				cm.Log.Printf("Missing config.%s %+v", api.ReverseSecretKey, checkBundle)
 			}
-			return fmt.Errorf("[ERROR] Unable to use check, no %s in config", cfgKey)
+			return fmt.Errorf("[ERROR] Unable to use check, no %s in config", api.ReverseSecretKey)
 		}
 	}
 
@@ -289,8 +287,8 @@ func (cm *CheckManager) createNewCheck() (*api.CheckBundle, *api.Broker, error) 
 	config := &api.CheckBundle{
 		Brokers: []string{broker.CID},
 		Config: map[api.CheckBundleConfigKey]string{
-			"async_metrics": "true",
-			"secret":        checkSecret,
+			api.AsyncMetrics: "true",
+			api.SecretKey:    checkSecret,
 		},
 		DisplayName: string(cm.checkDisplayName),
 		Metrics:     []api.CheckBundleMetric{},
