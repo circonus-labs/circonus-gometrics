@@ -34,6 +34,9 @@
     * DeleteCheckBundleByCID
     * SearchCheckBundles
 * [Check](https://login.circonus.com/resources/api/calls/check)
+    * FetchCheck
+    * FetchChecks
+    * SearchChecks
 * [Contact Group](https://login.circonus.com/resources/api/calls/contact_group)
 * [Graph](https://login.circonus.com/resources/api/calls/graph)
 * [Metric Cluster](https://login.circonus.com/resources/api/calls/metric_cluster)
