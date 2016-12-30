@@ -68,39 +68,45 @@ const (
 )
 
 // FetchContactGroup retrieves a contact group definition
-func (a *API) FetchContactGroup(cid CIDType) (*ContactGroup, error) {
-	if matched, err := regexp.MatchString(contactGroupCIDRegex, string(cid)); err != nil {
-		return nil, err
-	} else if !matched {
-		return nil, fmt.Errorf("Invalid contact group CID %v", cid)
+func (a *API) FetchContactGroup(cid *CIDType) (*ContactGroup, error) {
+	if cid == nil || *cid == "" {
+		return nil, fmt.Errorf("Invalid contact group CID [none]")
 	}
 
-	result, err := a.Get(string(cid))
+	groupCID := string(*cid)
+
+	if matched, err := regexp.MatchString(contactGroupCIDRegex, groupCID); err != nil {
+		return nil, err
+	} else if !matched {
+		return nil, fmt.Errorf("Invalid contact group CID [%s]", groupCID)
+	}
+
+	result, err := a.Get(groupCID)
 	if err != nil {
 		return nil, err
 	}
 
-	contactGroup := new(ContactGroup)
-	if err := json.Unmarshal(result, contactGroup); err != nil {
+	group := new(ContactGroup)
+	if err := json.Unmarshal(result, group); err != nil {
 		return nil, err
 	}
 
-	return contactGroup, nil
+	return group, nil
 }
 
 // FetchContactGroups retrieves all contact groups
-func (a *API) FetchContactGroups() ([]ContactGroup, error) {
+func (a *API) FetchContactGroups() (*[]ContactGroup, error) {
 	result, err := a.Get(baseContactGroupPath)
 	if err != nil {
 		return nil, err
 	}
 
-	var contactGroups []ContactGroup
-	if err := json.Unmarshal(result, &contactGroups); err != nil {
+	var groups []ContactGroup
+	if err := json.Unmarshal(result, &groups); err != nil {
 		return nil, err
 	}
 
-	return contactGroups, nil
+	return &groups, nil
 }
 
 // UpdateContactGroup update contact group definition
@@ -186,29 +192,29 @@ func (a *API) DeleteContactGroupByCID(cid CIDType) (bool, error) {
 // ContactGroupSearch returns list of contact groups matching a search query and/or filter
 //    - a search query (see: https://login.circonus.com/resources/api#searching)
 //    - a filter (see: https://login.circonus.com/resources/api#filtering)
-func (a *API) ContactGroupSearch(searchCriteria SearchQueryType, filterCriteria map[string]string) ([]ContactGroup, error) {
+func (a *API) ContactGroupSearch(searchCriteria *SearchQueryType, filterCriteria *SearchFilterType) (*[]ContactGroup, error) {
+	q := url.Values{}
 
-	if searchCriteria == "" && len(filterCriteria) == 0 {
+	if searchCriteria != nil && *searchCriteria != "" {
+		q.Set("search", string(*searchCriteria))
+	}
+
+	if filterCriteria != nil && len(*filterCriteria) > 0 {
+		for filter, criteria := range *filterCriteria {
+			for _, val := range criteria {
+				q.Add(filter, val)
+			}
+		}
+	}
+
+	if q.Encode() == "" {
 		return a.FetchContactGroups()
 	}
 
 	reqURL := url.URL{
-		Path: baseContactGroupPath,
+		Path:     baseContactGroupPath,
+		RawQuery: q.Encode(),
 	}
-
-	q := url.Values{}
-
-	if searchCriteria != "" {
-		q.Set("search", string(searchCriteria))
-	}
-
-	if len(filterCriteria) > 0 {
-		for filter, criteria := range filterCriteria {
-			q.Set(filter, criteria)
-		}
-	}
-
-	reqURL.RawQuery = q.Encode()
 
 	resp, err := a.Get(reqURL.String())
 	if err != nil {
@@ -220,5 +226,5 @@ func (a *API) ContactGroupSearch(searchCriteria SearchQueryType, filterCriteria 
 		return nil, err
 	}
 
-	return results, nil
+	return &results, nil
 }

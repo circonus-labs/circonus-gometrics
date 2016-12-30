@@ -146,8 +146,8 @@ func TestFetchContactGroup(t *testing.T) {
 
 	t.Log("without CID")
 	{
-		expectedError := errors.New("Invalid contact group CID ")
-		_, err := apih.FetchContactGroup(CIDType(""))
+		expectedError := errors.New("Invalid contact group CID [none]")
+		_, err := apih.FetchContactGroup(nil)
 		if err == nil {
 			t.Fatalf("Expected error")
 		}
@@ -159,7 +159,7 @@ func TestFetchContactGroup(t *testing.T) {
 	t.Log("with valid CID")
 	{
 		cid := CIDType("/contact_group/1234")
-		contactGroup, err := apih.FetchContactGroup(cid)
+		contactGroup, err := apih.FetchContactGroup(&cid)
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
@@ -177,8 +177,9 @@ func TestFetchContactGroup(t *testing.T) {
 
 	t.Log("with invalid CID")
 	{
-		expectedError := errors.New("Invalid contact group CID /invalid")
-		_, err := apih.FetchContactGroup(CIDType("/invalid"))
+		cid := CIDType("/invalid")
+		expectedError := errors.New("Invalid contact group CID [/invalid]")
+		_, err := apih.FetchContactGroup(&cid)
 		if err == nil {
 			t.Fatalf("Expected error")
 		}
@@ -208,7 +209,7 @@ func TestFetchContactGroups(t *testing.T) {
 	}
 
 	actualType := reflect.TypeOf(contactGroups)
-	expectedType := "[]api.ContactGroup"
+	expectedType := "*[]api.ContactGroup"
 	if actualType.String() != expectedType {
 		t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 	}
