@@ -82,8 +82,8 @@ func (cm *CheckManager) selectBroker() (*api.Broker, error) {
 	var err error
 
 	if len(cm.brokerSelectTag) > 0 {
-		filter := map[string]string{
-			"f__tags_has": strings.Replace(strings.Join(cm.brokerSelectTag, ","), ",", "&f__tags_has=", -1),
+		filter := api.SearchFilterType{
+			"f__tags_has": cm.brokerSelectTag,
 		}
 		brokerList, err = cm.apih.SearchBrokers(nil, &filter)
 		if err != nil {
