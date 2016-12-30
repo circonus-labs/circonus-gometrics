@@ -167,9 +167,11 @@ func (a *API) FetchGraph(cid CIDType) (*Graph, error) {
 
 	graphCID := string(*cid)
 
-	if matched, err := regexp.MatchString(graphCIDRegex, graphCID); err != nil {
+	matched, err := regexp.MatchString(graphCIDRegex, graphCID)
+	if err != nil {
 		return nil, err
-	} else if !matched {
+	}
+	if !matched {
 		return nil, fmt.Errorf("Invalid graph CID [%s]", graphCID)
 	}
 
@@ -221,13 +223,13 @@ func (a *API) UpdateGraph(config *Graph) (*Graph, error) {
 		return nil, err
 	}
 
-	resp, err := a.Put(graphCID, cfg)
+	result, err := a.Put(graphCID, cfg)
 	if err != nil {
 		return nil, err
 	}
 
 	graph := &Graph{}
-	if err := json.Unmarshal(resp, graph); err != nil {
+	if err := json.Unmarshal(result, graph); err != nil {
 		return nil, err
 	}
 
@@ -236,8 +238,8 @@ func (a *API) UpdateGraph(config *Graph) (*Graph, error) {
 
 // CreateGraph create a new graph
 func (a *API) CreateGraph(config *Graph) (*Graph, error) {
-	reqURL := url.URL{
-		Path: baseGraphPath,
+	if config == nil {
+		return nil, fmt.Errorf("Invalid graph config [nil]")
 	}
 
 	cfg, err := json.Marshal(config)
@@ -245,13 +247,13 @@ func (a *API) CreateGraph(config *Graph) (*Graph, error) {
 		return nil, err
 	}
 
-	resp, err := a.Post(reqURL.String(), cfg)
+	result, err := a.Post(baseGraphPath, cfg)
 	if err != nil {
 		return nil, err
 	}
 
 	graph := &Graph{}
-	if err := json.Unmarshal(resp, graph); err != nil {
+	if err := json.Unmarshal(result, graph); err != nil {
 		return nil, err
 	}
 
