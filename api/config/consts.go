@@ -1,22 +1,32 @@
 package config
 
-// Key key for CheckBundleConfig
+// Key for CheckBundleConfig options
 type Key string
 
 // Constants per type as defined in
 // https://login.circonus.com/resources/api/calls/check_bundle
 const (
+	//
+	// default settings for api.NewCheckBundle()
+	//
 	DefaultCheckBundleMetricLimit = -1 // unlimited
 	DefaultCheckBundleStatus      = "active"
 	DefaultCheckBundlePeriod      = 60
 	DefaultCheckBundleTimeout     = 10
 
-	AsyncMetrics     = Key("async_metrics")
-	ReverseSecretKey = Key("reverse:secret_key")
-	SecretKey        = Key("secret")
-	SubmissionURL    = Key("submission_url")
+	//
+	// common (apply to more than one check type)
+	//
+	AsyncMetrics = Key("async_metrics")
 
+	//
+	// httptrap
+	//
+	SecretKey = Key("secret")
+
+	//
 	// "http"
+	//
 	AuthMethod   = Key("auth_method")
 	AuthPassword = Key("auth_password")
 	AuthUser     = Key("auth_user")
@@ -36,4 +46,10 @@ const (
 	ReadLimit    = Key("read_limit")
 	Redirects    = Key("redirects")
 	URL          = Key("url")
+
+	//
+	// reserved - config option(s) can't actually be set - here for r/o access
+	//
+	ReverseSecretKey = Key("reverse:secret_key")
+	SubmissionURL    = Key("submission_url")
 )
