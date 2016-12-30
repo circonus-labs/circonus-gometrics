@@ -14,6 +14,8 @@ import (
 	"reflect"
 	"strconv"
 	"testing"
+
+	"github.com/circonus-labs/circonus-gometrics/api/config"
 )
 
 var (
@@ -25,7 +27,7 @@ var (
 		LastModified:       0,
 		LastModifedBy:      "",
 		ReverseConnectURLs: []string{""},
-		Config:             map[CheckBundleConfigKey]string{},
+		Config:             map[config.Key]string{},
 		Brokers:            []string{"/broker/1234"},
 		DisplayName:        "test check",
 		Metrics:            []CheckBundleMetric{},

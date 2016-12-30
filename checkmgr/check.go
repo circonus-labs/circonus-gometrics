@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/circonus-labs/circonus-gometrics/api"
+	"github.com/circonus-labs/circonus-gometrics/api/config"
 )
 
 // UpdateCheck determines if the check needs to be updated (new metrics, tags, etc.)
@@ -202,13 +203,13 @@ func (cm *CheckManager) initializeTrapURL() error {
 
 	// determine the trap url to which metrics should be PUT
 	if checkBundle.Type == "httptrap" {
-		if turl, found := checkBundle.Config[api.SubmissionURL]; found {
+		if turl, found := checkBundle.Config[config.SubmissionURL]; found {
 			cm.trapURL = api.URLType(turl)
 		} else {
 			if cm.Debug {
-				cm.Log.Printf("Missing config.%s %+v", api.SubmissionURL, checkBundle)
+				cm.Log.Printf("Missing config.%s %+v", config.SubmissionURL, checkBundle)
 			}
-			return fmt.Errorf("[ERROR] Unable to use check, no %s in config", api.SubmissionURL)
+			return fmt.Errorf("[ERROR] Unable to use check, no %s in config", config.SubmissionURL)
 		}
 	} else {
 		// build a submission_url for non-httptrap checks out of mtev_reverse url
@@ -218,13 +219,13 @@ func (cm *CheckManager) initializeTrapURL() error {
 		mtevURL := checkBundle.ReverseConnectURLs[0]
 		mtevURL = strings.Replace(mtevURL, "mtev_reverse", "https", 1)
 		mtevURL = strings.Replace(mtevURL, "check", "module/httptrap", 1)
-		if rs, found := checkBundle.Config[api.ReverseSecretKey]; found {
+		if rs, found := checkBundle.Config[config.ReverseSecretKey]; found {
 			cm.trapURL = api.URLType(fmt.Sprintf("%s/%s", mtevURL, rs))
 		} else {
 			if cm.Debug {
-				cm.Log.Printf("Missing config.%s %+v", api.ReverseSecretKey, checkBundle)
+				cm.Log.Printf("Missing config.%s %+v", config.ReverseSecretKey, checkBundle)
 			}
-			return fmt.Errorf("[ERROR] Unable to use check, no %s in config", api.ReverseSecretKey)
+			return fmt.Errorf("[ERROR] Unable to use check, no %s in config", config.ReverseSecretKey)
 		}
 	}
 
@@ -287,9 +288,9 @@ func (cm *CheckManager) createNewCheck() (*api.CheckBundle, *api.Broker, error) 
 
 	config := &api.CheckBundle{
 		Brokers: []string{broker.CID},
-		Config: map[api.CheckBundleConfigKey]string{
-			api.AsyncMetrics: "true",
-			api.SecretKey:    checkSecret,
+		Config: map[config.Key]string{
+			config.AsyncMetrics: "true",
+			config.SecretKey:    checkSecret,
 		},
 		DisplayName: string(cm.checkDisplayName),
 		Metrics:     []api.CheckBundleMetric{},

@@ -17,6 +17,7 @@ import (
 	"testing"
 
 	"github.com/circonus-labs/circonus-gometrics/api"
+	"github.com/circonus-labs/circonus-gometrics/api/config"
 )
 
 var (
@@ -43,8 +44,8 @@ var (
 		},
 		Brokers:     []string{"/broker/1234"},
 		DisplayName: "test check",
-		Config: map[api.CheckBundleConfigKey]string{
-			"submission_url": "https://127.0.0.1:43191/module/httptrap/abc123-a1b2-c3d4-e5f6-123abc/blah",
+		Config: map[config.Key]string{
+			config.SubmissionURL: "https://127.0.0.1:43191/module/httptrap/abc123-a1b2-c3d4-e5f6-123abc/blah",
 		},
 		// Config: api.CheckBundleConfig{
 		// 	SubmissionURL: "https://127.0.0.1:43191/module/httptrap/abc123-a1b2-c3d4-e5f6-123abc/blah",

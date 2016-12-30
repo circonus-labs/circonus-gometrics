@@ -9,6 +9,8 @@ import (
 	"fmt"
 	"net/url"
 	"regexp"
+
+	"github.com/circonus-labs/circonus-gometrics/api/config"
 )
 
 // CheckBundleMetric individual metric configuration
@@ -20,13 +22,10 @@ type CheckBundleMetric struct {
 	Tags   []string `json:"tags"`
 }
 
-// CheckBundleConfigKey key for CheckBundleConfig
-type CheckBundleConfigKey string
-
 // CheckBundleConfig contains the check type specific configuration settings
 // as k/v pairs (see https://login.circonus.com/resources/api/calls/check_bundle
 // for the specific settings available for each distinct check type)
-type CheckBundleConfig map[CheckBundleConfigKey]string
+type CheckBundleConfig map[config.Key]string
 
 // CheckBundle definition
 type CheckBundle struct {
