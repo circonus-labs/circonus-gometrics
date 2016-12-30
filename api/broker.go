@@ -77,7 +77,7 @@ func (a *API) FetchBroker(cid *CIDType) (*Broker, error) {
 
 // FetchBrokers return list of all brokers available to the api token/app
 func (a *API) FetchBrokers() (*[]Broker, error) {
-	result, err := a.Get("/broker")
+	result, err := a.Get(baseBrokerPath)
 	if err != nil {
 		return nil, err
 	}
@@ -130,15 +130,15 @@ func (a *API) SearchBrokers(searchCriteria *SearchQueryType, filterCriteria *map
 
 	reqURL.RawQuery = q.Encode()
 
-	resp, err := a.Get(reqURL.String())
+	result, err := a.Get(reqURL.String())
 	if err != nil {
 		return nil, fmt.Errorf("[ERROR] API call error %+v", err)
 	}
 
-	var results []Broker
-	if err := json.Unmarshal(resp, &results); err != nil {
+	var brokers []Broker
+	if err := json.Unmarshal(result, &brokers); err != nil {
 		return nil, err
 	}
 
-	return &results, nil
+	return &brokers, nil
 }

@@ -111,13 +111,13 @@ func (a *API) UpdateAccount(config *Account) (*Account, error) {
 		return nil, err
 	}
 
-	resp, err := a.Put(reqURL.String(), cfg)
+	result, err := a.Put(reqURL.String(), cfg)
 	if err != nil {
 		return nil, err
 	}
 
 	account := &Account{}
-	if err := json.Unmarshal(resp, account); err != nil {
+	if err := json.Unmarshal(result, account); err != nil {
 		return nil, err
 	}
 

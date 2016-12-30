@@ -98,13 +98,13 @@ func (a *API) UpdateAnnotation(config *Annotation) (*Annotation, error) {
 		return nil, err
 	}
 
-	resp, err := a.Put(reqURL.String(), cfg)
+	result, err := a.Put(reqURL.String(), cfg)
 	if err != nil {
 		return nil, err
 	}
 
 	annotation := &Annotation{}
-	if err := json.Unmarshal(resp, annotation); err != nil {
+	if err := json.Unmarshal(result, annotation); err != nil {
 		return nil, err
 	}
 
@@ -117,22 +117,18 @@ func (a *API) CreateAnnotation(config *Annotation) (*Annotation, error) {
 		return nil, fmt.Errorf("Invalid annotation config [nil]")
 	}
 
-	reqURL := url.URL{
-		Path: baseAnnotationPath,
-	}
-
 	cfg, err := json.Marshal(config)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := a.Post(reqURL.String(), cfg)
+	result, err := a.Post(baseAnnotationPath, cfg)
 	if err != nil {
 		return nil, err
 	}
 
 	annotation := &Annotation{}
-	if err := json.Unmarshal(resp, annotation); err != nil {
+	if err := json.Unmarshal(result, annotation); err != nil {
 		return nil, err
 	}
 
@@ -163,11 +159,7 @@ func (a *API) DeleteAnnotationByCID(cid *CIDType) (bool, error) {
 		return false, fmt.Errorf("Invalid annotation CID [%s]", annotationCID)
 	}
 
-	reqURL := url.URL{
-		Path: annotationCID,
-	}
-
-	_, err := a.Delete(reqURL.String())
+	_, err := a.Delete(annotationCID)
 	if err != nil {
 		return false, err
 	}
@@ -202,15 +194,15 @@ func (a *API) SearchAnnotations(searchCriteria *SearchQueryType, filterCriteria 
 
 	reqURL.RawQuery = q.Encode()
 
-	resp, err := a.Get(reqURL.String())
+	result, err := a.Get(reqURL.String())
 	if err != nil {
 		return nil, fmt.Errorf("[ERROR] API call error %+v", err)
 	}
 
-	var results []Annotation
-	if err := json.Unmarshal(resp, &results); err != nil {
+	var annotations []Annotation
+	if err := json.Unmarshal(result, &annotations); err != nil {
 		return nil, err
 	}
 
-	return &results, nil
+	return &annotations, nil
 }

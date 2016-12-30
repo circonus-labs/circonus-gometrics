@@ -50,27 +50,38 @@ type CheckBundle struct {
 	Type               string              `json:"type"`
 }
 
-const baseCheckBundlePath = "/check_bundle"
+const (
+	baseCheckBundlePath = "/check_bundle"
+	checkBundleCIDRegex = "^" + baseCheckBundlePath + "/[0-9]+$"
+)
 
-// FetchCheckBundleByID fetch a check bundle configuration by id
-func (a *API) FetchCheckBundleByID(id IDType) (*CheckBundle, error) {
-	cid := CIDType(fmt.Sprintf("%s/%d", baseCheckBundlePath, id))
-	return a.FetchCheckBundleByCID(cid)
+// NewCheckBundle returns a check bundle with defaults
+func (a *API) NewCheckBundle() *CheckBundle {
+	return &CheckBundle{
+		MetricLimit: config.DefaultCheckBundleMetricLimit,
+		Period:      config.DefaultCheckBundlePeriod,
+		Timeout:     config.DefaultCheckBundleTimeout,
+		Status:      config.DefaultCheckBundleStatus,
+	}
 }
 
-// FetchCheckBundleByCID fetch a check bundle configuration by cid
-func (a *API) FetchCheckBundleByCID(cid CIDType) (*CheckBundle, error) {
-	if matched, err := regexp.MatchString("^"+baseCheckBundlePath+"/[0-9]+$", string(cid)); err != nil {
+// FetchCheckBundle fetch a check bundle configuration by cid
+func (a *API) FetchCheckBundle(cid *CIDType) (*CheckBundle, error) {
+	if cid == nil || *cid == "" {
+		return nil, fmt.Errorf("Invalid check bundle CID [none]")
+	}
+
+	bundleCID := string(*cid)
+
+	matched, err := regexp.MatchString(checkBundleCIDRegex, bundleCID)
+	if err != nil {
 		return nil, err
-	} else if !matched {
-		return nil, fmt.Errorf("Invalid check bundle CID %v", cid)
+	}
+	if !matched {
+		return nil, fmt.Errorf("Invalid check bundle CID [%v]", bundleCID)
 	}
 
-	reqURL := url.URL{
-		Path: string(cid),
-	}
-
-	result, err := a.Get(reqURL.String())
+	result, err := a.Get(bundleCID)
 	if err != nil {
 		return nil, err
 	}
@@ -83,66 +94,33 @@ func (a *API) FetchCheckBundleByCID(cid CIDType) (*CheckBundle, error) {
 	return checkBundle, nil
 }
 
-// CheckBundleSearch returns list of check bundles matching a search query
-//    - a search query (see: https://login.circonus.com/resources/api#searching)
-func (a *API) CheckBundleSearch(searchCriteria SearchQueryType) ([]CheckBundle, error) {
-	reqURL := url.URL{
-		Path: baseCheckBundlePath,
-	}
-
-	if searchCriteria != "" {
-		q := url.Values{}
-		q.Set("search", string(searchCriteria))
-		reqURL.RawQuery = q.Encode()
-	}
-
-	resp, err := a.Get(reqURL.String())
+// FetchCheckBundles fetch a check bundle configurations
+func (a *API) FetchCheckBundles() (*[]CheckBundle, error) {
+	result, err := a.Get(baseCheckBundlePath)
 	if err != nil {
-		return nil, fmt.Errorf("[ERROR] API call error %+v", err)
-	}
-
-	var results []CheckBundle
-	if err := json.Unmarshal(resp, &results); err != nil {
 		return nil, err
 	}
 
-	return results, nil
-}
-
-// CheckBundleFilterSearch returns list of check bundles matching a search query and filter
-//    - a search query (see: https://login.circonus.com/resources/api#searching)
-//    - a filter (see: https://login.circonus.com/resources/api#filtering)
-func (a *API) CheckBundleFilterSearch(searchCriteria SearchQueryType, filterCriteria map[string]string) ([]CheckBundle, error) {
-	reqURL := url.URL{
-		Path: baseCheckBundlePath,
-	}
-
-	if searchCriteria != "" {
-		q := url.Values{}
-		q.Set("search", string(searchCriteria))
-		for field, val := range filterCriteria {
-			q.Set(field, val)
-		}
-		reqURL.RawQuery = q.Encode()
-	}
-
-	resp, err := a.Get(reqURL.String())
-	if err != nil {
-		return nil, fmt.Errorf("[ERROR] API call error %+v", err)
-	}
-
-	var results []CheckBundle
-	if err := json.Unmarshal(resp, &results); err != nil {
+	var checkBundles []CheckBundle
+	if err := json.Unmarshal(result, &checkBundles); err != nil {
 		return nil, err
 	}
 
-	return results, nil
+	return &checkBundles, nil
 }
 
-// CreateCheckBundle create a new check bundle (check)
-func (a *API) CreateCheckBundle(config *CheckBundle) (*CheckBundle, error) {
-	reqURL := url.URL{
-		Path: baseCheckBundlePath,
+// UpdateCheckBundle updates a check bundle configuration
+func (a *API) UpdateCheckBundle(config *CheckBundle) (*CheckBundle, error) {
+	if config == nil {
+		return nil, fmt.Errorf("Invalid check bundle config [nil]")
+	}
+
+	bundleCID := string(config.CID)
+
+	if matched, err := regexp.MatchString(checkBundleCIDRegex, bundleCID); err != nil {
+		return nil, err
+	} else if !matched {
+		return nil, fmt.Errorf("Invalid check bundle CID [%s]", bundleCID)
 	}
 
 	cfg, err := json.Marshal(config)
@@ -150,29 +128,23 @@ func (a *API) CreateCheckBundle(config *CheckBundle) (*CheckBundle, error) {
 		return nil, err
 	}
 
-	resp, err := a.Post(reqURL.String(), cfg)
+	result, err := a.Put(bundleCID, cfg)
 	if err != nil {
 		return nil, err
 	}
 
 	checkBundle := &CheckBundle{}
-	if err := json.Unmarshal(resp, checkBundle); err != nil {
+	if err := json.Unmarshal(result, checkBundle); err != nil {
 		return nil, err
 	}
 
 	return checkBundle, nil
 }
 
-// UpdateCheckBundle updates a check bundle configuration
-func (a *API) UpdateCheckBundle(config *CheckBundle) (*CheckBundle, error) {
-	if matched, err := regexp.MatchString("^"+baseCheckBundlePath+"/[0-9]+$", string(config.CID)); err != nil {
-		return nil, err
-	} else if !matched {
-		return nil, fmt.Errorf("Invalid check bundle CID %v", config.CID)
-	}
-
-	reqURL := url.URL{
-		Path: config.CID,
+// CreateCheckBundle create a new check bundle (check)
+func (a *API) CreateCheckBundle(config *CheckBundle) (*CheckBundle, error) {
+	if config == nil {
+		return nil, fmt.Errorf("Invalid check bundle config [nil]")
 	}
 
 	cfg, err := json.Marshal(config)
@@ -180,13 +152,13 @@ func (a *API) UpdateCheckBundle(config *CheckBundle) (*CheckBundle, error) {
 		return nil, err
 	}
 
-	resp, err := a.Put(reqURL.String(), cfg)
+	result, err := a.Post(baseCheckBundlePath, cfg)
 	if err != nil {
 		return nil, err
 	}
 
 	checkBundle := &CheckBundle{}
-	if err := json.Unmarshal(resp, checkBundle); err != nil {
+	if err := json.Unmarshal(result, checkBundle); err != nil {
 		return nil, err
 	}
 
@@ -194,27 +166,132 @@ func (a *API) UpdateCheckBundle(config *CheckBundle) (*CheckBundle, error) {
 }
 
 // DeleteCheckBundle delete a check bundle
-func (a *API) DeleteCheckBundle(bundle *CheckBundle) (bool, error) {
-	cid := CIDType(bundle.CID)
-	return a.DeleteCheckBundleByCID(cid)
+func (a *API) DeleteCheckBundle(config *CheckBundle) (bool, error) {
+	if config == nil {
+		return false, fmt.Errorf("Invalid check bundle config [nil]")
+	}
+
+	cid := CIDType(config.CID)
+	return a.DeleteCheckBundleByCID(&cid)
 }
 
 // DeleteCheckBundleByCID delete a check bundle by cid
-func (a *API) DeleteCheckBundleByCID(cid CIDType) (bool, error) {
-	if matched, err := regexp.MatchString("^"+baseCheckBundlePath+"/[0-9]+$", string(cid)); err != nil {
+func (a *API) DeleteCheckBundleByCID(cid *CIDType) (bool, error) {
+
+	if cid == nil || *cid == "" {
+		return false, fmt.Errorf("Invalid check bundle CID [none]")
+	}
+
+	bundleCID := string(*cid)
+
+	if matched, err := regexp.MatchString(checkBundleCIDRegex, bundleCID); err != nil {
 		return false, err
 	} else if !matched {
-		return false, fmt.Errorf("Invalid check bundle CID %v", cid)
+		return false, fmt.Errorf("Invalid check bundle CID [%v]", bundleCID)
 	}
 
-	reqURL := url.URL{
-		Path: string(cid),
-	}
-
-	_, err := a.Delete(reqURL.String())
+	_, err := a.Delete(bundleCID)
 	if err != nil {
 		return false, err
 	}
 
 	return true, nil
 }
+
+// SearchCheckBundles returns list of annotations matching a search query and/or filter
+//    - a search query (see: https://login.circonus.com/resources/api#searching)
+//    - a filter (see: https://login.circonus.com/resources/api#filtering)
+func (a *API) SearchCheckBundles(searchCriteria *SearchQueryType, filterCriteria *map[string]string) (*[]CheckBundle, error) {
+
+	if (searchCriteria == nil || *searchCriteria == "") && (filterCriteria == nil || len(*filterCriteria) == 0) {
+		return a.FetchCheckBundles()
+	}
+
+	reqURL := url.URL{
+		Path: baseCheckBundlePath,
+	}
+
+	q := url.Values{}
+
+	if searchCriteria != nil && *searchCriteria != "" {
+		q.Set("search", string(*searchCriteria))
+	}
+
+	if filterCriteria != nil && len(*filterCriteria) > 0 {
+		for filter, criteria := range *filterCriteria {
+			q.Set(filter, criteria)
+		}
+	}
+
+	reqURL.RawQuery = q.Encode()
+
+	resp, err := a.Get(reqURL.String())
+	if err != nil {
+		return nil, fmt.Errorf("[ERROR] API call error %+v", err)
+	}
+
+	var results []CheckBundle
+	if err := json.Unmarshal(resp, &results); err != nil {
+		return nil, err
+	}
+
+	return &results, nil
+}
+
+/*
+// CheckBundleSearch returns list of check bundles matching a search query
+//    - a search query (see: https://login.circonus.com/resources/api#searching)
+func (a *API) CheckBundleSearch(searchCriteria SearchQueryType) ([]CheckBundle, error) {
+    reqURL := url.URL{
+        Path: baseCheckBundlePath,
+    }
+
+    if searchCriteria != "" {
+        q := url.Values{}
+        q.Set("search", string(searchCriteria))
+        reqURL.RawQuery = q.Encode()
+    }
+
+    resp, err := a.Get(reqURL.String())
+    if err != nil {
+        return nil, fmt.Errorf("[ERROR] API call error %+v", err)
+    }
+
+    var results []CheckBundle
+    if err := json.Unmarshal(resp, &results); err != nil {
+        return nil, err
+    }
+
+    return results, nil
+}
+
+// CheckBundleFilterSearch returns list of check bundles matching a search query and filter
+//    - a search query (see: https://login.circonus.com/resources/api#searching)
+//    - a filter (see: https://login.circonus.com/resources/api#filtering)
+func (a *API) CheckBundleFilterSearch(searchCriteria SearchQueryType, filterCriteria map[string]string) ([]CheckBundle, error) {
+    reqURL := url.URL{
+        Path: baseCheckBundlePath,
+    }
+
+    if searchCriteria != "" {
+        q := url.Values{}
+        q.Set("search", string(searchCriteria))
+        for field, val := range filterCriteria {
+            q.Set(field, val)
+        }
+        reqURL.RawQuery = q.Encode()
+    }
+
+    resp, err := a.Get(reqURL.String())
+    if err != nil {
+        return nil, fmt.Errorf("[ERROR] API call error %+v", err)
+    }
+
+    var results []CheckBundle
+    if err := json.Unmarshal(resp, &results); err != nil {
+        return nil, err
+    }
+
+    return results, nil
+}
+*/

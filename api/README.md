@@ -24,8 +24,16 @@
     * FetchBroker
     * FetchBrokers
     * SearchBrokers
-* [Check](https://login.circonus.com/resources/api/calls/check)
 * [Check Bundle](https://login.circonus.com/resources/api/calls/check_bundle)
+    * NewCheckBundle
+    * FetchCheckBundle
+    * FetchCheckBundles
+    * UpdateCheckBundle
+    * CreateCheckBundle
+    * DeleteCheckBundle
+    * DeleteCheckBundleByCID
+    * SearchCheckBundles
+* [Check](https://login.circonus.com/resources/api/calls/check)
 * [Contact Group](https://login.circonus.com/resources/api/calls/contact_group)
 * [Graph](https://login.circonus.com/resources/api/calls/graph)
 * [Metric Cluster](https://login.circonus.com/resources/api/calls/metric_cluster)

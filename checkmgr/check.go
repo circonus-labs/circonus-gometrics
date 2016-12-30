@@ -36,7 +36,8 @@ func (cm *CheckManager) UpdateCheck(newMetrics map[string]*api.CheckBundleMetric
 	}
 
 	// refresh check bundle (in case there were changes made by other apps or in UI)
-	checkBundle, err := cm.apih.FetchCheckBundleByCID(api.CIDType(cm.checkBundle.CID))
+	cid := api.CIDType(cm.checkBundle.CID)
+	checkBundle, err := cm.apih.FetchCheckBundle(&cid)
 	if err != nil {
 		cm.Log.Printf("[ERROR] unable to fetch up-to-date check bundle %v", err)
 		return
@@ -44,6 +45,8 @@ func (cm *CheckManager) UpdateCheck(newMetrics map[string]*api.CheckBundleMetric
 	cm.cbmu.Lock()
 	cm.checkBundle = checkBundle
 	cm.cbmu.Unlock()
+
+	// check metric_limit and see if it’s 0, if so, don't even bother to try to update the check.
 
 	cm.addNewMetrics(newMetrics)
 
@@ -180,7 +183,8 @@ func (cm *CheckManager) initializeTrapURL() error {
 
 	if checkBundle == nil {
 		if check != nil {
-			checkBundle, err = cm.apih.FetchCheckBundleByCID(api.CIDType(check.CheckBundleCID))
+			cid := api.CIDType(check.CheckBundleCID)
+			checkBundle, err = cm.apih.FetchCheckBundle(&cid)
 			if err != nil {
 				return err
 			}
@@ -244,19 +248,20 @@ func (cm *CheckManager) initializeTrapURL() error {
 
 // Search for a check bundle given a predetermined set of criteria
 func (cm *CheckManager) checkBundleSearch(criteria string, filter map[string]string) (*api.CheckBundle, error) {
-	checkBundles, err := cm.apih.CheckBundleFilterSearch(api.SearchQueryType(criteria), filter)
+	search := api.SearchQueryType(criteria)
+	checkBundles, err := cm.apih.SearchCheckBundles(&search, &filter)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(checkBundles) == 0 {
+	if len(*checkBundles) == 0 {
 		return nil, nil // trigger creation of a new check
 	}
 
 	numActive := 0
 	checkID := -1
 
-	for idx, check := range checkBundles {
+	for idx, check := range *checkBundles {
 		if check.Status == statusActive {
 			numActive++
 			checkID = idx
@@ -267,7 +272,9 @@ func (cm *CheckManager) checkBundleSearch(criteria string, filter map[string]str
 		return nil, fmt.Errorf("[ERROR] multiple check bundles match criteria %s", criteria)
 	}
 
-	return &checkBundles[checkID], nil
+	bundle := (*checkBundles)[checkID]
+
+	return &bundle, nil
 }
 
 // Create a new check to receive metrics
@@ -294,7 +301,7 @@ func (cm *CheckManager) createNewCheck() (*api.CheckBundle, *api.Broker, error) 
 		},
 		DisplayName: string(cm.checkDisplayName),
 		Metrics:     []api.CheckBundleMetric{},
-		MetricLimit: 0,
+		MetricLimit: config.DefaultCheckBundleMetricLimit,
 		Notes:       cm.getNotes(),
 		Period:      60,
 		Status:      statusActive,

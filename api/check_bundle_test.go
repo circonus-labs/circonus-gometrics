@@ -12,7 +12,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"reflect"
-	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/circonus-labs/circonus-gometrics/api/config"
@@ -44,8 +44,8 @@ var (
 
 func testCheckBundleServer() *httptest.Server {
 	f := func(w http.ResponseWriter, r *http.Request) {
-		switch r.URL.Path {
-		case "/check_bundle/1234": // handle GET/PUT/DELETE
+		path := r.URL.Path
+		if path == "/check_bundle/1234" {
 			switch r.Method {
 			case "PUT": // update
 				defer r.Body.Close()
@@ -68,17 +68,34 @@ func testCheckBundleServer() *httptest.Server {
 				w.WriteHeader(200)
 				fmt.Fprintln(w, "")
 			default:
-				w.WriteHeader(500)
-				fmt.Fprintln(w, "unsupported")
+				w.WriteHeader(404)
+				fmt.Fprintln(w, fmt.Sprintf("not found: %s %s", r.Method, path))
 			}
-		case "/check_bundle":
+		} else if path == "/check_bundle" {
 			switch r.Method {
-			case "GET": // search
-				r := []CheckBundle{testCheckBundle}
-				ret, err := json.Marshal(r)
+			case "GET":
+				var c []CheckBundle
+				if strings.Contains(r.URL.String(), "search=test1") {
+					c = []CheckBundle{}
+				} else if strings.Contains(r.URL.String(), "f__tags_has=cat%3Atag") {
+					c = []CheckBundle{testCheckBundle, testCheckBundle}
+				} else if strings.Contains(r.URL.String(), "search=HTTPTrap") {
+					c = []CheckBundle{testCheckBundle, testCheckBundle}
+				} else if strings.Contains(r.URL.String(), "search=notfound") {
+					c = []CheckBundle{}
+				} else if strings.Contains(r.URL.String(), "f__tags_has=Found&search=Found") {
+					c = []CheckBundle{testCheckBundle, testCheckBundle}
+				} else if strings.Contains(r.URL.String(), "f__tags_has=NotFound&search=NotFound") {
+					c = []CheckBundle{}
+				} else {
+					c = []CheckBundle{testCheckBundle}
+				}
+
+				ret, err := json.Marshal(c)
 				if err != nil {
 					panic(err)
 				}
+
 				w.WriteHeader(200)
 				w.Header().Set("Content-Type", "application/json")
 				fmt.Fprintln(w, string(ret))
@@ -92,19 +109,19 @@ func testCheckBundleServer() *httptest.Server {
 				w.Header().Set("Content-Type", "application/json")
 				fmt.Fprintln(w, string(b))
 			default:
-				w.WriteHeader(500)
-				fmt.Fprintln(w, "unsupported")
+				w.WriteHeader(404)
+				fmt.Fprintln(w, fmt.Sprintf("not found: %s %s", r.Method, path))
 			}
-		default:
-			w.WriteHeader(500)
-			fmt.Fprintln(w, "unsupported")
+		} else {
+			w.WriteHeader(404)
+			fmt.Fprintln(w, fmt.Sprintf("not found: %s %s", r.Method, path))
 		}
 	}
 
 	return httptest.NewServer(http.HandlerFunc(f))
 }
 
-func TestFetchCheckBundleByID(t *testing.T) {
+func TestFetchCheckBundle(t *testing.T) {
 	server := testCheckBundleServer()
 	defer server.Close()
 
@@ -118,71 +135,37 @@ func TestFetchCheckBundleByID(t *testing.T) {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
-	cid := "1234"
-	id, err := strconv.Atoi(cid)
-	if err != nil {
-		t.Fatalf("Unable to convert id %s to int", cid)
-	}
-
-	cbID := IDType(id)
-
-	bundle, err := apih.FetchCheckBundleByID(cbID)
-	if err != nil {
-		t.Fatalf("Expected no error, got '%v'", err)
-	}
-
-	actualType := reflect.TypeOf(bundle)
-	expectedType := "*api.CheckBundle"
-	if actualType.String() != expectedType {
-		t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
-	}
-
-	if bundle.CID != testCheckBundle.CID {
-		t.Fatalf("CIDs do not match: %+v != %+v\n", bundle, testCheckBundle)
-	}
-}
-
-func TestFetchCheckBundleByCID(t *testing.T) {
-	server := testCheckBundleServer()
-	defer server.Close()
-
-	var apih *API
-	var err error
-
-	ac := &Config{
-		TokenKey: "abc123",
-		TokenApp: "test",
-		URL:      server.URL,
-	}
-	apih, err = NewAPI(ac)
-	if err != nil {
-		t.Errorf("Expected no error, got '%v'", err)
-	}
-
 	t.Log("Testing invalid CID")
-	expectedError := errors.New("Invalid check bundle CID /1234")
-	_, err = apih.FetchCheckBundleByCID("/1234")
-	if err == nil {
-		t.Fatalf("Expected error")
-	}
-	if err.Error() != expectedError.Error() {
-		t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+	{
+		cid := CIDType("/invalid")
+		expectedError := errors.New("Invalid check bundle CID [/invalid]")
+		_, err := apih.FetchCheckBundle(&cid)
+		if err == nil {
+			t.Fatalf("Expected error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+
 	}
 
 	t.Log("Testing valid CID")
-	bundle, err := apih.FetchCheckBundleByCID(CIDType(testCheckBundle.CID))
-	if err != nil {
-		t.Fatalf("Expected no error, got '%v'", err)
-	}
+	{
+		cid := CIDType(testCheckBundle.CID)
+		bundle, err := apih.FetchCheckBundle(&cid)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
 
-	actualType := reflect.TypeOf(bundle)
-	expectedType := "*api.CheckBundle"
-	if actualType.String() != expectedType {
-		t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
-	}
+		actualType := reflect.TypeOf(bundle)
+		expectedType := "*api.CheckBundle"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
 
-	if bundle.CID != testCheckBundle.CID {
-		t.Fatalf("CIDs do not match: %+v != %+v\n", bundle, testCheckBundle)
+		if bundle.CID != testCheckBundle.CID {
+			t.Fatalf("CIDs do not match: %+v != %+v\n", bundle, testCheckBundle)
+		}
 	}
 }
 
@@ -205,13 +188,13 @@ func TestCheckBundleSearch(t *testing.T) {
 
 	t.Log("Testing w/o search criteria")
 	{
-		bundles, err := apih.CheckBundleSearch("")
+		bundles, err := apih.SearchCheckBundles(nil, nil)
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
 
 		actualType := reflect.TypeOf(bundles)
-		expectedType := "[]api.CheckBundle"
+		expectedType := "*[]api.CheckBundle"
 		if actualType.String() != expectedType {
 			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 		}
@@ -219,13 +202,14 @@ func TestCheckBundleSearch(t *testing.T) {
 
 	t.Log("Testing with search criteria")
 	{
-		bundles, err := apih.CheckBundleSearch("test")
+		search := SearchQueryType("test1")
+		bundles, err := apih.SearchCheckBundles(&search, nil)
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
 
 		actualType := reflect.TypeOf(bundles)
-		expectedType := "[]api.CheckBundle"
+		expectedType := "*[]api.CheckBundle"
 		if actualType.String() != expectedType {
 			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 		}
@@ -233,13 +217,15 @@ func TestCheckBundleSearch(t *testing.T) {
 
 	t.Log("Testing with search and filter criteria")
 	{
-		bundles, err := apih.CheckBundleFilterSearch("test", map[string]string{"f_notes": "foo"})
+		search := SearchQueryType("test")
+		filter := map[string]string{"f_notes": "foo"}
+		bundles, err := apih.SearchCheckBundles(&search, &filter)
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
 
 		actualType := reflect.TypeOf(bundles)
-		expectedType := "[]api.CheckBundle"
+		expectedType := "*[]api.CheckBundle"
 		if actualType.String() != expectedType {
 			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 		}
@@ -304,8 +290,8 @@ func TestUpdateCheckBundle(t *testing.T) {
 	}
 
 	t.Log("Test with invalid CID")
-	expectedError := errors.New("Invalid check bundle CID xxx")
-	x := &CheckBundle{CID: "xxx"}
+	expectedError := errors.New("Invalid check bundle CID [/invalid]")
+	x := &CheckBundle{CID: "/invalid"}
 	_, err = apih.UpdateCheckBundle(x)
 	if err == nil {
 		t.Fatal("Expected an error")
@@ -319,37 +305,40 @@ func TestDeleteCheckBundleByCID(t *testing.T) {
 	server := testCheckBundleServer()
 	defer server.Close()
 
-	var apih *API
-	var err error
-
 	ac := &Config{
 		TokenKey: "abc123",
 		TokenApp: "test",
 		URL:      server.URL,
 	}
-	apih, err = NewAPI(ac)
+	apih, err := NewAPI(ac)
 	if err != nil {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
 	t.Log("Testing invalid CID")
-	expectedError := errors.New("Invalid check bundle CID /1234")
-	_, err = apih.DeleteCheckBundleByCID("/1234")
-	if err == nil {
-		t.Fatalf("Expected error")
-	}
-	if err.Error() != expectedError.Error() {
-		t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+	{
+		cid := CIDType("/invalid")
+		expectedError := errors.New("Invalid check bundle CID [/invalid]")
+		_, err := apih.DeleteCheckBundleByCID(&cid)
+		if err == nil {
+			t.Fatalf("Expected error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
 	}
 
 	t.Log("Testing valid CID")
-	success, err := apih.DeleteCheckBundleByCID(CIDType(testCheckBundle.CID))
-	if err != nil {
-		t.Fatalf("Expected no error, got '%v'", err)
-	}
+	{
+		cid := CIDType(testCheckBundle.CID)
+		success, err := apih.DeleteCheckBundleByCID(&cid)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
 
-	if !success {
-		t.Fatalf("Expected success to be true")
+		if !success {
+			t.Fatalf("Expected success to be true")
+		}
 	}
 }
 
