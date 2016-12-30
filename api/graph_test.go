@@ -144,8 +144,8 @@ func TestFetchGraph(t *testing.T) {
 
 	t.Log("without CID")
 	{
-		expectedError := errors.New("Invalid graph CID ")
-		_, err := apih.FetchGraph(CIDType(""))
+		expectedError := errors.New("Invalid graph CID [none]")
+		_, err := apih.FetchGraph(nil)
 		if err == nil {
 			t.Fatalf("Expected error")
 		}
@@ -157,7 +157,7 @@ func TestFetchGraph(t *testing.T) {
 	t.Log("with valid CID")
 	{
 		cid := CIDType("/graph/01234567-89ab-cdef-0123-456789abcdef")
-		graph, err := apih.FetchGraph(cid)
+		graph, err := apih.FetchGraph(&cid)
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
@@ -175,8 +175,9 @@ func TestFetchGraph(t *testing.T) {
 
 	t.Log("with invalid CID")
 	{
-		expectedError := errors.New("Invalid graph CID /invalid")
-		_, err := apih.FetchGraph(CIDType("/invalid"))
+		cid := CIDType("/invalid")
+		expectedError := errors.New("Invalid graph CID [/invalid]")
+		_, err := apih.FetchGraph(&cid)
 		if err == nil {
 			t.Fatalf("Expected error")
 		}
@@ -206,7 +207,7 @@ func TestFetchGraphs(t *testing.T) {
 	}
 
 	actualType := reflect.TypeOf(graphs)
-	expectedType := "[]api.Graph"
+	expectedType := "*[]api.Graph"
 	if actualType.String() != expectedType {
 		t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 	}
@@ -273,7 +274,7 @@ func TestUpdateGraph(t *testing.T) {
 
 	t.Log("Test with invalid CID")
 	{
-		expectedError := errors.New("Invalid graph CID /invalid")
+		expectedError := errors.New("Invalid graph CID [/invalid]")
 		x := &Graph{CID: "/invalid"}
 		_, err := apih.UpdateGraph(x)
 		if err == nil {
@@ -311,7 +312,7 @@ func TestDeleteGraph(t *testing.T) {
 
 	t.Log("Test with invalid CID")
 	{
-		expectedError := errors.New("Invalid graph CID /invalid")
+		expectedError := errors.New("Invalid graph CID [/invalid]")
 		x := &Graph{CID: "/invalid"}
 		_, err := apih.UpdateGraph(x)
 		if err == nil {

@@ -160,14 +160,20 @@ const (
 )
 
 // FetchGraph retrieves a graph definition
-func (a *API) FetchGraph(cid CIDType) (*Graph, error) {
-	if matched, err := regexp.MatchString(graphCIDRegex, string(cid)); err != nil {
-		return nil, err
-	} else if !matched {
-		return nil, fmt.Errorf("Invalid graph CID %v", cid)
+func (a *API) FetchGraph(cid *CIDType) (*Graph, error) {
+	if cid == nil || *cid == "" {
+		return nil, fmt.Errorf("Invalid graph CID [none]")
 	}
 
-	result, err := a.Get(string(cid))
+	graphCID := string(*cid)
+
+	if matched, err := regexp.MatchString(graphCIDRegex, graphCID); err != nil {
+		return nil, err
+	} else if !matched {
+		return nil, fmt.Errorf("Invalid graph CID [%s]", graphCID)
+	}
+
+	result, err := a.Get(graphCID)
 	if err != nil {
 		return nil, err
 	}
@@ -181,7 +187,7 @@ func (a *API) FetchGraph(cid CIDType) (*Graph, error) {
 }
 
 // FetchGraphs retrieves all graphs
-func (a *API) FetchGraphs() ([]Graph, error) {
+func (a *API) FetchGraphs() (*[]Graph, error) {
 	result, err := a.Get(baseGraphPath)
 	if err != nil {
 		return nil, err
@@ -192,19 +198,22 @@ func (a *API) FetchGraphs() ([]Graph, error) {
 		return nil, err
 	}
 
-	return graphs, nil
+	return &graphs, nil
 }
 
 // UpdateGraph update graph definition
 func (a *API) UpdateGraph(config *Graph) (*Graph, error) {
-	if matched, err := regexp.MatchString(graphCIDRegex, string(config.CID)); err != nil {
-		return nil, err
-	} else if !matched {
-		return nil, fmt.Errorf("Invalid graph CID %v", config.CID)
+
+	if config == nil {
+		return nil, fmt.Errorf("Invalid graph config [nil]")
 	}
 
-	reqURL := url.URL{
-		Path: config.CID,
+	graphCID := string(config.CID)
+
+	if matched, err := regexp.MatchString(graphCIDRegex, graphCID); err != nil {
+		return nil, err
+	} else if !matched {
+		return nil, fmt.Errorf("Invalid graph CID [%s]", graphCID)
 	}
 
 	cfg, err := json.Marshal(config)
@@ -212,7 +221,7 @@ func (a *API) UpdateGraph(config *Graph) (*Graph, error) {
 		return nil, err
 	}
 
-	resp, err := a.Put(reqURL.String(), cfg)
+	resp, err := a.Put(graphCID, cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -278,39 +287,39 @@ func (a *API) DeleteGraphByCID(cid CIDType) (bool, error) {
 // GraphSearch returns list of graphs matching a search query and/or filter
 //    - a search query (see: https://login.circonus.com/resources/api#searching)
 //    - a filter (see: https://login.circonus.com/resources/api#filtering)
-func (a *API) GraphSearch(searchCriteria SearchQueryType, filterCriteria map[string]string) ([]Graph, error) {
+func (a *API) GraphSearch(searchCriteria *SearchQueryType, filterCriteria *SearchFilterType) (*[]Graph, error) {
+	q := url.Values{}
 
-	if searchCriteria == "" && len(filterCriteria) == 0 {
+	if searchCriteria != nil && *searchCriteria != "" {
+		q.Set("search", string(*searchCriteria))
+	}
+
+	if filterCriteria != nil && len(*filterCriteria) > 0 {
+		for filter, criteria := range *filterCriteria {
+			for _, val := range criteria {
+				q.Add(filter, val)
+			}
+		}
+	}
+
+	if q.Encode() == "" {
 		return a.FetchGraphs()
 	}
 
 	reqURL := url.URL{
-		Path: baseGraphPath,
+		Path:     baseGraphPath,
+		RawQuery: q.Encode(),
 	}
 
-	q := url.Values{}
-
-	if searchCriteria != "" {
-		q.Set("search", string(searchCriteria))
-	}
-
-	if len(filterCriteria) > 0 {
-		for filter, criteria := range filterCriteria {
-			q.Set(filter, criteria)
-		}
-	}
-
-	reqURL.RawQuery = q.Encode()
-
-	resp, err := a.Get(reqURL.String())
+	result, err := a.Get(reqURL.String())
 	if err != nil {
 		return nil, fmt.Errorf("[ERROR] API call error %+v", err)
 	}
 
-	var results []Graph
-	if err := json.Unmarshal(resp, &results); err != nil {
+	var graphs []Graph
+	if err := json.Unmarshal(result, &graphs); err != nil {
 		return nil, err
 	}
 
-	return results, nil
+	return &graphs, nil
 }

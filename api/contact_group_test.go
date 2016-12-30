@@ -276,7 +276,7 @@ func TestUpdateContactGroup(t *testing.T) {
 
 	t.Log("Test with invalid CID")
 	{
-		expectedError := errors.New("Invalid contact group CID /invalid")
+		expectedError := errors.New("Invalid contact group CID [/invalid]")
 		x := &ContactGroup{CID: "/invalid"}
 		_, err := apih.UpdateContactGroup(x)
 		if err == nil {
@@ -314,7 +314,7 @@ func TestDeleteContactGroup(t *testing.T) {
 
 	t.Log("Test with invalid CID")
 	{
-		expectedError := errors.New("Invalid contact group CID /invalid")
+		expectedError := errors.New("Invalid contact group CID [/invalid]")
 		x := &ContactGroup{CID: "/invalid"}
 		_, err := apih.UpdateContactGroup(x)
 		if err == nil {

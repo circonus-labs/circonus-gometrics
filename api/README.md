@@ -46,6 +46,13 @@
     * DeleteContactGroupByCID
     * SearchContactGroups
 * [Graph](https://login.circonus.com/resources/api/calls/graph)
+    * FetchGraph
+    * FetchGraphs
+    * UpdateGraph
+    * CreateGraph
+    * DeleteGraph
+    * DeleteGraphByCID
+    * SearchGraphs
 * [Metric Cluster](https://login.circonus.com/resources/api/calls/metric_cluster)
 * [Rule Set](https://login.circonus.com/resources/api/calls/rule_set)
 * [Rule Set Group](https://login.circonus.com/resources/api/calls/rule_set_group)
