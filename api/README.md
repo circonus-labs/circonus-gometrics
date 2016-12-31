@@ -62,20 +62,20 @@
     * DeleteMetricClusterByCID
     * SearchMetricClusters
 * [Rule Set](https://login.circonus.com/resources/api/calls/rule_set)
-    * FetchMetricRuleset
-    * FetchMetricRulesets
-    * UpdateMetricRuleset
-    * CreateMetricRuleset
-    * DeleteMetricRuleset
-    * DeleteMetricRulesetByCID
-    * SearchMetricRulesets
+    * FetchRuleset
+    * FetchRulesets
+    * UpdateRuleset
+    * CreateRuleset
+    * DeleteRuleset
+    * DeleteRulesetByCID
+    * SearchRulesets
 * [Rule Set Group](https://login.circonus.com/resources/api/calls/rule_set_group)
-    * FetchMetricRulesetGroup
-    * FetchMetricRulesetGroups
-    * UpdateMetricRulesetGroup
-    * CreateMetricRulesetGroup
-    * DeleteMetricRulesetGroup
-    * DeleteMetricRulesetGroupByCID
-    * SearchMetricRulesetGroups
+    * FetchRulesetGroup
+    * FetchRulesetGroups
+    * UpdateRulesetGroup
+    * CreateRulesetGroup
+    * DeleteRulesetGroup
+    * DeleteRulesetGroupByCID
+    * SearchRulesetGroups
 * [User](https://login.circonus.com/resources/api/calls/user)
 * [Worksheet](https://login.circonus.com/resources/api/calls/worksheet)
