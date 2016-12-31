@@ -89,16 +89,12 @@ func (a *API) UpdateAnnotation(config *Annotation) (*Annotation, error) {
 		return nil, fmt.Errorf("Invalid annotation CID [%s]", annotationCID)
 	}
 
-	reqURL := url.URL{
-		Path: annotationCID,
-	}
-
 	cfg, err := json.Marshal(config)
 	if err != nil {
 		return nil, err
 	}
 
-	result, err := a.Put(reqURL.String(), cfg)
+	result, err := a.Put(annotationCID, cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -138,7 +134,7 @@ func (a *API) CreateAnnotation(config *Annotation) (*Annotation, error) {
 // DeleteAnnotation delete a annotation
 func (a *API) DeleteAnnotation(config *Annotation) (bool, error) {
 	if config == nil {
-		return false, fmt.Errorf("Invalid annotation config [nil]")
+		return false, fmt.Errorf("Invalid annotation config [none]")
 	}
 
 	cid := CIDType(&config.CID)
@@ -148,7 +144,7 @@ func (a *API) DeleteAnnotation(config *Annotation) (bool, error) {
 // DeleteAnnotationByCID delete a annotation by cid
 func (a *API) DeleteAnnotationByCID(cid CIDType) (bool, error) {
 	if cid == nil || *cid == "" {
-		return false, fmt.Errorf("Invalid annotation CID [%v]", *cid)
+		return false, fmt.Errorf("Invalid annotation CID [none]")
 	}
 
 	annotationCID := string(*cid)

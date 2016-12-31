@@ -113,8 +113,8 @@ func TestFetchMetricClusterByCID(t *testing.T) {
 	t.Log("Testing invalid CID")
 	{
 		cid := "/invalid"
-		expectedError := errors.New("Invalid metric cluster CID /invalid")
-		_, err = apih.FetchMetricClusterByCID(CIDType(&cid), "")
+		expectedError := errors.New("Invalid metric cluster CID [/invalid]")
+		_, err = apih.FetchMetricCluster(CIDType(&cid), "")
 		if err == nil {
 			t.Fatalf("Expected error")
 		}
@@ -125,7 +125,7 @@ func TestFetchMetricClusterByCID(t *testing.T) {
 
 	t.Log("Testing valid CID")
 	{
-		cluster, err = apih.FetchMetricClusterByCID(CIDType(&testMetricCluster.CID), "")
+		cluster, err = apih.FetchMetricCluster(CIDType(&testMetricCluster.CID), "")
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
@@ -143,7 +143,7 @@ func TestFetchMetricClusterByCID(t *testing.T) {
 
 	t.Log("Testing valid CID w/extras 'metrics'")
 	{
-		cluster, err = apih.FetchMetricClusterByCID(CIDType(&testMetricCluster.CID), "metrics")
+		cluster, err = apih.FetchMetricCluster(CIDType(&testMetricCluster.CID), "metrics")
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
@@ -155,7 +155,7 @@ func TestFetchMetricClusterByCID(t *testing.T) {
 
 	t.Log("Testing valid CID w/extras 'uuids'")
 	{
-		cluster, err = apih.FetchMetricClusterByCID(CIDType(&testMetricCluster.CID), "uuids")
+		cluster, err = apih.FetchMetricCluster(CIDType(&testMetricCluster.CID), "uuids")
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
@@ -185,13 +185,13 @@ func TestMetricClusterSearch(t *testing.T) {
 
 	t.Log("Testing w/o search criteria")
 	{
-		clusters, err := apih.MetricClusterSearch("")
+		clusters, err := apih.SearchMetricClusters(nil, nil)
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
 
 		actualType := reflect.TypeOf(clusters)
-		expectedType := "[]api.MetricCluster"
+		expectedType := "*[]api.MetricCluster"
 		if actualType.String() != expectedType {
 			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 		}
@@ -199,13 +199,14 @@ func TestMetricClusterSearch(t *testing.T) {
 
 	t.Log("Testing with search criteria")
 	{
-		clusters, err := apih.MetricClusterSearch("test")
+		search := SearchQueryType("test")
+		clusters, err := apih.SearchMetricClusters(&search, nil)
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
 
 		actualType := reflect.TypeOf(clusters)
-		expectedType := "[]api.MetricCluster"
+		expectedType := "*[]api.MetricCluster"
 		if actualType.String() != expectedType {
 			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 		}
@@ -245,40 +246,40 @@ func TestUpdateMetricCluster(t *testing.T) {
 	server := testMetricClusterServer()
 	defer server.Close()
 
-	var apih *API
-	var err error
-
 	ac := &Config{
 		TokenKey: "abc123",
 		TokenApp: "test",
 		URL:      server.URL,
 	}
-	apih, err = NewAPI(ac)
+	apih, err := NewAPI(ac)
 	if err != nil {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
-	cluster, err := apih.UpdateMetricCluster(&testMetricCluster)
-	if err != nil {
-		t.Fatalf("Expected no error, got '%v'", err)
+	t.Log("valid config")
+	{
+		cluster, err := apih.UpdateMetricCluster(&testMetricCluster)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(cluster)
+		expectedType := "*api.MetricCluster"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
 	}
 
-	actualType := reflect.TypeOf(cluster)
-	expectedType := "*api.MetricCluster"
-	if actualType.String() != expectedType {
-		t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
-	}
-
-	t.Log("Test with invalid CID")
-	expectedError := errors.New("Invalid metric cluster CID xxx")
-	x := &MetricCluster{}
-	x = &testMetricCluster
-	x.CID = "xxx"
-	_, err = apih.UpdateMetricCluster(x)
-	if err == nil {
-		t.Fatal("Expected an error")
-	}
-	if err.Error() != expectedError.Error() {
-		t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+	t.Log("invalid CID in config")
+	{
+		expectedError := errors.New("Invalid metric cluster CID [/invalid]")
+		x := &MetricCluster{CID: "/invalid"}
+		_, err := apih.UpdateMetricCluster(x)
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
 	}
 }

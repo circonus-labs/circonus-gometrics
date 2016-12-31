@@ -54,8 +54,14 @@
     * DeleteGraphByCID
     * SearchGraphs
 * [Metric Cluster](https://login.circonus.com/resources/api/calls/metric_cluster)
+    * FetchMetricCluster
+    * FetchMetricClusters
+    * UpdateMetricCluster
+    * CreateMetricCluster
+    * DeleteMetricCluster
+    * DeleteMetricClusterByCID
+    * SearchMetricClusters
 * [Rule Set](https://login.circonus.com/resources/api/calls/rule_set)
 * [Rule Set Group](https://login.circonus.com/resources/api/calls/rule_set_group)
 * [User](https://login.circonus.com/resources/api/calls/user)
 * [Worksheet](https://login.circonus.com/resources/api/calls/worksheet)
-
