@@ -45,10 +45,18 @@ const (
 
 // FetchWorksheet retrieves a worksheet definition
 func (a *API) FetchWorksheet(cid CIDType) (*Worksheet, error) {
-	if matched, err := regexp.MatchString(worksheetCIDRegex, string(*cid)); err != nil {
+	if cid == nil || *cid == "" {
+		return nil, fmt.Errorf("Invalid worksheet CID [none]")
+	}
+
+	worksheetCID := string(*cid)
+
+	matched, err := regexp.MatchString(worksheetCIDRegex, worksheetCID)
+	if err != nil {
 		return nil, err
-	} else if !matched {
-		return nil, fmt.Errorf("Invalid worksheet CID %v", *cid)
+	}
+	if !matched {
+		return nil, fmt.Errorf("Invalid worksheet CID [%s]", worksheetCID)
 	}
 
 	result, err := a.Get(string(*cid))
@@ -65,7 +73,7 @@ func (a *API) FetchWorksheet(cid CIDType) (*Worksheet, error) {
 }
 
 // FetchWorksheets retrieves all worksheets
-func (a *API) FetchWorksheets() ([]Worksheet, error) {
+func (a *API) FetchWorksheets() (*[]Worksheet, error) {
 	result, err := a.Get(baseWorksheetPath)
 	if err != nil {
 		return nil, err
@@ -76,19 +84,23 @@ func (a *API) FetchWorksheets() ([]Worksheet, error) {
 		return nil, err
 	}
 
-	return worksheets, nil
+	return &worksheets, nil
 }
 
 // UpdateWorksheet update worksheet definition
 func (a *API) UpdateWorksheet(config *Worksheet) (*Worksheet, error) {
-	if matched, err := regexp.MatchString(worksheetCIDRegex, string(config.CID)); err != nil {
-		return nil, err
-	} else if !matched {
-		return nil, fmt.Errorf("Invalid worksheet CID %v", config.CID)
+	if config == nil {
+		return nil, fmt.Errorf("Invalid worksheet config [nil]")
 	}
 
-	reqURL := url.URL{
-		Path: config.CID,
+	worksheetCID := string(config.CID)
+
+	matched, err := regexp.MatchString(worksheetCIDRegex, worksheetCID)
+	if err != nil {
+		return nil, err
+	}
+	if !matched {
+		return nil, fmt.Errorf("Invalid worksheet CID [%s]", worksheetCID)
 	}
 
 	cfg, err := json.Marshal(config)
@@ -96,13 +108,13 @@ func (a *API) UpdateWorksheet(config *Worksheet) (*Worksheet, error) {
 		return nil, err
 	}
 
-	resp, err := a.Put(reqURL.String(), cfg)
+	result, err := a.Put(worksheetCID, cfg)
 	if err != nil {
 		return nil, err
 	}
 
 	worksheet := &Worksheet{}
-	if err := json.Unmarshal(resp, worksheet); err != nil {
+	if err := json.Unmarshal(result, worksheet); err != nil {
 		return nil, err
 	}
 
@@ -111,8 +123,8 @@ func (a *API) UpdateWorksheet(config *Worksheet) (*Worksheet, error) {
 
 // CreateWorksheet create a new worksheet
 func (a *API) CreateWorksheet(config *Worksheet) (*Worksheet, error) {
-	reqURL := url.URL{
-		Path: baseWorksheetPath,
+	if config == nil {
+		return nil, fmt.Errorf("Invalid worksheet config [nil]")
 	}
 
 	cfg, err := json.Marshal(config)
@@ -120,13 +132,13 @@ func (a *API) CreateWorksheet(config *Worksheet) (*Worksheet, error) {
 		return nil, err
 	}
 
-	resp, err := a.Post(reqURL.String(), cfg)
+	result, err := a.Post(baseWorksheetPath, cfg)
 	if err != nil {
 		return nil, err
 	}
 
 	worksheet := &Worksheet{}
-	if err := json.Unmarshal(resp, worksheet); err != nil {
+	if err := json.Unmarshal(result, worksheet); err != nil {
 		return nil, err
 	}
 
@@ -134,24 +146,31 @@ func (a *API) CreateWorksheet(config *Worksheet) (*Worksheet, error) {
 }
 
 // DeleteWorksheet delete a worksheet
-func (a *API) DeleteWorksheet(bundle *Worksheet) (bool, error) {
-	cid := CIDType(&bundle.CID)
+func (a *API) DeleteWorksheet(config *Worksheet) (bool, error) {
+	if config == nil {
+		return false, fmt.Errorf("Invalid worksheet config [none]")
+	}
+	cid := CIDType(&config.CID)
 	return a.DeleteWorksheetByCID(cid)
 }
 
 // DeleteWorksheetByCID delete a worksheet by cid
 func (a *API) DeleteWorksheetByCID(cid CIDType) (bool, error) {
-	if matched, err := regexp.MatchString(worksheetCIDRegex, string(*cid)); err != nil {
+	if cid == nil || *cid == "" {
+		return false, fmt.Errorf("Invalid worksheet CID [none]")
+	}
+
+	worksheetCID := string(*cid)
+
+	matched, err := regexp.MatchString(worksheetCIDRegex, worksheetCID)
+	if err != nil {
 		return false, err
-	} else if !matched {
-		return false, fmt.Errorf("Invalid worksheet CID %v", *cid)
+	}
+	if !matched {
+		return false, fmt.Errorf("Invalid worksheet CID [%s]", worksheetCID)
 	}
 
-	reqURL := url.URL{
-		Path: string(*cid),
-	}
-
-	_, err := a.Delete(reqURL.String())
+	_, err = a.Delete(worksheetCID)
 	if err != nil {
 		return false, err
 	}
@@ -159,42 +178,42 @@ func (a *API) DeleteWorksheetByCID(cid CIDType) (bool, error) {
 	return true, nil
 }
 
-// WorksheetSearch returns list of worksheets matching a search query and/or filter
+// SearchWorksheets returns list of worksheets matching a search query and/or filter
 //    - a search query (see: https://login.circonus.com/resources/api#searching)
 //    - a filter (see: https://login.circonus.com/resources/api#filtering)
-func (a *API) WorksheetSearch(searchCriteria SearchQueryType, filterCriteria map[string]string) ([]Worksheet, error) {
+func (a *API) SearchWorksheets(searchCriteria *SearchQueryType, filterCriteria *SearchFilterType) (*[]Worksheet, error) {
+	q := url.Values{}
 
-	if searchCriteria == "" && len(filterCriteria) == 0 {
+	if searchCriteria != nil && *searchCriteria != "" {
+		q.Set("search", string(*searchCriteria))
+	}
+
+	if filterCriteria != nil && len(*filterCriteria) > 0 {
+		for filter, criteria := range *filterCriteria {
+			for _, val := range criteria {
+				q.Add(filter, val)
+			}
+		}
+	}
+
+	if q.Encode() == "" {
 		return a.FetchWorksheets()
 	}
 
 	reqURL := url.URL{
-		Path: baseWorksheetPath,
+		Path:     baseWorksheetPath,
+		RawQuery: q.Encode(),
 	}
 
-	q := url.Values{}
-
-	if searchCriteria != "" {
-		q.Set("search", string(searchCriteria))
-	}
-
-	if len(filterCriteria) > 0 {
-		for filter, criteria := range filterCriteria {
-			q.Set(filter, criteria)
-		}
-	}
-
-	reqURL.RawQuery = q.Encode()
-
-	resp, err := a.Get(reqURL.String())
+	result, err := a.Get(reqURL.String())
 	if err != nil {
 		return nil, fmt.Errorf("[ERROR] API call error %+v", err)
 	}
 
-	var results []Worksheet
-	if err := json.Unmarshal(resp, &results); err != nil {
+	var worksheets []Worksheet
+	if err := json.Unmarshal(result, &worksheets); err != nil {
 		return nil, err
 	}
 
-	return results, nil
+	return &worksheets, nil
 }

@@ -129,7 +129,7 @@ func TestFetchUser(t *testing.T) {
 	t.Log("with invalid CID")
 	{
 		cid := "/invalid"
-		expectedError := errors.New("Invalid user CID /invalid")
+		expectedError := errors.New("Invalid user CID [/invalid]")
 		_, err := apih.FetchUser(CIDType(&cid))
 		if err == nil {
 			t.Fatalf("Expected error")
@@ -160,7 +160,7 @@ func TestFetchUsers(t *testing.T) {
 	}
 
 	actualType := reflect.TypeOf(users)
-	expectedType := "[]api.User"
+	expectedType := "*[]api.User"
 	if actualType.String() != expectedType {
 		t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 	}
@@ -199,7 +199,7 @@ func TestUpdateUser(t *testing.T) {
 
 	t.Log("Test with invalid CID")
 	{
-		expectedError := errors.New("Invalid user CID /invalid")
+		expectedError := errors.New("Invalid user CID [/invalid]")
 		x := &User{CID: "/invalid"}
 		_, err := apih.UpdateUser(x)
 		if err == nil {

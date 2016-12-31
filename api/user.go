@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// User API support - Fetch and Update
+// User API support - Fetch, Update, and Search
 // See: https://login.circonus.com/resources/api/calls/user
 // Note: Create and Delete are not supported directly via the User API
 // endpoint. See the Account endpoint for inviting and removing users
@@ -32,22 +32,30 @@ type User struct {
 	Lastname    string          `json:"lastname"`
 }
 
-const baseUserPath = "/user"
+const (
+	baseUserPath = "/user"
+	userCIDRegex = "^" + baseUserPath + "/([0-9]+|current)$"
+)
 
 // FetchUser retrieves a user definition
 func (a *API) FetchUser(cid CIDType) (*User, error) {
-	if *cid == "" {
-		userCID := baseUserPath + "/current"
-		cid = CIDType(&userCID)
+	var userCID string
+
+	if cid == nil || *cid == "" {
+		userCID = baseUserPath + "/current"
+	} else {
+		userCID = string(*cid)
 	}
 
-	if matched, err := regexp.MatchString("^"+baseUserPath+"/([0-9]+|current)$", string(*cid)); err != nil {
+	matched, err := regexp.MatchString(userCIDRegex, userCID)
+	if err != nil {
 		return nil, err
-	} else if !matched {
-		return nil, fmt.Errorf("Invalid user CID %v", *cid)
+	}
+	if !matched {
+		return nil, fmt.Errorf("Invalid user CID [%s]", userCID)
 	}
 
-	result, err := a.Get(string(*cid))
+	result, err := a.Get(userCID)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +69,7 @@ func (a *API) FetchUser(cid CIDType) (*User, error) {
 }
 
 // FetchUsers retrieves users for current account
-func (a *API) FetchUsers() ([]User, error) {
+func (a *API) FetchUsers() (*[]User, error) {
 	result, err := a.Get(baseUserPath)
 	if err != nil {
 		return nil, err
@@ -72,19 +80,23 @@ func (a *API) FetchUsers() ([]User, error) {
 		return nil, err
 	}
 
-	return users, nil
+	return &users, nil
 }
 
 // UpdateUser update user information
 func (a *API) UpdateUser(config *User) (*User, error) {
-	if matched, err := regexp.MatchString("^"+baseUserPath+"/[0-9]+$", string(config.CID)); err != nil {
-		return nil, err
-	} else if !matched {
-		return nil, fmt.Errorf("Invalid user CID %v", config.CID)
+	if config == nil {
+		return nil, fmt.Errorf("Invalid user config [nil]")
 	}
 
-	reqURL := url.URL{
-		Path: config.CID,
+	userCID := string(config.CID)
+
+	matched, err := regexp.MatchString(userCIDRegex, userCID)
+	if err != nil {
+		return nil, err
+	}
+	if !matched {
+		return nil, fmt.Errorf("Invalid user CID [%s]", userCID)
 	}
 
 	cfg, err := json.Marshal(config)
@@ -92,15 +104,55 @@ func (a *API) UpdateUser(config *User) (*User, error) {
 		return nil, err
 	}
 
-	resp, err := a.Put(reqURL.String(), cfg)
+	result, err := a.Put(userCID, cfg)
 	if err != nil {
 		return nil, err
 	}
 
 	user := &User{}
-	if err := json.Unmarshal(resp, user); err != nil {
+	if err := json.Unmarshal(result, user); err != nil {
 		return nil, err
 	}
 
 	return user, nil
+}
+
+// SearchUsers returns list of users matching a search query and/or filter
+//    - a search query (see: https://login.circonus.com/resources/api#searching)
+//    - a filter (see: https://login.circonus.com/resources/api#filtering)
+func (a *API) SearchUsers(searchCriteria *SearchQueryType, filterCriteria *SearchFilterType) (*[]User, error) {
+	q := url.Values{}
+
+	if searchCriteria != nil && *searchCriteria != "" {
+		q.Set("search", string(*searchCriteria))
+	}
+
+	if filterCriteria != nil && len(*filterCriteria) > 0 {
+		for filter, criteria := range *filterCriteria {
+			for _, val := range criteria {
+				q.Add(filter, val)
+			}
+		}
+	}
+
+	if q.Encode() == "" {
+		return a.FetchUsers()
+	}
+
+	reqURL := url.URL{
+		Path:     baseUserPath,
+		RawQuery: q.Encode(),
+	}
+
+	result, err := a.Get(reqURL.String())
+	if err != nil {
+		return nil, fmt.Errorf("[ERROR] API call error %+v", err)
+	}
+
+	var users []User
+	if err := json.Unmarshal(result, &users); err != nil {
+		return nil, err
+	}
+
+	return &users, nil
 }

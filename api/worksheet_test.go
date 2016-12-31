@@ -121,7 +121,7 @@ func TestFetchWorksheet(t *testing.T) {
 	t.Log("without CID")
 	{
 		cid := ""
-		expectedError := errors.New("Invalid worksheet CID ")
+		expectedError := errors.New("Invalid worksheet CID [none]")
 		_, err := apih.FetchWorksheet(CIDType(&cid))
 		if err == nil {
 			t.Fatalf("Expected error")
@@ -153,7 +153,7 @@ func TestFetchWorksheet(t *testing.T) {
 	t.Log("with invalid CID")
 	{
 		cid := "/invalid"
-		expectedError := errors.New("Invalid worksheet CID /invalid")
+		expectedError := errors.New("Invalid worksheet CID [/invalid]")
 		_, err := apih.FetchWorksheet(CIDType(&cid))
 		if err == nil {
 			t.Fatalf("Expected error")
@@ -184,7 +184,7 @@ func TestFetchWorksheets(t *testing.T) {
 	}
 
 	actualType := reflect.TypeOf(worksheets)
-	expectedType := "[]api.Worksheet"
+	expectedType := "*[]api.Worksheet"
 	if actualType.String() != expectedType {
 		t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 	}
@@ -251,7 +251,7 @@ func TestUpdateWorksheet(t *testing.T) {
 
 	t.Log("Test with invalid CID")
 	{
-		expectedError := errors.New("Invalid worksheet CID /invalid")
+		expectedError := errors.New("Invalid worksheet CID [/invalid]")
 		x := &Worksheet{CID: "/invalid"}
 		_, err := apih.UpdateWorksheet(x)
 		if err == nil {
@@ -289,7 +289,7 @@ func TestDeleteWorksheet(t *testing.T) {
 
 	t.Log("Test with invalid CID")
 	{
-		expectedError := errors.New("Invalid worksheet CID /invalid")
+		expectedError := errors.New("Invalid worksheet CID [/invalid]")
 		x := &Worksheet{CID: "/invalid"}
 		_, err := apih.UpdateWorksheet(x)
 		if err == nil {

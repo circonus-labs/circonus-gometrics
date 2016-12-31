@@ -78,4 +78,15 @@
     * DeleteRulesetGroupByCID
     * SearchRulesetGroups
 * [User](https://login.circonus.com/resources/api/calls/user)
+    * FetchUser
+    * FetchUsers
+    * UpdateUser
+    * SearchUsers
 * [Worksheet](https://login.circonus.com/resources/api/calls/worksheet)
+    * FetchWorksheet
+    * FetchWorksheets
+    * UpdateWorksheet
+    * CreateWorksheet
+    * DeleteWorksheet
+    * DeleteWorksheetByCID
+    * SearchWorksheets
