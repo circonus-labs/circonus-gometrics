@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Worksheet API support - Fetch, Create, Delete, and Update
+// Worksheet API support - Fetch, Create, Update, Delete, and Search
 // See: https://login.circonus.com/resources/api/calls/worksheet
 
 package api

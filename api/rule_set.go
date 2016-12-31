@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Ruleset API support - Fetch, Create, Delete, Search, and Update
+// Rule Set API support - Fetch, Create, Update, Delete, and Search
 // See: https://login.circonus.com/resources/api/calls/rule_set
 
 package api
@@ -41,7 +41,7 @@ type Ruleset struct {
 }
 
 const (
-	baseRulesetPath = "/ruleset"
+	baseRulesetPath = "/rule_set"
 	rulesetCIDRegex = "^" + baseRulesetPath + "/[0-9]+_.+$"
 )
 

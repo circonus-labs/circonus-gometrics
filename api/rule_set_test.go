@@ -17,7 +17,7 @@ import (
 
 var (
 	testRuleset = Ruleset{
-		CID:      "/ruleset/1234_tt_firstbyte",
+		CID:      "/rule_set/1234_tt_firstbyte",
 		CheckCID: "/check/1234",
 		ContactGroups: map[int][]string{
 			1: []string{"/contact_group/1234", "/contact_group/5678"},
@@ -54,7 +54,7 @@ var (
 func testRulesetServer() *httptest.Server {
 	f := func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
-		if path == "/ruleset/1234_tt_firstbyte" {
+		if path == "/rule_set/1234_tt_firstbyte" {
 			switch r.Method {
 			case "GET":
 				ret, err := json.Marshal(testRuleset)
@@ -80,7 +80,7 @@ func testRulesetServer() *httptest.Server {
 				w.WriteHeader(404)
 				fmt.Fprintln(w, fmt.Sprintf("not found: %s %s", r.Method, path))
 			}
-		} else if path == "/ruleset" {
+		} else if path == "/rule_set" {
 			switch r.Method {
 			case "GET":
 				c := []Ruleset{testRuleset}
@@ -146,7 +146,7 @@ func TestFetchRuleset(t *testing.T) {
 
 	t.Log("with valid CID")
 	{
-		cid := "/ruleset/1234_tt_firstbyte"
+		cid := "/rule_set/1234_tt_firstbyte"
 		ruleset, err := apih.FetchRuleset(CIDType(&cid))
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)

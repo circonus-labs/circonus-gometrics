@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Check bundle API support - Fetch, Create, Delete, Search, and Update
+// Check bundle API support - Fetch, Create, Update, Delete, and Search
 // See: https://login.circonus.com/resources/api/calls/check_bundle
 
 package api

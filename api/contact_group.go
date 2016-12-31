@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// ContactGroup API support - Fetch, Create, Delete, Search, and Update
+// Contact Group API support - Fetch, Create, Update, Delete, and Search
 // See: https://login.circonus.com/resources/api/calls/contact_group
 
 package api

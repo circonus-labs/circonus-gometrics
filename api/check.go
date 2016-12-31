@@ -4,6 +4,7 @@
 
 // Check API support - Fetch and Search
 // See: https://login.circonus.com/resources/api/calls/check
+// Notes: checks do not directly support create, update, and delete - see check bundle.
 
 package api
 

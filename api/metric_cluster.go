@@ -2,6 +2,9 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// Metric Cluster API support - Fetch, Create, Update, Delete, and Search
+// See: https://login.circonus.com/resources/api/calls/metric_cluster
+
 package api
 
 import (
