@@ -41,9 +41,11 @@ func (a *API) FetchAnnotation(cid CIDType) (*Annotation, error) {
 
 	annotationCID := string(*cid)
 
-	if matched, err := regexp.MatchString(annotationCIDRegex, annotationCID); err != nil {
+	matched, err := regexp.MatchString(annotationCIDRegex, annotationCID)
+	if err != nil {
 		return nil, err
-	} else if !matched {
+	}
+	if !matched {
 		return nil, fmt.Errorf("Invalid annotation CID [%s]", annotationCID)
 	}
 
@@ -83,9 +85,11 @@ func (a *API) UpdateAnnotation(config *Annotation) (*Annotation, error) {
 
 	annotationCID := string(config.CID)
 
-	if matched, err := regexp.MatchString(annotationCIDRegex, annotationCID); err != nil {
+	matched, err := regexp.MatchString(annotationCIDRegex, annotationCID)
+	if err != nil {
 		return nil, err
-	} else if !matched {
+	}
+	if !matched {
 		return nil, fmt.Errorf("Invalid annotation CID [%s]", annotationCID)
 	}
 
@@ -149,13 +153,15 @@ func (a *API) DeleteAnnotationByCID(cid CIDType) (bool, error) {
 
 	annotationCID := string(*cid)
 
-	if matched, err := regexp.MatchString(annotationCIDRegex, annotationCID); err != nil {
+	matched, err := regexp.MatchString(annotationCIDRegex, annotationCID)
+	if err != nil {
 		return false, err
-	} else if !matched {
+	}
+	if !matched {
 		return false, fmt.Errorf("Invalid annotation CID [%s]", annotationCID)
 	}
 
-	_, err := a.Delete(annotationCID)
+	_, err = a.Delete(annotationCID)
 	if err != nil {
 		return false, err
 	}

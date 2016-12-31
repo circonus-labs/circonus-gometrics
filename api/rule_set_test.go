@@ -134,7 +134,7 @@ func TestFetchRuleset(t *testing.T) {
 	t.Log("without CID")
 	{
 		cid := ""
-		expectedError := errors.New("Invalid ruleset CID ")
+		expectedError := errors.New("Invalid rule set CID [none]")
 		_, err := apih.FetchRuleset(CIDType(&cid))
 		if err == nil {
 			t.Fatalf("Expected error")
@@ -166,7 +166,7 @@ func TestFetchRuleset(t *testing.T) {
 	t.Log("with invalid CID")
 	{
 		cid := "/invalid"
-		expectedError := errors.New("Invalid ruleset CID /invalid")
+		expectedError := errors.New("Invalid rule set CID [/invalid]")
 		_, err := apih.FetchRuleset(CIDType(&cid))
 		if err == nil {
 			t.Fatalf("Expected error")
@@ -197,7 +197,7 @@ func TestFetchRulesets(t *testing.T) {
 	}
 
 	actualType := reflect.TypeOf(rulesets)
-	expectedType := "[]api.Ruleset"
+	expectedType := "*[]api.Ruleset"
 	if actualType.String() != expectedType {
 		t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 	}
@@ -264,7 +264,7 @@ func TestUpdateRuleset(t *testing.T) {
 
 	t.Log("Test with invalid CID")
 	{
-		expectedError := errors.New("Invalid ruleset CID /invalid")
+		expectedError := errors.New("Invalid rule set CID [/invalid]")
 		x := &Ruleset{CID: "/invalid"}
 		_, err := apih.UpdateRuleset(x)
 		if err == nil {
@@ -302,7 +302,7 @@ func TestDeleteRuleset(t *testing.T) {
 
 	t.Log("Test with invalid CID")
 	{
-		expectedError := errors.New("Invalid ruleset CID /invalid")
+		expectedError := errors.New("Invalid rule set CID [/invalid]")
 		x := &Ruleset{CID: "/invalid"}
 		_, err := apih.UpdateRuleset(x)
 		if err == nil {

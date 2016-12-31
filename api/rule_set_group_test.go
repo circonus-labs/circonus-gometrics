@@ -138,7 +138,7 @@ func TestFetchRulesetGroup(t *testing.T) {
 	t.Log("without CID")
 	{
 		cid := ""
-		expectedError := errors.New("Invalid rule set group CID ")
+		expectedError := errors.New("Invalid rule set group CID [none]")
 		_, err := apih.FetchRulesetGroup(CIDType(&cid))
 		if err == nil {
 			t.Fatalf("Expected error")
@@ -170,7 +170,7 @@ func TestFetchRulesetGroup(t *testing.T) {
 	t.Log("with invalid CID")
 	{
 		cid := "/invalid"
-		expectedError := errors.New("Invalid rule set group CID /invalid")
+		expectedError := errors.New("Invalid rule set group CID [/invalid]")
 		_, err := apih.FetchRulesetGroup(CIDType(&cid))
 		if err == nil {
 			t.Fatalf("Expected error")
@@ -201,7 +201,7 @@ func TestFetchRulesetGroups(t *testing.T) {
 	}
 
 	actualType := reflect.TypeOf(rulesets)
-	expectedType := "[]api.RulesetGroup"
+	expectedType := "*[]api.RulesetGroup"
 	if actualType.String() != expectedType {
 		t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 	}
@@ -268,7 +268,7 @@ func TestUpdateRulesetGroup(t *testing.T) {
 
 	t.Log("Test with invalid CID")
 	{
-		expectedError := errors.New("Invalid rule set group CID /invalid")
+		expectedError := errors.New("Invalid rule set group CID [/invalid]")
 		x := &RulesetGroup{CID: "/invalid"}
 		_, err := apih.UpdateRulesetGroup(x)
 		if err == nil {
@@ -306,7 +306,7 @@ func TestDeleteRulesetGroup(t *testing.T) {
 
 	t.Log("Test with invalid CID")
 	{
-		expectedError := errors.New("Invalid rule set group CID /invalid")
+		expectedError := errors.New("Invalid rule set group CID [/invalid]")
 		x := &RulesetGroup{CID: "/invalid"}
 		_, err := apih.UpdateRulesetGroup(x)
 		if err == nil {

@@ -47,18 +47,26 @@ const (
 
 // FetchRuleset retrieves a ruleset definition
 func (a *API) FetchRuleset(cid CIDType) (*Ruleset, error) {
-	if matched, err := regexp.MatchString(rulesetCIDRegex, string(*cid)); err != nil {
-		return nil, err
-	} else if !matched {
-		return nil, fmt.Errorf("Invalid ruleset CID %v", *cid)
+	if cid == nil || *cid == "" {
+		return nil, fmt.Errorf("Invalid rule set CID [none]")
 	}
 
-	result, err := a.Get(string(*cid))
+	rulesetCID := string(*cid)
+
+	matched, err := regexp.MatchString(rulesetCIDRegex, rulesetCID)
+	if err != nil {
+		return nil, err
+	}
+	if !matched {
+		return nil, fmt.Errorf("Invalid rule set CID [%s]", rulesetCID)
+	}
+
+	result, err := a.Get(rulesetCID)
 	if err != nil {
 		return nil, err
 	}
 
-	ruleset := new(Ruleset)
+	ruleset := &Ruleset{}
 	if err := json.Unmarshal(result, ruleset); err != nil {
 		return nil, err
 	}
@@ -67,7 +75,7 @@ func (a *API) FetchRuleset(cid CIDType) (*Ruleset, error) {
 }
 
 // FetchRulesets retrieves all rulesets
-func (a *API) FetchRulesets() ([]Ruleset, error) {
+func (a *API) FetchRulesets() (*[]Ruleset, error) {
 	result, err := a.Get(baseRulesetPath)
 	if err != nil {
 		return nil, err
@@ -78,19 +86,23 @@ func (a *API) FetchRulesets() ([]Ruleset, error) {
 		return nil, err
 	}
 
-	return rulesets, nil
+	return &rulesets, nil
 }
 
 // UpdateRuleset update ruleset definition
 func (a *API) UpdateRuleset(config *Ruleset) (*Ruleset, error) {
-	if matched, err := regexp.MatchString(rulesetCIDRegex, string(config.CID)); err != nil {
-		return nil, err
-	} else if !matched {
-		return nil, fmt.Errorf("Invalid ruleset CID %v", config.CID)
+	if config == nil {
+		return nil, fmt.Errorf("Invalid rule set config [none]")
 	}
 
-	reqURL := url.URL{
-		Path: config.CID,
+	rulesetCID := string(config.CID)
+
+	matched, err := regexp.MatchString(rulesetCIDRegex, rulesetCID)
+	if err != nil {
+		return nil, err
+	}
+	if !matched {
+		return nil, fmt.Errorf("Invalid rule set CID [%s]", rulesetCID)
 	}
 
 	cfg, err := json.Marshal(config)
@@ -98,13 +110,13 @@ func (a *API) UpdateRuleset(config *Ruleset) (*Ruleset, error) {
 		return nil, err
 	}
 
-	resp, err := a.Put(reqURL.String(), cfg)
+	result, err := a.Put(rulesetCID, cfg)
 	if err != nil {
 		return nil, err
 	}
 
 	ruleset := &Ruleset{}
-	if err := json.Unmarshal(resp, ruleset); err != nil {
+	if err := json.Unmarshal(result, ruleset); err != nil {
 		return nil, err
 	}
 
@@ -113,8 +125,8 @@ func (a *API) UpdateRuleset(config *Ruleset) (*Ruleset, error) {
 
 // CreateRuleset create a new ruleset
 func (a *API) CreateRuleset(config *Ruleset) (*Ruleset, error) {
-	reqURL := url.URL{
-		Path: baseRulesetPath,
+	if config == nil {
+		return nil, fmt.Errorf("Invalid rule set config [none]")
 	}
 
 	cfg, err := json.Marshal(config)
@@ -122,7 +134,7 @@ func (a *API) CreateRuleset(config *Ruleset) (*Ruleset, error) {
 		return nil, err
 	}
 
-	resp, err := a.Post(reqURL.String(), cfg)
+	resp, err := a.Post(baseRulesetPath, cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -136,24 +148,32 @@ func (a *API) CreateRuleset(config *Ruleset) (*Ruleset, error) {
 }
 
 // DeleteRuleset delete a ruleset
-func (a *API) DeleteRuleset(bundle *Ruleset) (bool, error) {
-	cid := CIDType(&bundle.CID)
+func (a *API) DeleteRuleset(config *Ruleset) (bool, error) {
+	if config == nil {
+		return false, fmt.Errorf("Invalid rule set config [none]")
+	}
+
+	cid := CIDType(&config.CID)
 	return a.DeleteRulesetByCID(cid)
 }
 
 // DeleteRulesetByCID delete a ruleset by cid
 func (a *API) DeleteRulesetByCID(cid CIDType) (bool, error) {
-	if matched, err := regexp.MatchString(rulesetCIDRegex, string(*cid)); err != nil {
+	if cid == nil || *cid == "" {
+		return false, fmt.Errorf("Invalid rule set CID [none]")
+	}
+
+	rulesetCID := string(*cid)
+
+	matched, err := regexp.MatchString(rulesetCIDRegex, rulesetCID)
+	if err != nil {
 		return false, err
-	} else if !matched {
-		return false, fmt.Errorf("Invalid ruleset CID %v", *cid)
+	}
+	if !matched {
+		return false, fmt.Errorf("Invalid rule set CID [%s]", rulesetCID)
 	}
 
-	reqURL := url.URL{
-		Path: string(*cid),
-	}
-
-	_, err := a.Delete(reqURL.String())
+	_, err = a.Delete(rulesetCID)
 	if err != nil {
 		return false, err
 	}
@@ -161,42 +181,42 @@ func (a *API) DeleteRulesetByCID(cid CIDType) (bool, error) {
 	return true, nil
 }
 
-// RulesetSearch returns list of rulesets matching a search query and/or filter
+// SearchRulesets returns list of rule sets matching a search query and/or filter
 //    - a search query (see: https://login.circonus.com/resources/api#searching)
 //    - a filter (see: https://login.circonus.com/resources/api#filtering)
-func (a *API) RulesetSearch(searchCriteria SearchQueryType, filterCriteria map[string]string) ([]Ruleset, error) {
+func (a *API) SearchRulesets(searchCriteria *SearchQueryType, filterCriteria *SearchFilterType) (*[]Ruleset, error) {
+	q := url.Values{}
 
-	if searchCriteria == "" && len(filterCriteria) == 0 {
+	if searchCriteria != nil && *searchCriteria != "" {
+		q.Set("search", string(*searchCriteria))
+	}
+
+	if filterCriteria != nil && len(*filterCriteria) > 0 {
+		for filter, criteria := range *filterCriteria {
+			for _, val := range criteria {
+				q.Add(filter, val)
+			}
+		}
+	}
+
+	if q.Encode() == "" {
 		return a.FetchRulesets()
 	}
 
 	reqURL := url.URL{
-		Path: baseRulesetPath,
+		Path:     baseRulesetPath,
+		RawQuery: q.Encode(),
 	}
 
-	q := url.Values{}
-
-	if searchCriteria != "" {
-		q.Set("search", string(searchCriteria))
-	}
-
-	if len(filterCriteria) > 0 {
-		for filter, criteria := range filterCriteria {
-			q.Set(filter, criteria)
-		}
-	}
-
-	reqURL.RawQuery = q.Encode()
-
-	resp, err := a.Get(reqURL.String())
+	result, err := a.Get(reqURL.String())
 	if err != nil {
 		return nil, fmt.Errorf("[ERROR] API call error %+v", err)
 	}
 
-	var results []Ruleset
-	if err := json.Unmarshal(resp, &results); err != nil {
+	var rulesets []Ruleset
+	if err := json.Unmarshal(result, &rulesets); err != nil {
 		return nil, err
 	}
 
-	return results, nil
+	return &rulesets, nil
 }
