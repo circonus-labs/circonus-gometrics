@@ -59,12 +59,12 @@ func testServer() *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(f))
 }
 
-func TestNewCirconusMetrics(t *testing.T) {
+func TestNew(t *testing.T) {
 
 	t.Log("invalid config (none)")
 	{
 		expectedError := errors.New("invalid configuration (nil)")
-		_, err := NewCirconusMetrics(nil)
+		_, err := New(nil)
 		if err == nil || err.Error() != expectedError.Error() {
 			t.Fatalf("Expected an '%#v' error, got '%#v'", expectedError, err)
 		}
@@ -74,7 +74,7 @@ func TestNewCirconusMetrics(t *testing.T) {
 	{
 		cfg := &Config{}
 		expectedError := errors.New("invalid check manager configuration (no API token AND no submission url)")
-		_, err := NewCirconusMetrics(cfg)
+		_, err := New(cfg)
 		if err == nil || err.Error() != expectedError.Error() {
 			t.Fatalf("Expected an '%#v' error, got '%#v'", expectedError, err)
 		}
@@ -85,7 +85,7 @@ func TestNewCirconusMetrics(t *testing.T) {
 		cfg := &Config{}
 		cfg.CheckManager.Check.SubmissionURL = "http://127.0.0.1:56104/blah/blah"
 
-		cm, err := NewCirconusMetrics(cfg)
+		cm, err := New(cfg)
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
@@ -106,7 +106,7 @@ func TestNewCirconusMetrics(t *testing.T) {
 			Debug: true,
 		}
 		cfg.CheckManager.Check.SubmissionURL = "http://127.0.0.1:56104/blah/blah"
-		_, err := NewCirconusMetrics(cfg)
+		_, err := New(cfg)
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
@@ -118,7 +118,7 @@ func TestNewCirconusMetrics(t *testing.T) {
 			Interval: "30s",
 		}
 		cfg.CheckManager.Check.SubmissionURL = "http://127.0.0.1:56104/blah/blah"
-		_, err := NewCirconusMetrics(cfg)
+		_, err := New(cfg)
 		if err != nil {
 			t.Errorf("Expected no error, got '%v'", err)
 		}
@@ -129,7 +129,7 @@ func TestNewCirconusMetrics(t *testing.T) {
 			Interval: "thirty seconds",
 		}
 		expectedError := errors.New("time: invalid duration thirty seconds")
-		_, err := NewCirconusMetrics(cfg)
+		_, err := New(cfg)
 		if err == nil {
 			t.Fatal("expected error")
 		}
@@ -144,7 +144,7 @@ func TestNewCirconusMetrics(t *testing.T) {
 			ResetCounters: "true",
 		}
 		cfg.CheckManager.Check.SubmissionURL = "http://127.0.0.1:56104/blah/blah"
-		_, err := NewCirconusMetrics(cfg)
+		_, err := New(cfg)
 		if err != nil {
 			t.Errorf("Expected no error, got '%v'", err)
 		}
@@ -155,7 +155,7 @@ func TestNewCirconusMetrics(t *testing.T) {
 			ResetCounters: "1",
 		}
 		cfg.CheckManager.Check.SubmissionURL = "http://127.0.0.1:56104/blah/blah"
-		_, err := NewCirconusMetrics(cfg)
+		_, err := New(cfg)
 		if err != nil {
 			t.Errorf("Expected no error, got '%v'", err)
 		}
@@ -166,7 +166,7 @@ func TestNewCirconusMetrics(t *testing.T) {
 			ResetCounters: "yes",
 		}
 		expectedError := errors.New("strconv.ParseBool: parsing \"yes\": invalid syntax")
-		_, err := NewCirconusMetrics(cfg)
+		_, err := New(cfg)
 		if err == nil {
 			t.Fatal("expected error")
 		}
@@ -181,7 +181,7 @@ func TestNewCirconusMetrics(t *testing.T) {
 			ResetGauges: "true",
 		}
 		cfg.CheckManager.Check.SubmissionURL = "http://127.0.0.1:56104/blah/blah"
-		_, err := NewCirconusMetrics(cfg)
+		_, err := New(cfg)
 		if err != nil {
 			t.Errorf("Expected no error, got '%v'", err)
 		}
@@ -192,7 +192,7 @@ func TestNewCirconusMetrics(t *testing.T) {
 			ResetGauges: "1",
 		}
 		cfg.CheckManager.Check.SubmissionURL = "http://127.0.0.1:56104/blah/blah"
-		_, err := NewCirconusMetrics(cfg)
+		_, err := New(cfg)
 		if err != nil {
 			t.Errorf("Expected no error, got '%v'", err)
 		}
@@ -203,7 +203,7 @@ func TestNewCirconusMetrics(t *testing.T) {
 			ResetGauges: "yes",
 		}
 		expectedError := errors.New("strconv.ParseBool: parsing \"yes\": invalid syntax")
-		_, err := NewCirconusMetrics(cfg)
+		_, err := New(cfg)
 		if err == nil {
 			t.Fatal("expected error")
 		}
@@ -218,7 +218,7 @@ func TestNewCirconusMetrics(t *testing.T) {
 			ResetHistograms: "true",
 		}
 		cfg.CheckManager.Check.SubmissionURL = "http://127.0.0.1:56104/blah/blah"
-		_, err := NewCirconusMetrics(cfg)
+		_, err := New(cfg)
 		if err != nil {
 			t.Errorf("Expected no error, got '%v'", err)
 		}
@@ -229,7 +229,7 @@ func TestNewCirconusMetrics(t *testing.T) {
 			ResetHistograms: "1",
 		}
 		cfg.CheckManager.Check.SubmissionURL = "http://127.0.0.1:56104/blah/blah"
-		_, err := NewCirconusMetrics(cfg)
+		_, err := New(cfg)
 		if err != nil {
 			t.Errorf("Expected no error, got '%v'", err)
 		}
@@ -240,7 +240,7 @@ func TestNewCirconusMetrics(t *testing.T) {
 			ResetHistograms: "yes",
 		}
 		expectedError := errors.New("strconv.ParseBool: parsing \"yes\": invalid syntax")
-		_, err := NewCirconusMetrics(cfg)
+		_, err := New(cfg)
 		if err == nil {
 			t.Fatal("expected error")
 		}
@@ -255,7 +255,7 @@ func TestNewCirconusMetrics(t *testing.T) {
 			ResetText: "true",
 		}
 		cfg.CheckManager.Check.SubmissionURL = "http://127.0.0.1:56104/blah/blah"
-		_, err := NewCirconusMetrics(cfg)
+		_, err := New(cfg)
 		if err != nil {
 			t.Errorf("Expected no error, got '%v'", err)
 		}
@@ -266,7 +266,7 @@ func TestNewCirconusMetrics(t *testing.T) {
 			ResetText: "1",
 		}
 		cfg.CheckManager.Check.SubmissionURL = "http://127.0.0.1:56104/blah/blah"
-		_, err := NewCirconusMetrics(cfg)
+		_, err := New(cfg)
 		if err != nil {
 			t.Errorf("Expected no error, got '%v'", err)
 		}
@@ -277,7 +277,7 @@ func TestNewCirconusMetrics(t *testing.T) {
 			ResetText: "yes",
 		}
 		expectedError := errors.New("strconv.ParseBool: parsing \"yes\": invalid syntax")
-		_, err := NewCirconusMetrics(cfg)
+		_, err := New(cfg)
 		if err == nil {
 			t.Fatal("expected error")
 		}

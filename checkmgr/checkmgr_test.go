@@ -17,6 +17,7 @@ import (
 	"testing"
 
 	"github.com/circonus-labs/circonus-gometrics/api"
+	"github.com/circonus-labs/circonus-gometrics/api/config"
 )
 
 var (
@@ -43,10 +44,13 @@ var (
 		},
 		Brokers:     []string{"/broker/1234"},
 		DisplayName: "test check",
-		Config: api.CheckBundleConfig{
-			SubmissionURL: "https://127.0.0.1:43191/module/httptrap/abc123-a1b2-c3d4-e5f6-123abc/blah",
-			ReverseSecret: "blah",
+		Config: map[config.Key]string{
+			config.SubmissionURL: "https://127.0.0.1:43191/module/httptrap/abc123-a1b2-c3d4-e5f6-123abc/blah",
 		},
+		// Config: api.CheckBundleConfig{
+		// 	SubmissionURL: "https://127.0.0.1:43191/module/httptrap/abc123-a1b2-c3d4-e5f6-123abc/blah",
+		// 	ReverseSecret: "blah",
+		// },
 		Metrics: []api.CheckBundleMetric{
 			api.CheckBundleMetric{
 				Name:   "elmo",
@@ -314,8 +318,12 @@ func TestNewCheckManager(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
-		if trap.URL.String() != testCMCheckBundle.Config.SubmissionURL {
-			t.Fatalf("Expected '%s' got '%s'", testCMCheckBundle.Config.SubmissionURL, trap.URL.String())
+		suburl, found := testCMCheckBundle.Config["submission_url"]
+		if !found {
+			t.Fatalf("Exected submission_url in check bundle config %+v", testCMCheckBundle)
+		}
+		if trap.URL.String() != suburl {
+			t.Fatalf("Expected '%s' got '%s'", suburl, trap.URL.String())
 		}
 	}
 }

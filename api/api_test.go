@@ -32,12 +32,12 @@ func callServer() *httptest.Server {
 // 	return httptest.NewServer(http.HandlerFunc(f))
 // }
 
-func TestNewAPI(t *testing.T) {
+func TestNew(t *testing.T) {
 	var expectedError error
 
 	t.Log("Testing correct error return when no API config supplied")
 	expectedError = errors.New("Invalid API configuration (nil)")
-	_, err := NewAPI(nil)
+	_, err := New(nil)
 	if err == nil {
 		t.Error("Expected an error")
 	}
@@ -48,7 +48,7 @@ func TestNewAPI(t *testing.T) {
 	t.Log("Testing correct error return when no API Token supplied")
 	expectedError = errors.New("API Token is required")
 	ac := &Config{}
-	_, err = NewAPI(ac)
+	_, err = New(ac)
 	if err == nil {
 		t.Error("Expected an error")
 	}
@@ -60,7 +60,7 @@ func TestNewAPI(t *testing.T) {
 	ac = &Config{
 		TokenKey: "abc123",
 	}
-	_, err = NewAPI(ac)
+	_, err = New(ac)
 	if err != nil {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
@@ -70,7 +70,7 @@ func TestNewAPI(t *testing.T) {
 		TokenKey: "abc123",
 		TokenApp: "someapp",
 	}
-	_, err = NewAPI(ac)
+	_, err = New(ac)
 	if err != nil {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
@@ -81,7 +81,7 @@ func TestNewAPI(t *testing.T) {
 		TokenApp: "someapp",
 		URL:      "something.somewhere.com",
 	}
-	_, err = NewAPI(ac)
+	_, err = New(ac)
 	if err != nil {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
@@ -92,7 +92,7 @@ func TestNewAPI(t *testing.T) {
 		TokenApp: "someapp",
 		URL:      "something.somewhere.com/somepath/",
 	}
-	_, err = NewAPI(ac)
+	_, err = New(ac)
 	if err != nil {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
@@ -104,7 +104,7 @@ func TestNewAPI(t *testing.T) {
 		TokenApp: "someapp",
 		URL:      "http://something.somewhere.com\\somepath$",
 	}
-	_, err = NewAPI(ac)
+	_, err = New(ac)
 	if err == nil {
 		t.Error("Expected an error")
 	}
@@ -117,7 +117,7 @@ func TestNewAPI(t *testing.T) {
 		TokenKey: "abc123",
 		Debug:    true,
 	}
-	_, err = NewAPI(ac)
+	_, err = New(ac)
 	if err != nil {
 		t.Errorf("Expected no error, got '%v'", err)
 	}

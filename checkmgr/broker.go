@@ -24,7 +24,8 @@ func init() {
 // Get Broker to use when creating a check
 func (cm *CheckManager) getBroker() (*api.Broker, error) {
 	if cm.brokerID != 0 {
-		broker, err := cm.apih.FetchBrokerByID(cm.brokerID)
+		cid := api.CIDType(fmt.Sprintf("/broker/%d", cm.brokerID))
+		broker, err := cm.apih.FetchBroker(&cid)
 		if err != nil {
 			return nil, err
 		}
@@ -77,29 +78,32 @@ func (cm *CheckManager) getBrokerCN(broker *api.Broker, submissionURL api.URLTyp
 // Select a broker for use when creating a check, if a specific broker
 // was not specified.
 func (cm *CheckManager) selectBroker() (*api.Broker, error) {
-	var brokerList []api.Broker
+	var brokerList *[]api.Broker
 	var err error
 
 	if len(cm.brokerSelectTag) > 0 {
-		brokerList, err = cm.apih.FetchBrokerListByTag(cm.brokerSelectTag)
+		filter := api.SearchFilterType{
+			"f__tags_has": cm.brokerSelectTag,
+		}
+		brokerList, err = cm.apih.SearchBrokers(nil, &filter)
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		brokerList, err = cm.apih.FetchBrokerList()
+		brokerList, err = cm.apih.FetchBrokers()
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	if len(brokerList) == 0 {
+	if len(*brokerList) == 0 {
 		return nil, fmt.Errorf("zero brokers found")
 	}
 
 	validBrokers := make(map[string]api.Broker)
 	haveEnterprise := false
 
-	for _, broker := range brokerList {
+	for _, broker := range *brokerList {
 		if cm.isValidBroker(&broker) {
 			validBrokers[broker.CID] = broker
 			if broker.Type == "enterprise" {
@@ -117,7 +121,7 @@ func (cm *CheckManager) selectBroker() (*api.Broker, error) {
 	}
 
 	if len(validBrokers) == 0 {
-		return nil, fmt.Errorf("found %d broker(s), zero are valid", len(brokerList))
+		return nil, fmt.Errorf("found %d broker(s), zero are valid", len(*brokerList))
 	}
 
 	validBrokerKeys := reflect.ValueOf(validBrokers).MapKeys()
@@ -146,8 +150,8 @@ func (cm *CheckManager) brokerSupportsCheckType(checkType CheckTypeType, details
 
 // Is the broker valid (active, supports check type, and reachable)
 func (cm *CheckManager) isValidBroker(broker *api.Broker) bool {
-	brokerHost := ""
-	brokerPort := ""
+	var brokerHost string
+	var brokerPort string
 	valid := false
 	for _, detail := range broker.Details {
 
