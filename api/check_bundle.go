@@ -40,7 +40,7 @@ type CheckBundle struct {
 	LastModifedBy      string              `json:"_last_modifed_by,omitempty"`
 	ReverseConnectURLs []string            `json:"_reverse_connection_urls,omitempty"`
 	Brokers            []string            `json:"brokers"`
-	Config             CheckBundleConfig   `json:"config"`
+	Config             CheckBundleConfig   `json:"config,omitempty"`
 	DisplayName        string              `json:"display_name"`
 	Metrics            []CheckBundleMetric `json:"metrics"`
 	MetricLimit        int                 `json:"metric_limit,omitempty"`
@@ -49,7 +49,7 @@ type CheckBundle struct {
 	Status             string              `json:"status,omitempty"`
 	Tags               []string            `json:"tags,omitempty"`
 	Target             string              `json:"target"`
-	Timeout            int                 `json:"timeout,omitempty"`
+	Timeout            float64             `json:"timeout,omitempty"`
 	Type               string              `json:"type"`
 }
 
