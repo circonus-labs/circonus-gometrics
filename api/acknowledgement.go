@@ -2,8 +2,9 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Acknowledgement API support - Fetch, Create, Update, Delete, and Search
+// Acknowledgement API support - Fetch, Create, Update, Delete*, and Search
 // See: https://login.circonus.com/resources/api/calls/acknowledgement
+// *  : delete (cancel) by updating with AcknowledgedUntil set to 0
 
 package api
 
@@ -132,40 +133,6 @@ func (a *API) CreateAcknowledgement(config *Acknowledgement) (*Acknowledgement, 
 	}
 
 	return acknowledgement, nil
-}
-
-// DeleteAcknowledgement delete a acknowledgement
-func (a *API) DeleteAcknowledgement(config *Acknowledgement) (bool, error) {
-	if config == nil {
-		return false, fmt.Errorf("Invalid acknowledgement config [none]")
-	}
-
-	cid := CIDType(&config.CID)
-	return a.DeleteAcknowledgementByCID(cid)
-}
-
-// DeleteAcknowledgementByCID delete a acknowledgement by cid
-func (a *API) DeleteAcknowledgementByCID(cid CIDType) (bool, error) {
-	if cid == nil || *cid == "" {
-		return false, fmt.Errorf("Invalid acknowledgement CID [none]")
-	}
-
-	acknowledgementCID := string(*cid)
-
-	matched, err := regexp.MatchString(acknowledgementCIDRegex, acknowledgementCID)
-	if err != nil {
-		return false, err
-	}
-	if !matched {
-		return false, fmt.Errorf("Invalid acknowledgement CID [%s]", acknowledgementCID)
-	}
-
-	_, err = a.Delete(acknowledgementCID)
-	if err != nil {
-		return false, err
-	}
-
-	return true, nil
 }
 
 // SearchAcknowledgements returns list of acknowledgements matching a search query and/or filter
