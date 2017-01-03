@@ -16,39 +16,43 @@ import (
 
 // DashboardGridLayout defines layout
 type DashboardGridLayout struct {
-	Height int `json:"height"`
-	Width  int `json:"width"`
+	Height uint `json:"height"`
+	Width  uint `json:"width"`
 }
 
 // DashboardAccessConfig defines access config
 type DashboardAccessConfig struct {
-	BlackDash           bool   `json:"black_dash"`
-	Enabled             bool   `json:"enabled"`
-	Fullscreen          bool   `json:"fullscreen"`
-	FullscreenHideTitle bool   `json:"fullscreen_hide_title"`
-	Nickname            string `json:"nickname"`
-	ScaleText           bool   `json:"scale_text"`
-	SharedID            string `json:"shared_id"`
-	TextSize            int    `json:"text_size"`
+	BlackDash           bool   `json:"black_dash,omitempty"`
+	Enabled             bool   `json:"enabled,omitempty"`
+	Fullscreen          bool   `json:"fullscreen,omitempty"`
+	FullscreenHideTitle bool   `json:"fullscreen_hide_title,omitempty"`
+	Nickname            string `json:"nickname,omitempty"`
+	ScaleText           bool   `json:"scale_text,omitempty"`
+	SharedID            string `json:"shared_id,omitempty"`
+	TextSize            uint   `json:"text_size,omitempty"`
 }
 
 // DashboardOptions defines options
 type DashboardOptions struct {
-	AccessConfigs       []DashboardAccessConfig `json:"access_configs"`
-	FullscreenHideTitle bool                    `json:"fullscreen_hide_title"`
-	HideGrid            bool                    `json:"hide_grid"`
-	Linkages            [][]string              `json:"linkages"`
-	ScaleText           bool                    `json:"scale_text"`
-	TextSize            int                     `json:"text_size"`
+	AccessConfigs       []DashboardAccessConfig `json:"access_configs,omitempty"`
+	FullscreenHideTitle bool                    `json:"fullscreen_hide_title,omitempty"`
+	HideGrid            bool                    `json:"hide_grid,omitempty"`
+	Linkages            [][]string              `json:"linkages,omitempty"`
+	ScaleText           bool                    `json:"scale_text,omitempty"`
+	TextSize            uint                    `json:"text_size,omitempty"`
 }
 
 // ChartTextWidgetDatapoint defines datapoints for charts
 type ChartTextWidgetDatapoint struct {
-	NumericOnly bool   `json:"numeric_only,omitempty"` // metric cluster
-	ClusterID   int    `json:"cluster_id,omitempty"`   // metric cluster
-	AccountID   string `json:"account_id,omitempty"`   // metric cluster, metric
-	Label       string `json:"label,omitempty"`        // metric
-	Metric      string `json:"metric,omitempty"`       // metric
+	ClusterTitle string `json:"_cluster_title,omitempty"` // metric cluster
+	Label2       string `json:"_label,omitempty"`         // metric cluster
+	NumericOnly  bool   `json:"numeric_only,omitempty"`   // metric cluster
+	ClusterID    uint   `json:"cluster_id,omitempty"`     // metric cluster
+	AccountID    string `json:"account_id,omitempty"`     // metric cluster, metric
+	Label        string `json:"label,omitempty"`          // metric
+	Metric       string `json:"metric,omitempty"`         // metric
+	MetricType   string `json:"_metric_type,omitempty"`   // metric
+	CheckID      uint   `json:"_check_id,omitempty"`      // metric
 }
 
 // ChartWidgetDefinitionLegend defines chart widget definition legend
@@ -77,7 +81,7 @@ type ChartWidgtDefinition struct {
 	DisableAutoformat bool                        `json:"disable_autoformat,omitempty"`
 	Formula           string                      `json:"formula,omitempty"`
 	Legend            ChartWidgetDefinitionLegend `json:"legend,omitempty"`
-	Period            string                      `json:"period,omitempty"`
+	Period            uint                        `json:"period,omitempty"`
 	PopOnHover        bool                        `json:"pop_onhover,omitempty"`
 	WedgeLabels       ChartWidgetWedgeLabels      `json:"wedge_labels,omitempty"`
 	WedgeValues       ChartWidgetWedgeValues      `json:"wedge_values,omitempty"`
@@ -111,88 +115,90 @@ type StatusWidgetHostStatusSettings struct {
 
 // DashboardWidgetSettings defines settings specific to widget
 type DashboardWidgetSettings struct {
-	AccountID           int                             `json:"account_id,omitempty"`            // alerts, clusters, gauges, graphs, lists, status
+	AccountID           string                          `json:"account_id,omitempty"`            // alerts, clusters, gauges, graphs, lists, status
 	Acknowledged        string                          `json:"acknowledged,omitempty"`          // alerts
-	Cleared             string                          `json:"cleared,omitempty"`               // alerts
-	ContactGroups       []int                           `json:"contact_groups,omitempty"`        // alerts
-	Dependents          string                          `json:"dependents,omitempty"`            // alerts
-	Display             string                          `json:"display,omitempty"`               // alerts
-	Maintenance         string                          `json:"maintenance,omitempty"`           // alerts
-	MinAge              string                          `json:"min_age,omitempty"`               // alerts
-	OffHours            []int                           `json:"off_hours,omitempty"`             // alerts
-	Search              string                          `json:"search,omitempty"`                // alerts, lists
-	Severity            string                          `json:"severity,omitempty"`              // alerts
-	TagFilterSet        []string                        `json:"tag_filter_set,omitempty"`        // alerts
-	TimeWindow          string                          `json:"time_window,omitempty"`           // alerts
-	Title               string                          `json:"title,omitempty"`                 // alerts, charts, forecasts, gauges, html
-	WeekDays            []string                        `json:"weekdays,omitempty"`              // alerts
-	ChartType           string                          `json:"chart_type,omitempty"`            // charts
-	Datapoints          []ChartTextWidgetDatapoint      `json:"datapoints,omitempty"`            // charts, text
-	Definition          ChartWidgtDefinition            `json:"definition,omitempty"`            // charts
+	AgentStatusSettings StatusWidgetAgentStatusSettings `json:"agent_status_settings,omitempty"` // status
 	Algorithm           string                          `json:"algorithm,omitempty"`             // clusters
-	ClusterID           int                             `json:"cluster_id,omitempty"`            // clusters
-	ClusterName         string                          `json:"cluster_name,omitempty"`          // clusters
-	Layout              string                          `json:"layout,omitempty"`                // clusters
-	Size                string                          `json:"size,omitempty"`                  // clusters
-	Threshold           string                          `json:"threshold,omitempty"`             // clusters
-	Format              string                          `json:"format,omitempty"`                // forecasts
-	ResourceLimit       string                          `json:"resource_limit,omitempty"`        // forecasts
-	ResourceUsage       string                          `json:"resource_usage,omitempty"`        // forecasts
-	Thresholds          ForecastGaugeWidgetThresholds   `json:"thresholds,omitempty"`            // forecasts, gauges
-	Trend               string                          `json:"trend,omitempty"`                 // forecasts
+	Autoformat          bool                            `json:"autoformat,omitempty"`            // text
+	BodyFormat          string                          `json:"body_format,omitempty"`           // text
+	ChartType           string                          `json:"chart_type,omitempty"`            // charts
 	CheckUUID           string                          `json:"check_uuid,omitempty"`            // gauges
-	DisableAutoformat   bool                            `json:"disable_autoformat,omitempty"`    // gauges
-	Formula             string                          `json:"formula,omitempty"`               // gauges
-	MetricDisplayName   string                          `json:"metric_display_name,omitempty"`   // gauges
-	MetricName          string                          `json:"metric_name,omitempty"`           // gauges
-	Period              string                          `json:"period,omitempty"`                // gauges, graphs, text
-	RangeHigh           string                          `json:"range_high,omitempty"`            // gauges
-	RangeLow            string                          `json:"range_low,omitempty"`             // gauges
-	Type                string                          `json:"type,omitempty"`                  // gauges, lists
-	ValueType           string                          `json:"value_type,omitempty"`            // gauges, text
+	Cleared             string                          `json:"cleared,omitempty"`               // alerts
+	ClusterID           uint                            `json:"cluster_id,omitempty"`            // clusters
+	ClusterName         string                          `json:"cluster_name,omitempty"`          // clusters
+	ContactGroups       []uint                          `json:"contact_groups,omitempty"`        // alerts
+	ContentType         string                          `json:"content_type,omitempty"`          // status
+	Datapoints          []ChartTextWidgetDatapoint      `json:"datapoints,omitempty"`            // charts, text
 	DateWindow          string                          `json:"date_window,omitempty"`           // graphs
+	Definition          ChartWidgtDefinition            `json:"definition,omitempty"`            // charts
+	Dependents          string                          `json:"dependents,omitempty"`            // alerts
+	DisableAutoformat   bool                            `json:"disable_autoformat,omitempty"`    // gauges
+	Display             string                          `json:"display,omitempty"`               // alerts
+	Format              string                          `json:"format,omitempty"`                // forecasts
+	Formula             string                          `json:"formula,omitempty"`               // gauges
 	GraphUUID           string                          `json:"graph_id,omitempty"`              // graphs
 	HideXAxis           bool                            `json:"hide_xaxis,omitempty"`            // graphs
 	HideYAxis           bool                            `json:"hide_yaxis,omitempty"`            // graphs
+	HostStatusSettings  StatusWidgetHostStatusSettings  `json:"host_status_settings,omitempty"`  // status
 	KeyInline           bool                            `json:"key_inline,omitempty"`            // graphs
 	KeyLoc              string                          `json:"key_loc,omitempty"`               // graphs
 	KeySize             string                          `json:"key_size,omitempty"`              // graphs
 	KeyWrap             bool                            `json:"key_wrap,omitempty"`              // graphs
 	Label               string                          `json:"label,omitempty"`                 // graphs
-	OverlaySetID        string                          `json:"overlay_set_id,omitempty"`        // graphs
-	Realtime            bool                            `json:"realtime,omitempty"`              // graphs
-	ShowFlags           bool                            `json:"show_flags,omitempty"`            // graphs
-	Markup              string                          `json:"markup,omitempty"`                // html
+	Layout              string                          `json:"layout,omitempty"`                // clusters
 	Limit               string                          `json:"limit,omitempty"`                 // lists
-	AgentStatusSettings StatusWidgetAgentStatusSettings `json:"agent_status_settings,omitempty"` // status
-	ContentType         string                          `json:"content_type,omitempty"`          // status
-	HostStatusSettings  StatusWidgetHostStatusSettings  `json:"host_status_settings,omitempty"`  // status
-	Autoformat          bool                            `json:"autoformat,omitempty"`            // text
-	BodyFormat          string                          `json:"body_format,omitempty"`           // text
-	TitleFormat         string                          `json:"title_format,omitempty"`          // text
-	UseDefault          bool                            `json:"use_default,omitempty"`           // text
+	Maintenance         string                          `json:"maintenance,omitempty"`           // alerts
+	Markup              string                          `json:"markup,omitempty"`                // html
+	MetricDisplayName   string                          `json:"metric_display_name,omitempty"`   // gauges
+	MetricName          string                          `json:"metric_name,omitempty"`           // gauges
+	MinAge              string                          `json:"min_age,omitempty"`               // alerts
+	OffHours            []uint                          `json:"off_hours,omitempty"`             // alerts
+	OverlaySetID        string                          `json:"overlay_set_id,omitempty"`        // graphs
+	// Period              uint                            `json:"period,omitempty"`                // gauges, text
+	// Period              string                          `json:"period,omitempty"`                // graphs
+	Period        interface{}                   `json:"period,omitempty"`         // type switching between widgets
+	RangeHigh     int                           `json:"range_high,omitempty"`     // gauges
+	RangeLow      int                           `json:"range_low,omitempty"`      // gauges
+	Realtime      bool                          `json:"realtime,omitempty"`       // graphs
+	ResourceLimit string                        `json:"resource_limit,omitempty"` // forecasts
+	ResourceUsage string                        `json:"resource_usage,omitempty"` // forecasts
+	Search        string                        `json:"search,omitempty"`         // alerts, lists
+	Severity      string                        `json:"severity,omitempty"`       // alerts
+	ShowFlags     bool                          `json:"show_flags,omitempty"`     // graphs
+	Size          string                        `json:"size,omitempty"`           // clusters
+	TagFilterSet  []string                      `json:"tag_filter_set,omitempty"` // alerts
+	Threshold     float32                       `json:"threshold,omitempty"`      // clusters
+	Thresholds    ForecastGaugeWidgetThresholds `json:"thresholds,omitempty"`     // forecasts, gauges
+	TimeWindow    string                        `json:"time_window,omitempty"`    // alerts
+	Title         string                        `json:"title,omitempty"`          // alerts, charts, forecasts, gauges, html
+	TitleFormat   string                        `json:"title_format,omitempty"`   // text
+	Trend         string                        `json:"trend,omitempty"`          // forecasts
+	Type          string                        `json:"type,omitempty"`           // gauges, lists
+	UseDefault    bool                          `json:"use_default,omitempty"`    // text
+	ValueType     string                        `json:"value_type,omitempty"`     // gauges, text
+	WeekDays      []string                      `json:"weekdays,omitempty"`       // alerts
 }
 
 // DashboardWidget defines widget
 type DashboardWidget struct {
 	Active   bool                    `json:"active"`
-	Height   int                     `json:"height"`
+	Height   uint                    `json:"height"`
 	Name     string                  `json:"name"`
 	Origin   string                  `json:"origin"`
 	Settings DashboardWidgetSettings `json:"settings"`
 	Type     string                  `json:"type"`
 	WidgetID string                  `json:"widget_id"`
-	Width    int                     `json:"width"`
+	Width    uint                    `json:"width"`
 }
 
 // Dashboard defines a dashboard
 type Dashboard struct {
 	CID            string              `json:"_cid,omitempty"`
 	Active         bool                `json:"_active,omitempty"`
-	Created        int                 `json:"_created,omitempty"`
+	Created        uint                `json:"_created,omitempty"`
 	CreatedBy      string              `json:"_created_by,omitempty"`
 	UUID           string              `json:"_dashboard_uuid,omitempty"`
-	LastModified   int                 `json:"_last_modified,omitempty"`
+	LastModified   uint                `json:"_last_modified,omitempty"`
 	AccountDefault bool                `json:"account_default"`
 	GridLayout     DashboardGridLayout `json:"grid_layout"`
 	Options        DashboardOptions    `json:"options"`
@@ -203,7 +209,7 @@ type Dashboard struct {
 
 const (
 	baseDashboardPath = "/dashboard"
-	dashboardCIDRegex = "^" + baseDashboardPath + "/[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{8,12}$"
+	dashboardCIDRegex = "^" + baseDashboardPath + "/[0-9]+$"
 )
 
 // FetchDashboard retrieves a dashboard definition
@@ -226,6 +232,8 @@ func (a *API) FetchDashboard(cid CIDType) (*Dashboard, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	fmt.Println(string(result))
 
 	dashboard := new(Dashboard)
 	if err := json.Unmarshal(result, dashboard); err != nil {
