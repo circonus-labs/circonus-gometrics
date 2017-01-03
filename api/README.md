@@ -12,6 +12,18 @@
 * [Account](https://login.circonus.com/resources/api/calls/account)
     * FetchAccount
     * UpdateAccount
+* [Acknowledgement](https://login.circonus.com/resources/api/calls/acknowledgement)
+    * FetchAcknowledgement
+    * FetchAcknowledgements
+    * UpdateAcknowledgement
+    * CreateAcknowledgement
+    * DeleteAcknowledgement
+    * DeleteAcknowledgementByCID
+    * SearchAcknowledgements
+* [Alert](https://login.circonus.com/resources/api/calls/alert)
+    * FetchAlert
+    * FetchAlerts
+    * SearchAlerts
 * [Annotation](https://login.circonus.com/resources/api/calls/annotation)
     * FetchAnnotation
     * FetchAnnotations
@@ -33,6 +45,9 @@
     * DeleteCheckBundle
     * DeleteCheckBundleByCID
     * SearchCheckBundles
+* [Check Bundle Metrics](https://login.circonus.com/resources/api/calls/check_bundle_metrics)
+    * FetchCheckBundleMetrics
+    * UpdateCheckBundleMetrics
 * [Check](https://login.circonus.com/resources/api/calls/check)
     * FetchCheck
     * FetchChecks
