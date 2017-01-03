@@ -89,6 +89,14 @@
     * DeleteMaintenanceWindow
     * DeleteMaintenanceWindowByCID
     * SearchMaintenanceWindows
+* [Outlier Report](https://login.circonus.com/resources/api/calls/outlier_report)
+    * FetchOutlierReport
+    * FetchOutlierReports
+    * UpdateOutlierReport
+    * CreateOutlierReport
+    * DeleteOutlierReport
+    * DeleteOutlierReportByCID
+    * SearchOutlierReports
 * [Rule Set](https://login.circonus.com/resources/api/calls/rule_set)
     * FetchRuleset
     * FetchRulesets
