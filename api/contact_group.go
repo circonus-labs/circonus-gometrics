@@ -65,7 +65,15 @@ type ContactGroup struct {
 const (
 	baseContactGroupPath = "/contact_group"
 	contactGroupCIDRegex = "^" + baseContactGroupPath + "/[0-9]+$"
+	numSeverityLevels    = 5
 )
+
+// NewContactGroup returns a ContactGroup
+func (a *API) NewContactGroup() *ContactGroup {
+	return &ContactGroup{
+		Escalations: make([]ContactGroupEscalation, numSeverityLevels),
+	}
+}
 
 // FetchContactGroup retrieves a contact group definition
 func (a *API) FetchContactGroup(cid CIDType) (*ContactGroup, error) {
