@@ -76,6 +76,11 @@
     * DeleteMetricCluster
     * DeleteMetricClusterByCID
     * SearchMetricClusters
+* [Metric](https://login.circonus.com/resources/api/calls/metric)
+    * FetchMetric
+    * FetchMetrics
+    * UpdateMetric
+    * SearchMetrics
 * [Maintenance window](https://login.circonus.com/resources/api/calls/maintenance)
     * FetchMaintenanceWindow
     * FetchMaintenanceWindows

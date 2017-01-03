@@ -16,25 +16,29 @@ import (
 )
 
 var (
-	testCheckBundleMetrics = CheckBundleMetrics{
-		CID: "/check_bundle_metrics/1234",
-		Metrics: []CheckBundleMetric{
-			CheckBundleMetric{Name: "foo", Type: "numeric", Status: "active"},
-			CheckBundleMetric{Name: "bar", Type: "histogram", Status: "active"},
-			CheckBundleMetric{Name: "baz", Type: "text", Status: "available"},
-			CheckBundleMetric{Name: "fum", Type: "composite", Status: "active", Tags: []string{"cat:tag"}},
-			CheckBundleMetric{Name: "zot", Type: "caql", Status: "active", Units: "milliseconds"},
-		},
+	testMetric = Metric{
+		CID:            "/metric/1234",
+		Active:         true,
+		CheckCID:       "/check/1234",
+		CheckActive:    true,
+		CheckBundleCID: "/check_bundle/1234",
+		CheckTags:      []string{"cat:tag"},
+		CheckUUID:      "",
+		Histogram:      false,
+		MetricName:     "foo",
+		MetricType:     "numeric",
+		Tags:           []string{"cat1:tag1"},
+		Units:          "light years",
 	}
 )
 
-func testCheckBundleMetricsServer() *httptest.Server {
+func testMetricServer() *httptest.Server {
 	f := func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
-		if path == "/check_bundle_metrics/1234" {
+		if path == "/metric/1234" {
 			switch r.Method {
 			case "GET":
-				ret, err := json.Marshal(testCheckBundleMetrics)
+				ret, err := json.Marshal(testMetric)
 				if err != nil {
 					panic(err)
 				}
@@ -54,6 +58,21 @@ func testCheckBundleMetricsServer() *httptest.Server {
 				w.WriteHeader(404)
 				fmt.Fprintln(w, fmt.Sprintf("not found: %s %s", r.Method, path))
 			}
+		} else if path == "/metric" {
+			switch r.Method {
+			case "GET":
+				c := []Metric{testMetric}
+				ret, err := json.Marshal(c)
+				if err != nil {
+					panic(err)
+				}
+				w.WriteHeader(200)
+				w.Header().Set("Content-Type", "application/json")
+				fmt.Fprintln(w, string(ret))
+			default:
+				w.WriteHeader(404)
+				fmt.Fprintln(w, fmt.Sprintf("not found: %s %s", r.Method, path))
+			}
 		} else {
 			w.WriteHeader(404)
 			fmt.Fprintln(w, fmt.Sprintf("not found: %s %s", r.Method, path))
@@ -63,8 +82,8 @@ func testCheckBundleMetricsServer() *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(f))
 }
 
-func TestFetchCheckBundleMetrics(t *testing.T) {
-	server := testCheckBundleMetricsServer()
+func TestFetchMetric(t *testing.T) {
+	server := testMetricServer()
 	defer server.Close()
 
 	ac := &Config{
@@ -80,8 +99,8 @@ func TestFetchCheckBundleMetrics(t *testing.T) {
 	t.Log("without CID")
 	{
 		cid := ""
-		expectedError := errors.New("Invalid check bundle metrics CID [none]")
-		_, err := apih.FetchCheckBundleMetrics(CIDType(&cid))
+		expectedError := errors.New("Invalid metric CID [none]")
+		_, err := apih.FetchMetric(CIDType(&cid))
 		if err == nil {
 			t.Fatalf("Expected error")
 		}
@@ -92,28 +111,28 @@ func TestFetchCheckBundleMetrics(t *testing.T) {
 
 	t.Log("with valid CID")
 	{
-		cid := "/check_bundle_metrics/1234"
-		metrics, err := apih.FetchCheckBundleMetrics(CIDType(&cid))
+		cid := "/metric/1234"
+		metric, err := apih.FetchMetric(CIDType(&cid))
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
 
-		actualType := reflect.TypeOf(metrics)
-		expectedType := "*api.CheckBundleMetrics"
+		actualType := reflect.TypeOf(metric)
+		expectedType := "*api.Metric"
 		if actualType.String() != expectedType {
 			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 		}
 
-		if metrics.CID != testCheckBundleMetrics.CID {
-			t.Fatalf("CIDs do not match: %+v != %+v\n", metrics, testCheckBundleMetrics)
+		if metric.CID != testMetric.CID {
+			t.Fatalf("CIDs do not match: %+v != %+v\n", metric, testMetric)
 		}
 	}
 
 	t.Log("with invalid CID")
 	{
 		cid := "/invalid"
-		expectedError := errors.New("Invalid check bundle metrics CID [/invalid]")
-		_, err := apih.FetchCheckBundleMetrics(CIDType(&cid))
+		expectedError := errors.New("Invalid metric CID [/invalid]")
+		_, err := apih.FetchMetric(CIDType(&cid))
 		if err == nil {
 			t.Fatalf("Expected error")
 		}
@@ -123,8 +142,35 @@ func TestFetchCheckBundleMetrics(t *testing.T) {
 	}
 }
 
-func TestUpdateCheckBundleMetrics(t *testing.T) {
-	server := testCheckBundleMetricsServer()
+func TestFetchMetrics(t *testing.T) {
+	server := testMetricServer()
+	defer server.Close()
+
+	ac := &Config{
+		TokenKey: "abc123",
+		TokenApp: "test",
+		URL:      server.URL,
+	}
+	apih, err := NewAPI(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	metrics, err := apih.FetchMetrics()
+	if err != nil {
+		t.Fatalf("Expected no error, got '%v'", err)
+	}
+
+	actualType := reflect.TypeOf(metrics)
+	expectedType := "*[]api.Metric"
+	if actualType.String() != expectedType {
+		t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+	}
+
+}
+
+func TestUpdateMetric(t *testing.T) {
+	server := testMetricServer()
 	defer server.Close()
 
 	var apih *API
@@ -139,15 +185,15 @@ func TestUpdateCheckBundleMetrics(t *testing.T) {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
-	t.Log("valid CheckBundleMetrics")
+	t.Log("valid Metric")
 	{
-		metrics, err := apih.UpdateCheckBundleMetrics(&testCheckBundleMetrics)
+		metric, err := apih.UpdateMetric(&testMetric)
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
 
-		actualType := reflect.TypeOf(metrics)
-		expectedType := "*api.CheckBundleMetrics"
+		actualType := reflect.TypeOf(metric)
+		expectedType := "*api.Metric"
 		if actualType.String() != expectedType {
 			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 		}
@@ -155,9 +201,9 @@ func TestUpdateCheckBundleMetrics(t *testing.T) {
 
 	t.Log("Test with invalid CID")
 	{
-		expectedError := errors.New("Invalid check bundle metrics CID [/invalid]")
-		x := &CheckBundleMetrics{CID: "/invalid"}
-		_, err := apih.UpdateCheckBundleMetrics(x)
+		expectedError := errors.New("Invalid metric CID [/invalid]")
+		x := &Metric{CID: "/invalid"}
+		_, err := apih.UpdateMetric(x)
 		if err == nil {
 			t.Fatal("Expected an error")
 		}

@@ -23,6 +23,7 @@ type CheckBundleMetric struct {
 	Units  string   `json:"units"`
 	Status string   `json:"status"`
 	Tags   []string `json:"tags"`
+	Result string   `json:"result,omitempty"` // note: this is not settable - it is a return value
 }
 
 // CheckBundleConfig contains the check type specific configuration settings

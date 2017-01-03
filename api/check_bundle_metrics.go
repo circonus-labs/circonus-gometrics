@@ -15,20 +15,12 @@ import (
 	"regexp"
 )
 
-// Metric defines a metric
-type Metric struct {
-	Name   string   `json:"name,omitempty"`
-	Result string   `json:"result,omitempty"` // note: this is not settable - it is a return value
-	Status string   `json:"status,omitempty"`
-	Tags   []string `json:"tags,omitempty"`
-	Type   string   `json:"type,omitempty"`
-	Units  string   `json:"units,omitempty"`
-}
+// See check_bundle.go for CheckBundleMetric definition
 
 // CheckBundleMetrics defines metrics
 type CheckBundleMetrics struct {
-	CID     string   `json:"_cid,omitempty"`
-	Metrics []Metric `json:"metrics"`
+	CID     string              `json:"_cid,omitempty"`
+	Metrics []CheckBundleMetric `json:"metrics"`
 }
 
 const (
