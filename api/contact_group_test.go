@@ -49,15 +49,15 @@ var (
 				},
 			},
 		},
-		Escalations: []ContactGroupEscalation{
-			ContactGroupEscalation{
+		Escalations: []*ContactGroupEscalation{
+			&ContactGroupEscalation{
 				After:           900,
 				ContactGroupCID: "/contact_group/4567",
 			},
-			ContactGroupEscalation{},
-			ContactGroupEscalation{},
-			ContactGroupEscalation{},
-			ContactGroupEscalation{},
+			nil,
+			nil,
+			nil,
+			nil,
 		},
 		Name:      "FooBar",
 		Reminders: []uint{10, 0, 0, 15, 30},
