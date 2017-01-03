@@ -97,6 +97,10 @@
     * DeleteOutlierReport
     * DeleteOutlierReportByCID
     * SearchOutlierReports
+* [Provision Broker](https://login.circonus.com/resources/api/calls/provision_broker)
+    * FetchProvisionBroker
+    * UpdateProvisionBroker
+    * CreateProvisionBroker
 * [Rule Set](https://login.circonus.com/resources/api/calls/rule_set)
     * FetchRuleset
     * FetchRulesets
