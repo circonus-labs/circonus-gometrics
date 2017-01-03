@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -50,18 +49,6 @@ func testAlertServer() *httptest.Server {
 				w.WriteHeader(200)
 				w.Header().Set("Content-Type", "application/json")
 				fmt.Fprintln(w, string(ret))
-			case "PUT":
-				defer r.Body.Close()
-				b, err := ioutil.ReadAll(r.Body)
-				if err != nil {
-					panic(err)
-				}
-				w.WriteHeader(200)
-				w.Header().Set("Content-Type", "application/json")
-				fmt.Fprintln(w, string(b))
-			case "DELETE":
-				w.WriteHeader(200)
-				w.Header().Set("Content-Type", "application/json")
 			default:
 				w.WriteHeader(404)
 				fmt.Fprintln(w, fmt.Sprintf("not found: %s %s", r.Method, path))
@@ -71,19 +58,6 @@ func testAlertServer() *httptest.Server {
 			case "GET":
 				c := []Alert{testAlert}
 				ret, err := json.Marshal(c)
-				if err != nil {
-					panic(err)
-				}
-				w.WriteHeader(200)
-				w.Header().Set("Content-Type", "application/json")
-				fmt.Fprintln(w, string(ret))
-			case "POST":
-				defer r.Body.Close()
-				_, err := ioutil.ReadAll(r.Body)
-				if err != nil {
-					panic(err)
-				}
-				ret, err := json.Marshal(testAlert)
 				if err != nil {
 					panic(err)
 				}
