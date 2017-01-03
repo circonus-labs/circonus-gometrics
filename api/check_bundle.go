@@ -35,8 +35,8 @@ type CheckBundle struct {
 	CheckUUIDs         []string            `json:"_check_uuids,omitempty"`
 	Checks             []string            `json:"_checks,omitempty"`
 	CID                string              `json:"_cid,omitempty"`
-	Created            int                 `json:"_created,omitempty"`
-	LastModified       int                 `json:"_last_modified,omitempty"`
+	Created            uint                `json:"_created,omitempty"`
+	LastModified       uint                `json:"_last_modified,omitempty"`
 	LastModifedBy      string              `json:"_last_modifed_by,omitempty"`
 	ReverseConnectURLs []string            `json:"_reverse_connection_urls,omitempty"`
 	Brokers            []string            `json:"brokers"`
@@ -45,7 +45,7 @@ type CheckBundle struct {
 	Metrics            []CheckBundleMetric `json:"metrics"`
 	MetricLimit        int                 `json:"metric_limit,omitempty"`
 	Notes              string              `json:"notes,omitempty"`
-	Period             int                 `json:"period,omitempty"`
+	Period             uint                `json:"period,omitempty"`
 	Status             string              `json:"status,omitempty"`
 	Tags               []string            `json:"tags,omitempty"`
 	Target             string              `json:"target"`

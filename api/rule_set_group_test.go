@@ -18,7 +18,7 @@ import (
 var (
 	testRulesetGroup = RulesetGroup{
 		CID: "/rule_set_group/1234",
-		ContactGroups: map[int][]string{
+		ContactGroups: map[uint8][]string{
 			1: []string{"/contact_group/1234", "/contact_group/5678"},
 			2: []string{"/contact_group/1234"},
 			3: []string{"/contact_group/1234"},

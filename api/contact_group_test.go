@@ -60,7 +60,7 @@ var (
 			ContactGroupEscalation{},
 		},
 		Name:      "FooBar",
-		Reminders: []int{10, 0, 0, 15, 30},
+		Reminders: []uint{10, 0, 0, 15, 30},
 	}
 )
 

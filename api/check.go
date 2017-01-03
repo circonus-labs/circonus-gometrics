@@ -15,7 +15,7 @@ import (
 	"regexp"
 )
 
-// CheckDetails is an arbitrary json structure, we would only care about submission_url
+// CheckDetails is an arbitrary json structure, contents are undocumented
 type CheckDetails struct {
 	SubmissionURL string `json:"submission_url"`
 }

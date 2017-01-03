@@ -19,7 +19,7 @@ var (
 	testRuleset = Ruleset{
 		CID:      "/rule_set/1234_tt_firstbyte",
 		CheckCID: "/check/1234",
-		ContactGroups: map[int][]string{
+		ContactGroups: map[uint8][]string{
 			1: []string{"/contact_group/1234", "/contact_group/5678"},
 			2: []string{"/contact_group/1234"},
 			3: []string{"/contact_group/1234"},

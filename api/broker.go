@@ -18,14 +18,14 @@ import (
 type BrokerDetail struct {
 	CN           string   `json:"cn"`
 	ExternalHost string   `json:"external_host"`
-	ExternalPort int      `json:"external_port"`
+	ExternalPort uint16   `json:"external_port"`
 	IP           string   `json:"ipaddress"`
-	MinVer       int      `json:"minimum_version_required"`
+	MinVer       uint     `json:"minimum_version_required"`
 	Modules      []string `json:"modules"`
-	Port         int      `json:"port"`
-	Skew         string   `json:"skew"`
+	Port         uint16   `json:"port"`
+	Skew         string   `json:"skew"` // doc: floating point number, api object: string
 	Status       string   `json:"status"`
-	Version      int      `json:"version"`
+	Version      uint     `json:"version"`
 }
 
 // Broker definition

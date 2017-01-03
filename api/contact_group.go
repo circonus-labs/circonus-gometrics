@@ -44,21 +44,21 @@ type ContactGroupContacts struct {
 
 // ContactGroupEscalation defines escalations for severity levels
 type ContactGroupEscalation struct {
-	After           int    `json:"after"`
+	After           uint   `json:"after"`
 	ContactGroupCID string `json:"contact_group"`
 }
 
 // ContactGroup defines a contactGroup
 type ContactGroup struct {
 	CID               string                     `json:"_cid,omitempty"`
-	LastModified      int                        `json:"_last_modified,omitempty"`
+	LastModified      uint                       `json:"_last_modified,omitempty"`
 	LastModfiedBy     string                     `json:"_last_modified_by,omitempty"`
-	AggregationWindow int                        `json:"aggregation_window"`
+	AggregationWindow uint                       `json:"aggregation_window"`
 	AlertFormats      []ContactGroupAlertFormats `json:"alert_formats"`
 	Contacts          ContactGroupContacts       `json:"contacts"`
 	Escalations       []ContactGroupEscalation   `json:"escalations"`
 	Name              string                     `json:"name"`
-	Reminders         []int                      `json:"reminders"`
+	Reminders         []uint                     `json:"reminders"`
 	Tags              []string                   `json:"tags"`
 }
 
