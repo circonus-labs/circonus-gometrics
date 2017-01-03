@@ -50,16 +50,16 @@ type ContactGroupEscalation struct {
 
 // ContactGroup defines a contactGroup
 type ContactGroup struct {
-	CID               string                     `json:"_cid,omitempty"`
-	LastModified      uint                       `json:"_last_modified,omitempty"`
-	LastModfiedBy     string                     `json:"_last_modified_by,omitempty"`
-	AggregationWindow uint                       `json:"aggregation_window"`
-	AlertFormats      []ContactGroupAlertFormats `json:"alert_formats"`
-	Contacts          ContactGroupContacts       `json:"contacts"`
-	Escalations       []ContactGroupEscalation   `json:"escalations"`
-	Name              string                     `json:"name"`
-	Reminders         []uint                     `json:"reminders"`
-	Tags              []string                   `json:"tags"`
+	CID               string                   `json:"_cid,omitempty"`
+	LastModified      uint                     `json:"_last_modified,omitempty"`
+	LastModfiedBy     string                   `json:"_last_modified_by,omitempty"`
+	AggregationWindow uint                     `json:"aggregation_window"`
+	AlertFormats      ContactGroupAlertFormats `json:"alert_formats"`
+	Contacts          ContactGroupContacts     `json:"contacts"`
+	Escalations       []ContactGroupEscalation `json:"escalations"`
+	Name              string                   `json:"name"`
+	Reminders         []uint                   `json:"reminders"`
+	Tags              []string                 `json:"tags"`
 }
 
 const (
