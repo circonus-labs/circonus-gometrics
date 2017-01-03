@@ -11,7 +11,6 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"net/url"
 	"regexp"
 )
 
@@ -61,17 +60,17 @@ const (
 
 // FetchAccount retrieves an account definition
 func (a *API) FetchAccount(cid CIDType) (*Account, error) {
-	var accountCID string
-
 	if cid == nil || *cid == "" {
-		accountCID = baseAccountPath + "/current"
-	} else {
-		accountCID = string(*cid)
+		return nil, fmt.Errorf("Invalid account CID [none]")
 	}
 
-	if matched, err := regexp.MatchString(accountCIDRegex, accountCID); err != nil {
+	accountCID := string(*cid)
+
+	matched, err := regexp.MatchString(accountCIDRegex, accountCID)
+	if err != nil {
 		return nil, err
-	} else if !matched {
+	}
+	if !matched {
 		return nil, fmt.Errorf("Invalid account CID [%s]", accountCID)
 	}
 
@@ -96,14 +95,12 @@ func (a *API) UpdateAccount(config *Account) (*Account, error) {
 
 	accountCID := string(config.CID)
 
-	if matched, err := regexp.MatchString(accountCIDRegex, accountCID); err != nil {
+	matched, err := regexp.MatchString(accountCIDRegex, accountCID)
+	if err != nil {
 		return nil, err
-	} else if !matched {
-		return nil, fmt.Errorf("Invalid account CID [%s]", accountCID)
 	}
-
-	reqURL := url.URL{
-		Path: accountCID,
+	if !matched {
+		return nil, fmt.Errorf("Invalid account CID [%s]", accountCID)
 	}
 
 	cfg, err := json.Marshal(config)
@@ -111,7 +108,7 @@ func (a *API) UpdateAccount(config *Account) (*Account, error) {
 		return nil, err
 	}
 
-	result, err := a.Put(reqURL.String(), cfg)
+	result, err := a.Put(accountCID, cfg)
 	if err != nil {
 		return nil, err
 	}
