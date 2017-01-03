@@ -233,8 +233,6 @@ func (a *API) FetchDashboard(cid CIDType) (*Dashboard, error) {
 		return nil, err
 	}
 
-	fmt.Println(string(result))
-
 	dashboard := new(Dashboard)
 	if err := json.Unmarshal(result, dashboard); err != nil {
 		return nil, err

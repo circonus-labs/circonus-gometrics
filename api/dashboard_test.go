@@ -21,15 +21,13 @@ var (
 )
 
 func init() {
-	fi, err := os.Open("dashboard-example.json")
+	file := "dashboard-example.json"
+	fi, err := os.Open(file)
 	if err != nil {
-		panic(err)
+		fmt.Printf("Error opening example json file (%s)\n", file)
+		os.Exit(1)
 	}
-	defer func() {
-		if err := fi.Close(); err != nil {
-			panic(err)
-		}
-	}()
+	defer fi.Close()
 
 	dec := json.NewDecoder(fi)
 	dec.Decode(&testDashboard)
