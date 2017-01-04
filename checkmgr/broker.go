@@ -24,8 +24,8 @@ func init() {
 // Get Broker to use when creating a check
 func (cm *CheckManager) getBroker() (*api.Broker, error) {
 	if cm.brokerID != 0 {
-		cid := api.CIDType(fmt.Sprintf("/broker/%d", cm.brokerID))
-		broker, err := cm.apih.FetchBroker(&cid)
+		cid := fmt.Sprintf("/broker/%d", cm.brokerID)
+		broker, err := cm.apih.FetchBroker(api.CIDType(&cid))
 		if err != nil {
 			return nil, err
 		}
@@ -172,10 +172,10 @@ func (cm *CheckManager) isValidBroker(broker *api.Broker) bool {
 		}
 
 		if detail.ExternalPort != 0 {
-			brokerPort = strconv.Itoa(detail.ExternalPort)
+			brokerPort = strconv.Itoa(int(detail.ExternalPort))
 		} else {
 			if detail.Port != 0 {
-				brokerPort = strconv.Itoa(detail.Port)
+				brokerPort = strconv.Itoa(int(detail.Port))
 			} else {
 				brokerPort = "43191"
 			}

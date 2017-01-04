@@ -320,7 +320,7 @@ func TestCreateNewCheck(t *testing.T) {
 	}
 
 	testBroker.Details[0].ExternalHost = hostParts[0]
-	testBroker.Details[0].ExternalPort = hostPort
+	testBroker.Details[0].ExternalPort = uint16(hostPort)
 
 	cm := &CheckManager{
 		enabled:               true,
@@ -366,7 +366,7 @@ func TestInitializeTrapURL(t *testing.T) {
 	}
 
 	testBroker.Details[0].ExternalHost = hostParts[0]
-	testBroker.Details[0].ExternalPort = hostPort
+	testBroker.Details[0].ExternalPort = uint16(hostPort)
 
 	cm := &CheckManager{
 		enabled: false,

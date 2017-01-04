@@ -298,7 +298,7 @@ func TestNewCheckManager(t *testing.T) {
 	}
 
 	testCMBroker.Details[0].ExternalHost = hostParts[0]
-	testCMBroker.Details[0].ExternalPort = hostPort
+	testCMBroker.Details[0].ExternalPort = uint16(hostPort)
 
 	t.Log("Defaults")
 	{

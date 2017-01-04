@@ -37,8 +37,8 @@ func (cm *CheckManager) UpdateCheck(newMetrics map[string]*api.CheckBundleMetric
 	}
 
 	// refresh check bundle (in case there were changes made by other apps or in UI)
-	cid := api.CIDType(cm.checkBundle.CID)
-	checkBundle, err := cm.apih.FetchCheckBundle(&cid)
+	cid := cm.checkBundle.CID
+	checkBundle, err := cm.apih.FetchCheckBundle(api.CIDType(&cid))
 	if err != nil {
 		cm.Log.Printf("[ERROR] unable to fetch up-to-date check bundle %v", err)
 		return
@@ -143,8 +143,8 @@ func (cm *CheckManager) initializeTrapURL() error {
 				check.CID, err)
 		}
 	} else if cm.checkID > 0 {
-		cid := api.CIDType(fmt.Sprintf("/check/%d", cm.checkID))
-		check, err = cm.apih.FetchCheck(&cid)
+		cid := fmt.Sprintf("/check/%d", cm.checkID)
+		check, err = cm.apih.FetchCheck(api.CIDType(&cid))
 		if err != nil {
 			return err
 		}
@@ -185,8 +185,8 @@ func (cm *CheckManager) initializeTrapURL() error {
 
 	if checkBundle == nil {
 		if check != nil {
-			cid := api.CIDType(check.CheckBundleCID)
-			checkBundle, err = cm.apih.FetchCheckBundle(&cid)
+			cid := check.CheckBundleCID
+			checkBundle, err = cm.apih.FetchCheckBundle(api.CIDType(&cid))
 			if err != nil {
 				return err
 			}
@@ -196,8 +196,8 @@ func (cm *CheckManager) initializeTrapURL() error {
 	}
 
 	if broker == nil {
-		cid := api.CIDType(checkBundle.Brokers[0])
-		broker, err = cm.apih.FetchBroker(&cid)
+		cid := checkBundle.Brokers[0]
+		broker, err = cm.apih.FetchBroker(api.CIDType(&cid))
 		if err != nil {
 			return err
 		}

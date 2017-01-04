@@ -233,14 +233,14 @@ func TestSelectBroker(t *testing.T) {
 	}
 
 	validBroker.Details[0].ExternalHost = hostParts[0]
-	validBroker.Details[0].ExternalPort = hostPort
+	validBroker.Details[0].ExternalPort = uint16(hostPort)
 	validBroker.Details[0].IP = hostParts[0]
-	validBroker.Details[0].Port = hostPort
+	validBroker.Details[0].Port = uint16(hostPort)
 
 	validBrokerNonEnterprise.Details[0].ExternalHost = hostParts[0]
-	validBrokerNonEnterprise.Details[0].ExternalPort = hostPort
+	validBrokerNonEnterprise.Details[0].ExternalPort = uint16(hostPort)
 	validBrokerNonEnterprise.Details[0].IP = hostParts[0]
-	validBrokerNonEnterprise.Details[0].Port = hostPort
+	validBrokerNonEnterprise.Details[0].Port = uint16(hostPort)
 
 	t.Log("default broker selection")
 	{
@@ -411,9 +411,9 @@ func TestGetBroker(t *testing.T) {
 	}
 
 	validBroker.Details[0].ExternalHost = hostParts[0]
-	validBroker.Details[0].ExternalPort = hostPort
+	validBroker.Details[0].ExternalPort = uint16(hostPort)
 	validBroker.Details[0].IP = hostParts[0]
-	validBroker.Details[0].Port = hostPort
+	validBroker.Details[0].Port = uint16(hostPort)
 
 	t.Log("invalid custom broker")
 	{
