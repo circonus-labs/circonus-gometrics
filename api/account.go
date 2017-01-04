@@ -60,8 +60,10 @@ const (
 
 // FetchAccount retrieves an account definition
 func (a *API) FetchAccount(cid CIDType) (*Account, error) {
-	if cid == nil || *cid == "" {
+	if cid == nil {
 		return nil, fmt.Errorf("Invalid account CID [none]")
+	} else if *cid == "" {
+		*cid = baseAccountPath + "/current"
 	}
 
 	accountCID := string(*cid)
