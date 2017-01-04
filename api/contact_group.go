@@ -73,6 +73,10 @@ func (a *API) NewContactGroup() *ContactGroup {
 	return &ContactGroup{
 		Escalations: make([]*ContactGroupEscalation, numSeverityLevels),
 		Reminders:   make([]uint, numSeverityLevels),
+		Contacts: ContactGroupContacts{
+			External: []ContactGroupContactsExternal{},
+			Users:    []ContactGroupContactsUser{},
+		},
 	}
 }
 
