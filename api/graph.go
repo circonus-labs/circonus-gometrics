@@ -227,6 +227,10 @@ func (a *API) UpdateGraph(config *Graph) (*Graph, error) {
 		return nil, err
 	}
 
+	if a.Debug {
+		a.Log.Printf("[DEBUG] update graph, sending JSON API: %s", string(cfg))
+	}
+
 	result, err := a.Put(graphCID, cfg)
 	if err != nil {
 		return nil, err
@@ -249,6 +253,10 @@ func (a *API) CreateGraph(config *Graph) (*Graph, error) {
 	cfg, err := json.Marshal(config)
 	if err != nil {
 		return nil, err
+	}
+
+	if a.Debug {
+		a.Log.Printf("[DEBUG] create graph, sending JSON API: %s", string(cfg))
 	}
 
 	result, err := a.Post(baseGraphPath, cfg)
