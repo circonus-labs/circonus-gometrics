@@ -28,7 +28,9 @@ type Metric struct {
 	MetricName     string   `json:"_metric_name,omitempty"`
 	MetricType     string   `json:"_metric_type,omitempty"`
 	Tags           []string `json:"tags,omitempty"`
-	Units          string   `json:"units,omitempty"`
+	Units          *string  `json:"units,omitempty"` // string or null
+	Link           *string  `json:"link,omitempty"`  // string or null
+	Notes          *string  `json:"notes,omitempty"` // string or null
 }
 
 const (
