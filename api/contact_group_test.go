@@ -18,7 +18,7 @@ import (
 var (
 	testContactGroup = ContactGroup{
 		CID:               "/contact_group/1234",
-		LastModfiedBy:     "/user/1234",
+		LastModifiedBy:    "/user/1234",
 		LastModified:      1483041636,
 		AggregationWindow: 300,
 		Contacts: ContactGroupContacts{
