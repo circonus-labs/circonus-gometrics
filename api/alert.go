@@ -22,12 +22,12 @@ type Alert struct {
 	BrokerCID          string   `json:"_broker,omitempty"`
 	CheckCID           string   `json:"_check,omitempty"`
 	CheckName          string   `json:"_check_name,omitempty"`
-	ClearedOn          uint     `json:"_cleared_on,omitempty"`
-	ClearedValue       string   `json:"_cleared_value,omitempty"`
+	ClearedOn          *uint    `json:"_cleared_on,omitempty"`    // uint or null
+	ClearedValue       *string  `json:"_cleared_value,omitempty"` // string or null
 	Maintenance        []string `json:"_maintenance,omitempty"`
-	MetricLinkURL      string   `json:"_metric_link,omitempty"`
+	MetricLinkURL      *string  `json:"_metric_link,omitempty"` // string or null
 	MetricName         string   `json:"_metric_name,omitempty"`
-	MetricNotes        string   `json:"_metric_notes,omitempty"`
+	MetricNotes        *string  `json:"_metric_notes,omitempty"` // string or null
 	OccurredOn         uint     `json:"_occurred_on,omitempty"`
 	RuleSetCID         string   `json:"_rule_set,omitempty"`
 	Severity           uint     `json:"_severity,omitempty"`
