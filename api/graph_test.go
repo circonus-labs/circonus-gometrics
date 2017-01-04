@@ -16,14 +16,16 @@ import (
 )
 
 var (
-	testGraph = Graph{
+	testFormula1 = "=A-B"
+	testFormula2 = "=VAL/1000"
+	testGraph    = Graph{
 		CID:        "/graph/01234567-89ab-cdef-0123-456789abcdef",
 		AccessKeys: []GraphAccessKey{},
 		Composites: []GraphComposite{
 			GraphComposite{
 				Axis:        "l",
 				Color:       "#000000",
-				DataFormula: "=A-B",
+				DataFormula: &testFormula1,
 				Hidden:      false,
 				Name:        "Time After First Byte",
 			},
@@ -33,7 +35,7 @@ var (
 				Axis:        "l",
 				CheckID:     1234,
 				Color:       "#ff0000",
-				DataFormula: "=VAL/1000",
+				DataFormula: &testFormula2,
 				Derive:      "gauge",
 				Hidden:      false,
 				MetricName:  "duration",
@@ -44,7 +46,7 @@ var (
 				Axis:        "l",
 				CheckID:     2345,
 				Color:       "#00ff00",
-				DataFormula: "=VAL/1000",
+				DataFormula: &testFormula2,
 				Derive:      "gauge",
 				Hidden:      false,
 				MetricName:  "tt_firstbyte",

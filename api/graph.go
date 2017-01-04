@@ -35,51 +35,51 @@ type GraphAccessKey struct {
 
 // GraphComposite defines a composite
 type GraphComposite struct {
-	Axis          string `json:"axis,omitempty"`
-	Color         string `json:"color,omitempty"`
-	DataFormula   string `json:"data_formula,omitempty"`
-	Hidden        bool   `json:"hidden,omitempty"`
-	LegendFormula string `json:"legend_formula,omitempty"`
-	Name          string `json:"name,omitempty"`
-	Stack         uint   `json:"stack,omitempty"`
+	Axis          string  `json:"axis,omitempty"`
+	Color         string  `json:"color,omitempty"`
+	DataFormula   *string `json:"data_formula,omitempty"`
+	Hidden        bool    `json:"hidden,omitempty"`
+	LegendFormula *string `json:"legend_formula,omitempty"`
+	Name          string  `json:"name,omitempty"`
+	Stack         uint    `json:"stack,omitempty"`
 }
 
 // GraphDatapoint defines a datapoint
 type GraphDatapoint struct {
 	Alpha         string      `json:"alpha,omitempty"`
 	Axis          string      `json:"axis,omitempty"`
-	CAQL          string      `json:"caql,omitempty"`
+	CAQL          *string     `json:"caql,omitempty"`
 	CheckID       uint        `json:"check_id,omitempty"`
 	Color         string      `json:"color,omitempty"`
-	DataFormula   string      `json:"data_formula,omitempty"`
+	DataFormula   *string     `json:"data_formula,omitempty"`
 	Derive        interface{} `json:"derive,omitempty"` // this is supposed to be a string but for CAQL statements it comes out as a boolean
 	Hidden        bool        `json:"hidden,omitempty"`
 	LegendFormula string      `json:"legend_formula,omitempty"`
 	MetricName    string      `json:"metric_name,omitempty"`
 	MetricType    string      `json:"metric_type,omitempty"`
 	Name          string      `json:"name,omitempty"`
-	Stack         uint        `json:"stack,omitempty"`
+	Stack         *uint       `json:"stack,omitempty"`
 }
 
 // GraphGuide defines a guide
 type GraphGuide struct {
-	Color         string `json:"color,omitempty"`
-	DataFormula   string `json:"data_formula,omitempty"`
-	Hidden        bool   `json:"hidden,omitempty"`
-	LegendFormula string `json:"legend_formula,omitempty"`
-	Name          string `json:"name,omitempty"`
+	Color         string  `json:"color,omitempty"`
+	DataFormula   *string `json:"data_formula,omitempty"`
+	Hidden        bool    `json:"hidden,omitempty"`
+	LegendFormula *string `json:"legend_formula,omitempty"`
+	Name          string  `json:"name,omitempty"`
 }
 
 // GraphMetricCluster defines a metric cluster
 type GraphMetricCluster struct {
-	AggregateFunc string `json:"aggregation_function,omitempty"`
-	Axis          string `json:"axis,omitempty"`
-	DataFormula   string `json:"data_formula,omitempty"`
-	Hidden        bool   `json:"hidden,omitempty"`
-	LegendFormula string `json:"legend_formula,omitempty"`
-	MetricCluster string `json:"metric_cluster,omitempty"`
-	Name          string `json:"name,omitempty"`
-	Stack         uint   `json:"stack,omitempty"`
+	AggregateFunc string  `json:"aggregation_function,omitempty"`
+	Axis          string  `json:"axis,omitempty"`
+	DataFormula   *string `json:"data_formula,omitempty"`
+	Hidden        bool    `json:"hidden,omitempty"`
+	LegendFormula *string `json:"legend_formula,omitempty"`
+	MetricCluster string  `json:"metric_cluster,omitempty"`
+	Name          string  `json:"name,omitempty"`
+	Stack         uint    `json:"stack,omitempty"`
 }
 
 // OverlayDataOptions defines overlay options for data. Note, each overlay type requires
@@ -133,25 +133,25 @@ type GraphOverlaySet struct {
 
 // Graph definition
 type Graph struct {
-	CID            string                     `json:"_cid,omitempty"`
-	AccessKeys     []GraphAccessKey           `json:"access_keys,omitempty"`
-	Composites     []GraphComposite           `json:"composites,omitempty"`
-	Datapoints     []GraphDatapoint           `json:"datapoints,omitempt"`
-	Description    string                     `json:"description,omitempty"`
-	Guides         []GraphGuide               `json:"guides,omitempty"`
-	LineStyle      string                     `json:"line_style,omitempty"`
-	LogLeftY       int                        `json:"logarithmitc_left_y,omitempty"`
-	LogRightY      int                        `json:"logarithmitc_right_y,omitempty"`
-	MaxLeftY       float64                    `json:"max_left_y,omitempty"`
-	MaxRightY      float64                    `json:"max_right_y,omitempty"`
-	MetricClusters []GraphMetricCluster       `json:"metric_clusters,omitempty"`
-	MinLeftY       float64                    `json:"min_left_y,omitempty"`
-	MinRightY      float64                    `json:"min_right_y,omitempty"`
-	Notes          string                     `json:"notes,omitempty"`
-	OverlaySets    map[string]GraphOverlaySet `json:"overlay_sets,omitempty"`
-	Style          string                     `json:"style,omitempty"`
-	Tags           []string                   `json:"tags,omitempty"`
-	Title          string                     `json:"title,omitempty"`
+	CID            string                      `json:"_cid,omitempty"`
+	AccessKeys     []GraphAccessKey            `json:"access_keys,omitempty"`
+	Composites     []GraphComposite            `json:"composites,omitempty"`
+	Datapoints     []GraphDatapoint            `json:"datapoints,omitempt"`
+	Description    string                      `json:"description,omitempty"`
+	Guides         []GraphGuide                `json:"guides,omitempty"`
+	LineStyle      string                      `json:"line_style,omitempty"`
+	LogLeftY       int                         `json:"logarithmitc_left_y,omitempty"`  // doc: number, comes as null|string
+	LogRightY      int                         `json:"logarithmitc_right_y,omitempty"` // doc: number, comes as null|string
+	MaxLeftY       *string                     `json:"max_left_y,omitempty"`           // doc: number, comes as null|string
+	MaxRightY      *string                     `json:"max_right_y,omitempty"`          // doc: number, comes as null|string
+	MetricClusters []GraphMetricCluster        `json:"metric_clusters,omitempty"`
+	MinLeftY       *string                     `json:"min_left_y,omitempty"`  // doc: number, comes as null|string
+	MinRightY      *string                     `json:"min_right_y,omitempty"` // doc: number, comes as null|string
+	Notes          string                      `json:"notes,omitempty"`
+	OverlaySets    *map[string]GraphOverlaySet `json:"overlay_sets,omitempty"`
+	Style          string                      `json:"style,omitempty"`
+	Tags           []string                    `json:"tags,omitempty"`
+	Title          string                      `json:"title,omitempty"`
 }
 
 const (
@@ -178,6 +178,10 @@ func (a *API) FetchGraph(cid CIDType) (*Graph, error) {
 	result, err := a.Get(graphCID)
 	if err != nil {
 		return nil, err
+	}
+
+	if a.Debug {
+		a.Log.Printf("[DEBUG] fetch graph, JSON from API: %s", string(result))
 	}
 
 	graph := new(Graph)
