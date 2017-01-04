@@ -52,7 +52,7 @@ type ContactGroupEscalation struct {
 type ContactGroup struct {
 	CID               string                    `json:"_cid,omitempty"`
 	LastModified      uint                      `json:"_last_modified,omitempty"`
-	LastModfiedBy     string                    `json:"_last_modified_by,omitempty"`
+	LastModifiedBy    string                    `json:"_last_modified_by,omitempty"`
 	AggregationWindow uint                      `json:"aggregation_window"`
 	AlertFormats      ContactGroupAlertFormats  `json:"alert_formats"`
 	Contacts          ContactGroupContacts      `json:"contacts"`
