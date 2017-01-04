@@ -37,36 +37,36 @@ type GraphAccessKey struct {
 type GraphComposite struct {
 	Axis          string  `json:"axis,omitempty"`
 	Color         string  `json:"color,omitempty"`
-	DataFormula   *string `json:"data_formula,omitempty"`
+	DataFormula   *string `json:"data_formula,omitempty"` // null or string
 	Hidden        bool    `json:"hidden,omitempty"`
-	LegendFormula *string `json:"legend_formula,omitempty"`
+	LegendFormula *string `json:"legend_formula,omitempty"` // null or string
 	Name          string  `json:"name,omitempty"`
-	Stack         uint    `json:"stack,omitempty"`
+	Stack         *uint   `json:"stack,omitempty"` // null or uint
 }
 
 // GraphDatapoint defines a datapoint
 type GraphDatapoint struct {
 	Alpha         string      `json:"alpha,omitempty"`
 	Axis          string      `json:"axis,omitempty"`
-	CAQL          *string     `json:"caql,omitempty"`
+	CAQL          *string     `json:"caql,omitempty"` // null or string
 	CheckID       uint        `json:"check_id,omitempty"`
 	Color         string      `json:"color,omitempty"`
-	DataFormula   *string     `json:"data_formula,omitempty"`
-	Derive        interface{} `json:"derive,omitempty"` // this is supposed to be a string but for CAQL statements it comes out as a boolean
+	DataFormula   *string     `json:"data_formula,omitempty"` // null or string
+	Derive        interface{} `json:"derive,omitempty"`       // this is supposed to be a string but for CAQL statements it comes out as a boolean
 	Hidden        bool        `json:"hidden,omitempty"`
 	LegendFormula string      `json:"legend_formula,omitempty"`
 	MetricName    string      `json:"metric_name,omitempty"`
 	MetricType    string      `json:"metric_type,omitempty"`
 	Name          string      `json:"name,omitempty"`
-	Stack         *uint       `json:"stack,omitempty"`
+	Stack         *uint       `json:"stack,omitempty"` // null or uint
 }
 
 // GraphGuide defines a guide
 type GraphGuide struct {
 	Color         string  `json:"color,omitempty"`
-	DataFormula   *string `json:"data_formula,omitempty"`
+	DataFormula   *string `json:"data_formula,omitempty"` // null or string
 	Hidden        bool    `json:"hidden,omitempty"`
-	LegendFormula *string `json:"legend_formula,omitempty"`
+	LegendFormula *string `json:"legend_formula,omitempty"` // null or string
 	Name          string  `json:"name,omitempty"`
 }
 
@@ -74,12 +74,12 @@ type GraphGuide struct {
 type GraphMetricCluster struct {
 	AggregateFunc string  `json:"aggregation_function,omitempty"`
 	Axis          string  `json:"axis,omitempty"`
-	DataFormula   *string `json:"data_formula,omitempty"`
+	DataFormula   *string `json:"data_formula,omitempty"` // null or string
 	Hidden        bool    `json:"hidden,omitempty"`
-	LegendFormula *string `json:"legend_formula,omitempty"`
+	LegendFormula *string `json:"legend_formula,omitempty"` // null or string
 	MetricCluster string  `json:"metric_cluster,omitempty"`
 	Name          string  `json:"name,omitempty"`
-	Stack         uint    `json:"stack,omitempty"`
+	Stack         *uint   `json:"stack,omitempty"` // null or uint
 }
 
 // OverlayDataOptions defines overlay options for data. Note, each overlay type requires
@@ -148,7 +148,7 @@ type Graph struct {
 	MinLeftY       *string                     `json:"min_left_y,omitempty"`  // doc: number, comes as null|string
 	MinRightY      *string                     `json:"min_right_y,omitempty"` // doc: number, comes as null|string
 	Notes          string                      `json:"notes,omitempty"`
-	OverlaySets    *map[string]GraphOverlaySet `json:"overlay_sets,omitempty"`
+	OverlaySets    *map[string]GraphOverlaySet `json:"overlay_sets,omitempty"` // null or overlay sets object
 	Style          string                      `json:"style,omitempty"`
 	Tags           []string                    `json:"tags,omitempty"`
 	Title          string                      `json:"title,omitempty"`
