@@ -35,22 +35,22 @@ type AccountUser struct {
 
 // Account definition
 type Account struct {
-	CID           string          `json:"_cid,omitempty"`         // string
-	Name          string          `json:"name,omitempty"`         // string
-	Description   *string         `json:"description,omitempty"`  // string or null
-	OwnerCID      string          `json:"_owner,omitempty"`       // string
-	Address1      *string         `json:"address1,omitempty"`     // string or null
-	Address2      *string         `json:"address2,omitempty"`     // string or null
-	CCEmail       *string         `json:"cc_email,omitempty"`     // string or null
-	City          *string         `json:"city,omitempty"`         // string or null
-	StateProv     *string         `json:"state_prov,omitempty"`   // string or null
-	Country       string          `json:"country_code,omitempty"` // string
-	Timezone      string          `json:"timezone,omitempty"`     // string
-	Invites       []AccountInvite `json:"invites,omitempty"`
-	Users         []AccountUser   `json:"users,omitempty"`
-	ContactGroups []string        `json:"_contact_groups,omitempty"` // []string, len >= 0
+	CID           string          `json:"_cid,omitempty"`            // string
+	Name          string          `json:"name,omitempty"`            // string
+	Description   *string         `json:"description,omitempty"`     // string or null
+	OwnerCID      string          `json:"_owner,omitempty"`          // string
+	Address1      *string         `json:"address1,omitempty"`        // string or null
+	Address2      *string         `json:"address2,omitempty"`        // string or null
+	CCEmail       *string         `json:"cc_email,omitempty"`        // string or null
+	City          *string         `json:"city,omitempty"`            // string or null
+	StateProv     *string         `json:"state_prov,omitempty"`      // string or null
+	Country       string          `json:"country_code,omitempty"`    // string
+	Timezone      string          `json:"timezone,omitempty"`        // string
+	Invites       []AccountInvite `json:"invites,omitempty"`         // [] len >= 0
+	Users         []AccountUser   `json:"users,omitempty"`           // [] len >= 0
+	ContactGroups []string        `json:"_contact_groups,omitempty"` // [] len >= 0
 	UIBaseURL     string          `json:"_ui_base_url,omitempty"`    // string
-	Usage         []AccountLimit  `json:"_usage,omitempty"`
+	Usage         []AccountLimit  `json:"_usage,omitempty"`          // [] len >= 0
 }
 
 const (
