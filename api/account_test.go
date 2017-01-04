@@ -30,12 +30,12 @@ var (
 				Used:  7,
 			},
 		},
-		Address1:    "Hooper's Store",
-		Address2:    "Sesame Street",
-		CCEmail:     "accounts_payable@yourdomain.com",
-		City:        "New York City",
+		Address1:    &[]string{"Hooper's Store"}[0],
+		Address2:    &[]string{"Sesame Street"}[0],
+		CCEmail:     &[]string{"accounts_payable@yourdomain.com"}[0],
+		City:        &[]string{"New York City"}[0],
 		Country:     "US",
-		Description: "Hooper's Store Account",
+		Description: &[]string{"Hooper's Store Account"}[0],
 		Invites: []AccountInvite{
 			AccountInvite{
 				Email: "alan@example.com",
@@ -47,7 +47,7 @@ var (
 			},
 		},
 		Name:      "hoopers-store",
-		StateProv: "NY",
+		StateProv: &[]string{"NY"}[0],
 		Timezone:  "America/New_York",
 		Users: []AccountUser{
 			AccountUser{

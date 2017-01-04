@@ -16,40 +16,40 @@ import (
 
 // AccountLimit defines a usage limit imposed on account
 type AccountLimit struct {
-	Limit int    `json:"_limit,omitempty"`
-	Type  string `json:"_type,omitempty"`
-	Used  int    `json:"_used,omitempty"`
+	Limit uint   `json:"_limit,omitempty"` // uint >=0
+	Type  string `json:"_type,omitempty"`  // string
+	Used  uint   `json:"_used,omitempty"`  // uint >=0
 }
 
 // AccountInvite defines outstanding invites
 type AccountInvite struct {
-	Email string `json:"email"`
-	Role  string `json:"role"`
+	Email string `json:"email"` // string
+	Role  string `json:"role"`  // string
 }
 
 // AccountUser defines current users
 type AccountUser struct {
-	Role    string `json:"role"`
-	UserCID string `json:"user"`
+	Role    string `json:"role"` // string
+	UserCID string `json:"user"` // string
 }
 
 // Account definition
 type Account struct {
-	CID           string          `json:"_cid,omitempty"`
-	Name          string          `json:"name"`
-	Description   string          `json:"description"`
-	OwnerCID      string          `json:"_owner,omitempty"`
-	Address1      string          `json:"address1"`
-	Address2      string          `json:"address2"`
-	CCEmail       string          `json:"cc_email"`
-	City          string          `json:"city"`
-	StateProv     string          `json:"state_prov"`
-	Country       string          `json:"country_code"`
-	Timezone      string          `json:"timezone"`
-	Invites       []AccountInvite `json:"invites"`
-	Users         []AccountUser   `json:"users"`
-	ContactGroups []string        `json:"_contact_groups,omitempty"`
-	UIBaseURL     string          `json:"_ui_base_url,omitempty"`
+	CID           string          `json:"_cid,omitempty"`         // string
+	Name          string          `json:"name,omitempty"`         // string
+	Description   *string         `json:"description,omitempty"`  // string or null
+	OwnerCID      string          `json:"_owner,omitempty"`       // string
+	Address1      *string         `json:"address1,omitempty"`     // string or null
+	Address2      *string         `json:"address2,omitempty"`     // string or null
+	CCEmail       *string         `json:"cc_email,omitempty"`     // string or null
+	City          *string         `json:"city,omitempty"`         // string or null
+	StateProv     *string         `json:"state_prov,omitempty"`   // string or null
+	Country       string          `json:"country_code,omitempty"` // string
+	Timezone      string          `json:"timezone,omitempty"`     // string
+	Invites       []AccountInvite `json:"invites,omitempty"`
+	Users         []AccountUser   `json:"users,omitempty"`
+	ContactGroups []string        `json:"_contact_groups,omitempty"` // []string, len >= 0
+	UIBaseURL     string          `json:"_ui_base_url,omitempty"`    // string
 	Usage         []AccountLimit  `json:"_usage,omitempty"`
 }
 
@@ -81,6 +81,10 @@ func (a *API) FetchAccount(cid CIDType) (*Account, error) {
 		return nil, err
 	}
 
+	if a.Debug {
+		a.Log.Printf("[DEBUG] account fetch, JSON from API: %s", string(result))
+	}
+
 	account := new(Account)
 	if err := json.Unmarshal(result, account); err != nil {
 		return nil, err
@@ -108,6 +112,10 @@ func (a *API) UpdateAccount(config *Account) (*Account, error) {
 	cfg, err := json.Marshal(config)
 	if err != nil {
 		return nil, err
+	}
+
+	if a.Debug {
+		a.Log.Printf("[DEBUG] account update, sending JSON API: %s", string(cfg))
 	}
 
 	result, err := a.Put(accountCID, cfg)
