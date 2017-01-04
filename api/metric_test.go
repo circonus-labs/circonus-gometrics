@@ -28,7 +28,7 @@ var (
 		MetricName:     "foo",
 		MetricType:     "numeric",
 		Tags:           []string{"cat1:tag1"},
-		Units:          "light years",
+		Units:          &[]string{"light years"}[0],
 	}
 )
 
