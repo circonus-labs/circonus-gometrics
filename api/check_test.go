@@ -11,7 +11,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"reflect"
-	"strings"
 	"testing"
 )
 
@@ -46,22 +45,31 @@ func testCheckServer() *httptest.Server {
 		} else if path == "/check" {
 			switch r.Method {
 			case "GET": // search or filter
+				reqURL := r.URL.String()
 				var c []Check
-				if strings.Contains(r.URL.String(), "f_name=test") {
-					c = []Check{}
-				} else if strings.Contains(r.URL.String(), "search=test") {
-					c = []Check{testCheck, testCheck}
-				} else {
+				if reqURL == "/check?search=test" {
 					c = []Check{testCheck}
+				} else if reqURL == "/check?f__tags_has=cat%3Atag" {
+					c = []Check{testCheck}
+				} else if reqURL == "/check?f__tags_has=cat%3Atag&search=test" {
+					c = []Check{testCheck}
+				} else if reqURL == "/check" {
+					c = []Check{testCheck}
+				} else {
+					c = []Check{}
 				}
-
-				ret, err := json.Marshal(c)
-				if err != nil {
-					panic(err)
+				if len(c) > 0 {
+					ret, err := json.Marshal(c)
+					if err != nil {
+						panic(err)
+					}
+					w.WriteHeader(200)
+					w.Header().Set("Content-Type", "application/json")
+					fmt.Fprintln(w, string(ret))
+				} else {
+					w.WriteHeader(404)
+					fmt.Fprintln(w, fmt.Sprintf("not found: %s %s", r.Method, reqURL))
 				}
-				w.WriteHeader(200)
-				w.Header().Set("Content-Type", "application/json")
-				fmt.Fprintln(w, string(ret))
 			default:
 				w.WriteHeader(404)
 				fmt.Fprintln(w, fmt.Sprintf("not found: %s %s", r.Method, path))
@@ -118,6 +126,84 @@ func TestFetchCheck(t *testing.T) {
 
 		if check.CID != testCheck.CID {
 			t.Fatalf("CIDs do not match: %+v != %+v\n", check, testCheck)
+		}
+	}
+}
+
+func TestSearchChecks(t *testing.T) {
+	server := testCheckServer()
+	defer server.Close()
+
+	var apih *API
+	var err error
+
+	ac := &Config{
+		TokenKey: "abc123",
+		TokenApp: "test",
+		URL:      server.URL,
+	}
+	apih, err = NewAPI(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	t.Log("no search, no filter")
+	{
+		clusters, err := apih.SearchChecks(nil, nil)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(clusters)
+		expectedType := "*[]api.Check"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
+	}
+
+	t.Log("search, no filter")
+	{
+		search := SearchQueryType("test")
+		clusters, err := apih.SearchChecks(&search, nil)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(clusters)
+		expectedType := "*[]api.Check"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
+	}
+
+	t.Log("no search, filter")
+	{
+		filter := SearchFilterType{"f__tags_has": []string{"cat:tag"}}
+		clusters, err := apih.SearchChecks(nil, &filter)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(clusters)
+		expectedType := "*[]api.Check"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
+	}
+
+	t.Log("search, filter")
+	{
+		search := SearchQueryType("test")
+		filter := SearchFilterType{"f__tags_has": []string{"cat:tag"}}
+		clusters, err := apih.SearchChecks(&search, &filter)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(clusters)
+		expectedType := "*[]api.Check"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 		}
 	}
 }
@@ -231,65 +317,3 @@ func TestFetchCheckBySubmissionURL(t *testing.T) {
     }
 }
 */
-
-func TestSearchChecks(t *testing.T) {
-	server := testCheckServer()
-	defer server.Close()
-
-	var apih *API
-	var err error
-
-	ac := &Config{
-		TokenKey: "abc123",
-		TokenApp: "test",
-		URL:      server.URL,
-	}
-	apih, err = NewAPI(ac)
-	if err != nil {
-		t.Errorf("Expected no error, got '%v'", err)
-	}
-
-	t.Log("no search, no filter")
-	{
-		clusters, err := apih.SearchChecks(nil, nil)
-		if err != nil {
-			t.Fatalf("Expected no error, got '%v'", err)
-		}
-
-		actualType := reflect.TypeOf(clusters)
-		expectedType := "*[]api.Check"
-		if actualType.String() != expectedType {
-			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
-		}
-	}
-
-	t.Log("search criteria")
-	{
-		search := SearchQueryType("test")
-		clusters, err := apih.SearchChecks(&search, nil)
-		if err != nil {
-			t.Fatalf("Expected no error, got '%v'", err)
-		}
-
-		actualType := reflect.TypeOf(clusters)
-		expectedType := "*[]api.Check"
-		if actualType.String() != expectedType {
-			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
-		}
-	}
-
-	t.Log("filter criteria")
-	{
-		filter := SearchFilterType{"f_name": []string{"test"}}
-		clusters, err := apih.SearchChecks(nil, &filter)
-		if err != nil {
-			t.Fatalf("Expected no error, got '%v'", err)
-		}
-
-		actualType := reflect.TypeOf(clusters)
-		expectedType := "*[]api.Check"
-		if actualType.String() != expectedType {
-			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
-		}
-	}
-}
