@@ -57,13 +57,13 @@ func (a *API) FetchBroker(cid CIDType) (*Broker, error) {
 		return nil, fmt.Errorf("Invalid broker CID [%s]", brokerCID)
 	}
 
-	reqURL := url.URL{
-		Path: brokerCID,
-	}
-
-	result, err := a.Get(reqURL.String())
+	result, err := a.Get(brokerCID)
 	if err != nil {
 		return nil, err
+	}
+
+	if a.Debug {
+		a.Log.Printf("[DEBUG] fetch broker, received JSON: %s", string(result))
 	}
 
 	response := new(Broker)
