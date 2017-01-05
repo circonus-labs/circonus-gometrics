@@ -96,14 +96,31 @@ func testContactGroupServer() *httptest.Server {
 		} else if path == "/contact_group" {
 			switch r.Method {
 			case "GET":
-				c := []ContactGroup{testContactGroup}
-				ret, err := json.Marshal(c)
-				if err != nil {
-					panic(err)
+				reqURL := r.URL.String()
+				var c []ContactGroup
+				if reqURL == "/contact_group?search=%28name%3D%22ops%22%29" {
+					c = []ContactGroup{testContactGroup}
+				} else if reqURL == "/contact_group?f__last_modified_gt=1483639916" {
+					c = []ContactGroup{testContactGroup}
+				} else if reqURL == "/contact_group?f__last_modified_gt=1483639916&search=%28name%3D%22ops%22%29" {
+					c = []ContactGroup{testContactGroup}
+				} else if reqURL == "/contact_group" {
+					c = []ContactGroup{testContactGroup}
+				} else {
+					c = []ContactGroup{}
 				}
-				w.WriteHeader(200)
-				w.Header().Set("Content-Type", "application/json")
-				fmt.Fprintln(w, string(ret))
+				if len(c) > 0 {
+					ret, err := json.Marshal(c)
+					if err != nil {
+						panic(err)
+					}
+					w.WriteHeader(200)
+					w.Header().Set("Content-Type", "application/json")
+					fmt.Fprintln(w, string(ret))
+				} else {
+					w.WriteHeader(404)
+					fmt.Fprintln(w, fmt.Sprintf("not found: %s %s", r.Method, reqURL))
+				}
 			case "POST":
 				defer r.Body.Close()
 				_, err := ioutil.ReadAll(r.Body)
@@ -126,7 +143,6 @@ func testContactGroupServer() *httptest.Server {
 			fmt.Fprintln(w, fmt.Sprintf("not found: %s %s", r.Method, path))
 		}
 	}
-
 	return httptest.NewServer(http.HandlerFunc(f))
 }
 
@@ -322,6 +338,83 @@ func TestDeleteContactGroup(t *testing.T) {
 		}
 		if err.Error() != expectedError.Error() {
 			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+}
+
+func TestSearchContactGroups(t *testing.T) {
+	server := testContactGroupServer()
+	defer server.Close()
+
+	var apih *API
+
+	ac := &Config{
+		TokenKey: "abc123",
+		TokenApp: "test",
+		URL:      server.URL,
+	}
+	apih, err := NewAPI(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	t.Log("no search, no filter")
+	{
+		groups, err := apih.SearchContactGroups(nil, nil)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(groups)
+		expectedType := "*[]api.ContactGroup"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
+	}
+
+	t.Log("search, no filter")
+	{
+		search := SearchQueryType(`(name="ops")`)
+		groups, err := apih.SearchContactGroups(&search, nil)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(groups)
+		expectedType := "*[]api.ContactGroup"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
+	}
+
+	t.Log("no search, filter")
+	{
+		filter := SearchFilterType(map[string][]string{"f__last_modified_gt": []string{"1483639916"}})
+		groups, err := apih.SearchContactGroups(nil, &filter)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(groups)
+		expectedType := "*[]api.ContactGroup"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
+	}
+
+	t.Log("search, filter")
+	{
+		search := SearchQueryType(`(name="ops")`)
+		filter := SearchFilterType(map[string][]string{"f__last_modified_gt": []string{"1483639916"}})
+		groups, err := apih.SearchContactGroups(&search, &filter)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(groups)
+		expectedType := "*[]api.ContactGroup"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 		}
 	}
 }
