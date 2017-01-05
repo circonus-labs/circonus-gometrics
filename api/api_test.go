@@ -22,104 +22,121 @@ func callServer() *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(f))
 }
 
-// func retryServer() *httptest.Server {
-// 	f := func(w http.ResponseWriter, r *http.Request) {
-// 		w.WriteHeader(500)
-// 		w.Header().Set("Content-Type", "application/json")
-// 		fmt.Fprintln(w, "blah blah blah")
-// 	}
-//
-// 	return httptest.NewServer(http.HandlerFunc(f))
-// }
-
 func TestNew(t *testing.T) {
-	var expectedError error
-
-	t.Log("Testing correct error return when no API config supplied")
-	expectedError = errors.New("Invalid API configuration (nil)")
-	_, err := New(nil)
-	if err == nil {
-		t.Error("Expected an error")
-	}
-	if err.Error() != expectedError.Error() {
-		t.Errorf("Expected an '%#v' error, got '%#v'", expectedError, err)
-	}
-
-	t.Log("Testing correct error return when no API Token supplied")
-	expectedError = errors.New("API Token is required")
-	ac := &Config{}
-	_, err = New(ac)
-	if err == nil {
-		t.Error("Expected an error")
-	}
-	if err.Error() != expectedError.Error() {
-		t.Errorf("Expected an '%#v' error, got '%#v'", expectedError, err)
+	t.Log("invalid config [nil]")
+	{
+		expectedError := errors.New("Invalid API configuration (nil)")
+		_, err := New(nil)
+		if err == nil {
+			t.Error("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Errorf("Expected an '%#v' error, got '%#v'", expectedError, err)
+		}
 	}
 
-	t.Log("Testing correct return when an API Token is supplied")
-	ac = &Config{
-		TokenKey: "abc123",
-	}
-	_, err = New(ac)
-	if err != nil {
-		t.Errorf("Expected no error, got '%v'", err)
-	}
-
-	t.Log("Testing correct return when an API Token and App are supplied")
-	ac = &Config{
-		TokenKey: "abc123",
-		TokenApp: "someapp",
-	}
-	_, err = New(ac)
-	if err != nil {
-		t.Errorf("Expected no error, got '%v'", err)
+	t.Log("invalid config [blank]")
+	{
+		expectedError := errors.New("API Token is required")
+		ac := &Config{}
+		_, err := New(ac)
+		if err == nil {
+			t.Error("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Errorf("Expected an '%#v' error, got '%#v'", expectedError, err)
+		}
 	}
 
-	t.Log("Testing correct return when an API Token, App, and URL (host) are supplied")
-	ac = &Config{
-		TokenKey: "abc123",
-		TokenApp: "someapp",
-		URL:      "something.somewhere.com",
-	}
-	_, err = New(ac)
-	if err != nil {
-		t.Errorf("Expected no error, got '%v'", err)
-	}
-
-	t.Log("Testing correct return when an API Token, App, and URL (w/trailing '/') are supplied")
-	ac = &Config{
-		TokenKey: "abc123",
-		TokenApp: "someapp",
-		URL:      "something.somewhere.com/somepath/",
-	}
-	_, err = New(ac)
-	if err != nil {
-		t.Errorf("Expected no error, got '%v'", err)
+	t.Log("API Token, no API App, no API URL")
+	{
+		ac := &Config{
+			TokenKey: "abc123",
+		}
+		_, err := New(ac)
+		if err != nil {
+			t.Errorf("Expected no error, got '%v'", err)
+		}
 	}
 
-	t.Log("Testing correct return when an API Token, App, and [invalid] URL are supplied")
-	expectedError = errors.New("parse http://something.somewhere.com\\somepath$: invalid character \"\\\\\" in host name")
-	ac = &Config{
-		TokenKey: "abc123",
-		TokenApp: "someapp",
-		URL:      "http://something.somewhere.com\\somepath$",
-	}
-	_, err = New(ac)
-	if err == nil {
-		t.Error("Expected an error")
-	}
-	if err.Error() != expectedError.Error() {
-		t.Errorf("Expected an '%#v' error, got '%#v'", expectedError, err)
+	t.Log("API Token, API App, no API URL")
+	{
+		ac := &Config{
+			TokenKey: "abc123",
+			TokenApp: "someapp",
+		}
+		_, err := New(ac)
+		if err != nil {
+			t.Errorf("Expected no error, got '%v'", err)
+		}
 	}
 
-	t.Log("Testing correct return when an Debug true but no log.Logger are supplied")
-	ac = &Config{
-		TokenKey: "abc123",
-		Debug:    true,
+	t.Log("API Token, API App, API URL [host]")
+	{
+		ac := &Config{
+			TokenKey: "abc123",
+			TokenApp: "someapp",
+			URL:      "something.somewhere.com",
+		}
+		_, err := New(ac)
+		if err != nil {
+			t.Errorf("Expected no error, got '%v'", err)
+		}
 	}
-	_, err = New(ac)
-	if err != nil {
-		t.Errorf("Expected no error, got '%v'", err)
+
+	t.Log("API Token, API App, API URL [trailing '/']")
+	{
+		ac := &Config{
+			TokenKey: "abc123",
+			TokenApp: "someapp",
+			URL:      "something.somewhere.com/somepath/",
+		}
+		_, err := New(ac)
+		if err != nil {
+			t.Errorf("Expected no error, got '%v'", err)
+		}
+	}
+
+	t.Log("API Token, API App, API URL [w/o trailing '/']")
+	{
+		ac := &Config{
+			TokenKey: "abc123",
+			TokenApp: "someapp",
+			URL:      "something.somewhere.com/somepath",
+		}
+		_, err := New(ac)
+		if err != nil {
+			t.Errorf("Expected no error, got '%v'", err)
+		}
+	}
+
+	t.Log("API Token, API App, API URL [invalid]")
+	{
+		expectedError := errors.New("parse http://something.somewhere.com\\somepath$: invalid character \"\\\\\" in host name")
+		ac := &Config{
+			TokenKey: "abc123",
+			TokenApp: "someapp",
+			URL:      "http://something.somewhere.com\\somepath$",
+		}
+		_, err := New(ac)
+		if err == nil {
+			t.Error("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Errorf("Expected an '%#v' error, got '%#v'", expectedError, err)
+		}
+	}
+
+	t.Log("Debug true, no log.Logger")
+	{
+		ac := &Config{
+			TokenKey: "abc123",
+			Debug:    true,
+		}
+		_, err := New(ac)
+		if err != nil {
+			t.Errorf("Expected no error, got '%v'", err)
+		}
 	}
 }
 
@@ -138,7 +155,7 @@ func TestApiCall(t *testing.T) {
 		t.Errorf("Expected no error, got '%+v'", err)
 	}
 
-	t.Log("Testing invalid URL path")
+	t.Log("invalid URL path")
 	{
 		_, err := apih.apiCall("GET", "", nil)
 		expectedError := errors.New("Invalid URL path")
@@ -150,7 +167,7 @@ func TestApiCall(t *testing.T) {
 		}
 	}
 
-	t.Log("Testing URL path fixup, prefix '/'")
+	t.Log("URL path fixup, prefix '/'")
 	{
 		call := "GET"
 		resp, err := apih.apiCall(call, "nothing", nil)
@@ -163,7 +180,7 @@ func TestApiCall(t *testing.T) {
 		}
 	}
 
-	t.Log("Testing URL path fixup, remove '/v2' prefix")
+	t.Log("URL path fixup, remove '/v2' prefix")
 	{
 		call := "GET"
 		resp, err := apih.apiCall(call, "/v2/nothing", nil)
