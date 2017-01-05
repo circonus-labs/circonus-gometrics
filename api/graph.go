@@ -12,6 +12,8 @@ import (
 	"fmt"
 	"net/url"
 	"regexp"
+
+	"github.com/circonus-labs/circonus-gometrics/api/config"
 )
 
 // GraphAccessKey defines an access key for a graph
@@ -155,7 +157,7 @@ type Graph struct {
 }
 
 const (
-	baseGraphPath = "/graph"
+	baseGraphPath = config.GraphPrefix
 	graphCIDRegex = "^" + baseGraphPath + "/[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{8,12}$"
 )
 

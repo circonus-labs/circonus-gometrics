@@ -12,6 +12,8 @@ import (
 	"fmt"
 	"net/url"
 	"regexp"
+
+	"github.com/circonus-labs/circonus-gometrics/api/config"
 )
 
 // Alert defines a alert
@@ -36,7 +38,7 @@ type Alert struct {
 }
 
 const (
-	baseAlertPath = "/alert"
+	baseAlertPath = config.AlertPrefix
 	alertCIDRegex = "^" + baseAlertPath + "/[0-9]+$"
 )
 

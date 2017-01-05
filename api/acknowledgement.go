@@ -13,6 +13,8 @@ import (
 	"fmt"
 	"net/url"
 	"regexp"
+
+	"github.com/circonus-labs/circonus-gometrics/api/config"
 )
 
 // Acknowledgement defines a acknowledgement
@@ -29,7 +31,7 @@ type Acknowledgement struct {
 }
 
 const (
-	baseAcknowledgementPath = "/acknowledgement"
+	baseAcknowledgementPath = config.AcknowledgementPrefix
 	acknowledgementCIDRegex = "^" + baseAcknowledgementPath + "/[0-9]+$"
 )
 

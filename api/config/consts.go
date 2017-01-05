@@ -6,6 +6,28 @@ type Key string
 // Constants per type as defined in
 // https://login.circonus.com/resources/api/calls/check_bundle
 const (
+	// Endpoint prefixes
+	AccountPrefix            = "/account"
+	AcknowledgementPrefix    = "/acknowledgement"
+	AlertPrefix              = "/alert"
+	AnnotationPrefix         = "/annotation"
+	BrokerPrefix             = "/broker"
+	CheckBundlePrefix        = "/check_bundle"
+	CheckBundleMetricsPrefix = "/check_bundle_metrics"
+	CheckPrefix              = "/check"
+	ContactGroupPrefix       = "/contact_group"
+	DashboardPrefix          = "/dashboard"
+	GraphPrefix              = "/graph"
+	MaintenancePrefix        = "/maintenance"
+	MetricClusterPrefix      = "/metric_cluster"
+	MetricPrefix             = "/metric"
+	OutlierReportPrefix      = "/outlier_report"
+	ProvisionBrokerPrefix    = "/provision_broker"
+	RuleSetGroupPrefix       = "/rule_set_group"
+	RuleSetPrefix            = "/rule_set"
+	UserPrefix               = "/user"
+	WorksheetPrefix          = "/worksheet"
+
 	//
 	// default settings for api.NewCheckBundle()
 	//

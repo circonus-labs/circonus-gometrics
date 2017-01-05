@@ -13,6 +13,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+
+	"github.com/circonus-labs/circonus-gometrics/api/config"
 )
 
 // BrokerStratcon defines stratcons for broker
@@ -41,7 +43,7 @@ type ProvisionBroker struct {
 }
 
 const (
-	baseProvisionBrokerPath = "/provision_broker"
+	baseProvisionBrokerPath = config.ProvisionBrokerPrefix
 	brokerProvisionCIDRegex = "^" + baseProvisionBrokerPath + "/[a-z0-9]+-[a-z0-9]+$"
 )
 

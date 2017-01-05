@@ -12,6 +12,8 @@ import (
 	"fmt"
 	"net/url"
 	"regexp"
+
+	"github.com/circonus-labs/circonus-gometrics/api/config"
 )
 
 // MetricQuery object
@@ -32,7 +34,7 @@ type MetricCluster struct {
 }
 
 const (
-	baseMetricClusterPath = "/metric_cluster"
+	baseMetricClusterPath = config.MetricClusterPrefix
 	metricClusterCIDRegex = "^" + baseMetricClusterPath + "/[0-9]+$"
 )
 

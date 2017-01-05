@@ -12,6 +12,8 @@ import (
 	"fmt"
 	"net/url"
 	"regexp"
+
+	"github.com/circonus-labs/circonus-gometrics/api/config"
 )
 
 // Maintenance defines a maintenance
@@ -27,7 +29,7 @@ type Maintenance struct {
 }
 
 const (
-	baseMaintenancePath = "/maintenance"
+	baseMaintenancePath = config.MaintenancePrefix
 	maintenanceCIDRegex = "^" + baseMaintenancePath + "/[0-9]+$"
 )
 

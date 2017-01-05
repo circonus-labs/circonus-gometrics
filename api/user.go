@@ -15,6 +15,8 @@ import (
 	"fmt"
 	"net/url"
 	"regexp"
+
+	"github.com/circonus-labs/circonus-gometrics/api/config"
 )
 
 // UserContactInfo defines known contact details
@@ -33,7 +35,7 @@ type User struct {
 }
 
 const (
-	baseUserPath = "/user"
+	baseUserPath = config.UserPrefix
 	userCIDRegex = "^" + baseUserPath + "/([0-9]+|current)$"
 )
 

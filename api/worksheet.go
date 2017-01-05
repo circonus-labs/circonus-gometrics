@@ -12,6 +12,8 @@ import (
 	"fmt"
 	"net/url"
 	"regexp"
+
+	"github.com/circonus-labs/circonus-gometrics/api/config"
 )
 
 // WorksheetGraph defines a worksheet cid to be include in the worksheet
@@ -39,7 +41,7 @@ type Worksheet struct {
 }
 
 const (
-	baseWorksheetPath = "/worksheet"
+	baseWorksheetPath = config.WorksheetPrefix
 	worksheetCIDRegex = "^" + baseWorksheetPath + "/[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{8,12}$"
 )
 

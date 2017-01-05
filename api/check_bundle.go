@@ -55,7 +55,7 @@ type CheckBundle struct {
 }
 
 const (
-	baseCheckBundlePath = "/check_bundle"
+	baseCheckBundlePath = config.CheckBundlePrefix
 	checkBundleCIDRegex = "^" + baseCheckBundlePath + "/[0-9]+$"
 )
 

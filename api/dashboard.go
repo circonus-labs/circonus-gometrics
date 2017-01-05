@@ -12,6 +12,8 @@ import (
 	"fmt"
 	"net/url"
 	"regexp"
+
+	"github.com/circonus-labs/circonus-gometrics/api/config"
 )
 
 // DashboardGridLayout defines layout
@@ -208,7 +210,7 @@ type Dashboard struct {
 }
 
 const (
-	baseDashboardPath = "/dashboard"
+	baseDashboardPath = config.DashboardPrefix
 	dashboardCIDRegex = "^" + baseDashboardPath + "/[0-9]+$"
 )
 

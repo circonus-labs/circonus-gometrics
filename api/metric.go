@@ -13,6 +13,8 @@ import (
 	"fmt"
 	"net/url"
 	"regexp"
+
+	"github.com/circonus-labs/circonus-gometrics/api/config"
 )
 
 // Metric defines a metric
@@ -34,7 +36,7 @@ type Metric struct {
 }
 
 const (
-	baseMetricPath = "/metric"
+	baseMetricPath = config.MetricPrefix
 	metricCIDRegex = "^" + baseMetricPath + "/[0-9]+$"
 )
 

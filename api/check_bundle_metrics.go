@@ -13,6 +13,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+
+	"github.com/circonus-labs/circonus-gometrics/api/config"
 )
 
 // See check_bundle.go for CheckBundleMetric definition
@@ -24,7 +26,7 @@ type CheckBundleMetrics struct {
 }
 
 const (
-	baseCheckBundleMetricsPath = "/check_bundle_metrics"
+	baseCheckBundleMetricsPath = config.CheckBundleMetricsPrefix
 	metricsCIDRegex            = "^" + baseCheckBundleMetricsPath + "/[0-9]+$"
 )
 

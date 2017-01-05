@@ -13,6 +13,8 @@ import (
 	"fmt"
 	"net/url"
 	"regexp"
+
+	"github.com/circonus-labs/circonus-gometrics/api/config"
 )
 
 // CheckDetails is an arbitrary json structure, contents are undocumented
@@ -31,7 +33,7 @@ type Check struct {
 }
 
 const (
-	baseCheckPath = "/check"
+	baseCheckPath = config.CheckPrefix
 	checkCIDRegex = "^" + baseCheckPath + "/[0-9]+$"
 )
 

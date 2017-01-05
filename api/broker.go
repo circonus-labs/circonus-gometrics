@@ -12,6 +12,8 @@ import (
 	"fmt"
 	"net/url"
 	"regexp"
+
+	"github.com/circonus-labs/circonus-gometrics/api/config"
 )
 
 // BrokerDetail instance attributes
@@ -40,7 +42,7 @@ type Broker struct {
 }
 
 const (
-	baseBrokerPath = "/broker"
+	baseBrokerPath = config.BrokerPrefix
 	brokerCIDRegex = "^" + baseBrokerPath + "/[0-9]+$"
 )
 

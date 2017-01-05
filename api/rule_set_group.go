@@ -12,6 +12,8 @@ import (
 	"fmt"
 	"net/url"
 	"regexp"
+
+	"github.com/circonus-labs/circonus-gometrics/api/config"
 )
 
 // RulesetGroupRule defines a rulesetGroup rule
@@ -48,7 +50,7 @@ type RulesetGroup struct {
 }
 
 const (
-	baseRulesetGroupPath = "/rule_set_group"
+	baseRulesetGroupPath = config.RuleSetGroupPrefix
 	rulesetGroupCIDRegex = "^" + baseRulesetGroupPath + "/[0-9]+$"
 )
 

@@ -12,6 +12,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+
+	"github.com/circonus-labs/circonus-gometrics/api/config"
 )
 
 // AccountLimit defines a usage limit imposed on account
@@ -54,7 +56,7 @@ type Account struct {
 }
 
 const (
-	baseAccountPath = "/account"
+	baseAccountPath = config.AccountPrefix
 	accountCIDRegex = "^" + baseAccountPath + "/([0-9]+|current)$"
 )
 

@@ -12,6 +12,8 @@ import (
 	"fmt"
 	"net/url"
 	"regexp"
+
+	"github.com/circonus-labs/circonus-gometrics/api/config"
 )
 
 // ContactGroupAlertFormats define alert formats
@@ -63,7 +65,7 @@ type ContactGroup struct {
 }
 
 const (
-	baseContactGroupPath = "/contact_group"
+	baseContactGroupPath = config.ContactGroupPrefix
 	contactGroupCIDRegex = "^" + baseContactGroupPath + "/[0-9]+$"
 	numSeverityLevels    = 5
 )

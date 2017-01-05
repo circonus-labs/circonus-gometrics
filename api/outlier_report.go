@@ -12,6 +12,8 @@ import (
 	"fmt"
 	"net/url"
 	"regexp"
+
+	"github.com/circonus-labs/circonus-gometrics/api/config"
 )
 
 // OutlierReport defines a outlier report
@@ -28,7 +30,7 @@ type OutlierReport struct {
 }
 
 const (
-	baseOutlierReportPath = "/outlier_report"
+	baseOutlierReportPath = config.OutlierReportPrefix
 	reportCIDRegex        = "^" + baseOutlierReportPath + "/[0-9]+$"
 )
 

@@ -12,6 +12,8 @@ import (
 	"fmt"
 	"net/url"
 	"regexp"
+
+	"github.com/circonus-labs/circonus-gometrics/api/config"
 )
 
 // Annotation defines a annotation
@@ -29,7 +31,7 @@ type Annotation struct {
 }
 
 const (
-	baseAnnotationPath = "/annotation"
+	baseAnnotationPath = config.AnnotationPrefix
 	annotationCIDRegex = "^" + baseAnnotationPath + "/[0-9]+$"
 )
 
