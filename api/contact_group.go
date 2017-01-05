@@ -97,6 +97,10 @@ func (a *API) FetchContactGroup(cid CIDType) (*ContactGroup, error) {
 		return nil, err
 	}
 
+	if a.Debug {
+		a.Log.Printf("[DEBUG] fetch contact group, received JSON: %s", string(result))
+	}
+
 	group := new(ContactGroup)
 	if err := json.Unmarshal(result, group); err != nil {
 		return nil, err
@@ -141,6 +145,10 @@ func (a *API) UpdateContactGroup(cfg *ContactGroup) (*ContactGroup, error) {
 		return nil, err
 	}
 
+	if a.Debug {
+		a.Log.Printf("[DEBUG] update contact group, sending JSON: %s", string(jsonCfg))
+	}
+
 	result, err := a.Put(groupCID, jsonCfg)
 	if err != nil {
 		return nil, err
@@ -156,9 +164,17 @@ func (a *API) UpdateContactGroup(cfg *ContactGroup) (*ContactGroup, error) {
 
 // CreateContactGroup create a new contact group
 func (a *API) CreateContactGroup(cfg *ContactGroup) (*ContactGroup, error) {
+	if cfg == nil {
+		return nil, fmt.Errorf("Invalid contact group config [nil]")
+	}
+
 	jsonCfg, err := json.Marshal(cfg)
 	if err != nil {
 		return nil, err
+	}
+
+	if a.Debug {
+		a.Log.Printf("[DEBUG] create contact group, sending JSON: %s", string(jsonCfg))
 	}
 
 	result, err := a.Post(config.ContactGroupPrefix, jsonCfg)
