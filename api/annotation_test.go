@@ -60,14 +60,31 @@ func testAnnotationServer() *httptest.Server {
 		} else if path == "/annotation" {
 			switch r.Method {
 			case "GET":
-				c := []Annotation{testAnnotation}
-				ret, err := json.Marshal(c)
-				if err != nil {
-					panic(err)
+				reqURL := r.URL.String()
+				var c []Annotation
+				if reqURL == "/annotation?search=%28category%3D%22updates%22%29" {
+					c = []Annotation{testAnnotation}
+				} else if reqURL == "/annotation?f__created_gt=1483639916" {
+					c = []Annotation{testAnnotation}
+				} else if reqURL == "/annotation?f__created_gt=1483639916&search=%28category%3D%22updates%22%29" {
+					c = []Annotation{testAnnotation}
+				} else if reqURL == "/annotation" {
+					c = []Annotation{testAnnotation}
+				} else {
+					c = []Annotation{}
 				}
-				w.WriteHeader(200)
-				w.Header().Set("Content-Type", "application/json")
-				fmt.Fprintln(w, string(ret))
+				if len(c) > 0 {
+					ret, err := json.Marshal(c)
+					if err != nil {
+						panic(err)
+					}
+					w.WriteHeader(200)
+					w.Header().Set("Content-Type", "application/json")
+					fmt.Fprintln(w, string(ret))
+				} else {
+					w.WriteHeader(404)
+					fmt.Fprintln(w, fmt.Sprintf("not found: %s %s", r.Method, reqURL))
+				}
 			case "POST":
 				defer r.Body.Close()
 				_, err := ioutil.ReadAll(r.Body)
@@ -287,6 +304,83 @@ func TestDeleteAnnotation(t *testing.T) {
 		}
 		if err.Error() != expectedError.Error() {
 			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+}
+
+func TestSearchAnnotations(t *testing.T) {
+	server := testAnnotationServer()
+	defer server.Close()
+
+	var apih *API
+
+	ac := &Config{
+		TokenKey: "abc123",
+		TokenApp: "test",
+		URL:      server.URL,
+	}
+	apih, err := NewAPI(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	t.Log("no search, no filter")
+	{
+		annotations, err := apih.SearchAnnotations(nil, nil)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(annotations)
+		expectedType := "*[]api.Annotation"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
+	}
+
+	t.Log("search, no filter")
+	{
+		search := SearchQueryType(`(category="updates")`)
+		annotations, err := apih.SearchAnnotations(&search, nil)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(annotations)
+		expectedType := "*[]api.Annotation"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
+	}
+
+	t.Log("no search, filter")
+	{
+		filter := SearchFilterType(map[string][]string{"f__created_gt": []string{"1483639916"}})
+		annotations, err := apih.SearchAnnotations(nil, &filter)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(annotations)
+		expectedType := "*[]api.Annotation"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
+	}
+
+	t.Log("search, filter")
+	{
+		search := SearchQueryType(`(category="updates")`)
+		filter := SearchFilterType(map[string][]string{"f__created_gt": []string{"1483639916"}})
+		annotations, err := apih.SearchAnnotations(&search, &filter)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(annotations)
+		expectedType := "*[]api.Annotation"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 		}
 	}
 }
