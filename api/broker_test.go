@@ -11,7 +11,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"reflect"
-	"strings"
 	"testing"
 )
 
@@ -60,30 +59,31 @@ func testBrokerServer() *httptest.Server {
 		} else if path == "/broker" {
 			switch r.Method {
 			case "GET": // search or filter
+				reqURL := r.URL.String()
 				var c []Broker
-				if strings.Contains(r.URL.String(), "f__tags_has=cat%3Anot_found") {
-					c = []Broker{}
-				} else if strings.Contains(r.URL.String(), "f__tags_has=cat%3Atag") {
-					c = []Broker{testBroker, testBroker}
-				} else if strings.Contains(r.URL.String(), "search=HTTPTrap") {
-					c = []Broker{testBroker, testBroker}
-				} else if strings.Contains(r.URL.String(), "search=notfound") {
-					c = []Broker{}
-				} else if strings.Contains(r.URL.String(), "f__tags_has=Found&search=Found") {
-					c = []Broker{testBroker, testBroker}
-				} else if strings.Contains(r.URL.String(), "f__tags_has=NotFound&search=NotFound") {
-					c = []Broker{}
-				} else {
+				if r.URL.String() == "/broker?search=httptrap" {
 					c = []Broker{testBroker}
+				} else if r.URL.String() == "/broker?f__type=enterprise" {
+					c = []Broker{testBroker}
+				} else if r.URL.String() == "/broker?f__type=enterprise&search=httptrap" {
+					c = []Broker{testBroker}
+				} else if reqURL == "/broker" {
+					c = []Broker{testBroker}
+				} else {
+					c = []Broker{}
 				}
-
-				ret, err := json.Marshal(c)
-				if err != nil {
-					panic(err)
+				if len(c) > 0 {
+					ret, err := json.Marshal(c)
+					if err != nil {
+						panic(err)
+					}
+					w.WriteHeader(200)
+					w.Header().Set("Content-Type", "application/json")
+					fmt.Fprintln(w, string(ret))
+				} else {
+					w.WriteHeader(404)
+					fmt.Fprintln(w, fmt.Sprintf("not found: %s %s", r.Method, reqURL))
 				}
-				w.WriteHeader(200)
-				w.Header().Set("Content-Type", "application/json")
-				fmt.Fprintln(w, string(ret))
 			default:
 				w.WriteHeader(404)
 				fmt.Fprintln(w, fmt.Sprintf("not found: %s %s", r.Method, path))
@@ -199,7 +199,7 @@ func TestSearchBrokers(t *testing.T) {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
-	t.Log("search [nil search, nil filter]")
+	t.Log("no search, no filter")
 	{
 		brokers, err := apih.SearchBrokers(nil, nil)
 		if err != nil {
@@ -213,9 +213,9 @@ func TestSearchBrokers(t *testing.T) {
 		}
 	}
 
-	t.Log("search [search, nil filter, found]")
+	t.Log("search, no filter")
 	{
-		search := SearchQueryType("HTTPTrap")
+		search := SearchQueryType("httptrap")
 		brokers, err := apih.SearchBrokers(&search, nil)
 		if err != nil {
 			t.Fatalf("Expected no error, got %v", err)
@@ -228,10 +228,10 @@ func TestSearchBrokers(t *testing.T) {
 		}
 	}
 
-	t.Log("search [search, nil filter, not found]")
+	t.Log("no search, filter")
 	{
-		search := SearchQueryType("notfound")
-		brokers, err := apih.SearchBrokers(&search, nil)
+		filter := SearchFilterType{"f__type": []string{"enterprise"}}
+		brokers, err := apih.SearchBrokers(nil, &filter)
 		if err != nil {
 			t.Fatalf("Expected no error, got %v", err)
 		}
@@ -241,16 +241,12 @@ func TestSearchBrokers(t *testing.T) {
 		if actualType.String() != expectedType {
 			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 		}
-
-		if len(*brokers) > 0 {
-			t.Fatalf("Expected 0 got %d", len(*brokers))
-		}
 	}
 
-	t.Log("search [search, filter, found]")
+	t.Log("search, filter")
 	{
-		filter := SearchFilterType{"f__tags_has": []string{"Found"}}
-		search := SearchQueryType("Found")
+		search := SearchQueryType("httptrap")
+		filter := SearchFilterType{"f__type": []string{"enterprise"}}
 		brokers, err := apih.SearchBrokers(&search, &filter)
 		if err != nil {
 			t.Fatalf("Expected no error, got %v", err)
@@ -262,24 +258,4 @@ func TestSearchBrokers(t *testing.T) {
 			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 		}
 	}
-
-	t.Log("search [search, filter, not found]")
-	{
-		filter := SearchFilterType{"f__tags_has": []string{"NotFound"}}
-		search := SearchQueryType("NotFound")
-		brokers, err := apih.SearchBrokers(&search, &filter)
-		if err != nil {
-			t.Fatalf("Expected no error, got %v", err)
-		}
-
-		actualType := reflect.TypeOf(brokers)
-		expectedType := "*[]api.Broker"
-		if actualType.String() != expectedType {
-			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
-		}
-		if len(*brokers) > 0 {
-			t.Fatalf("Expected 0 got %d", len(*brokers))
-		}
-	}
-
 }
