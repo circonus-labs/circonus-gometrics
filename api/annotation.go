@@ -30,11 +30,6 @@ type Annotation struct {
 	Title          string   `json:"title"`
 }
 
-const (
-	baseAnnotationPath = config.AnnotationPrefix
-	annotationCIDRegex = "^" + baseAnnotationPath + "/[0-9]+$"
-)
-
 // FetchAnnotation retrieves a annotation definition
 func (a *API) FetchAnnotation(cid CIDType) (*Annotation, error) {
 	if cid == nil || *cid == "" {
@@ -43,7 +38,7 @@ func (a *API) FetchAnnotation(cid CIDType) (*Annotation, error) {
 
 	annotationCID := string(*cid)
 
-	matched, err := regexp.MatchString(annotationCIDRegex, annotationCID)
+	matched, err := regexp.MatchString(config.AnnotationCIDRegex, annotationCID)
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +61,7 @@ func (a *API) FetchAnnotation(cid CIDType) (*Annotation, error) {
 
 // FetchAnnotations retrieves all annotations
 func (a *API) FetchAnnotations() (*[]Annotation, error) {
-	result, err := a.Get(baseAnnotationPath)
+	result, err := a.Get(config.AnnotationPrefix)
 	if err != nil {
 		return nil, err
 	}
@@ -80,14 +75,14 @@ func (a *API) FetchAnnotations() (*[]Annotation, error) {
 }
 
 // UpdateAnnotation update annotation definition
-func (a *API) UpdateAnnotation(config *Annotation) (*Annotation, error) {
-	if config == nil {
+func (a *API) UpdateAnnotation(cfg *Annotation) (*Annotation, error) {
+	if cfg == nil {
 		return nil, fmt.Errorf("Invalid annotation config [nil]")
 	}
 
-	annotationCID := string(config.CID)
+	annotationCID := string(cfg.CID)
 
-	matched, err := regexp.MatchString(annotationCIDRegex, annotationCID)
+	matched, err := regexp.MatchString(config.AnnotationCIDRegex, annotationCID)
 	if err != nil {
 		return nil, err
 	}
@@ -95,12 +90,12 @@ func (a *API) UpdateAnnotation(config *Annotation) (*Annotation, error) {
 		return nil, fmt.Errorf("Invalid annotation CID [%s]", annotationCID)
 	}
 
-	cfg, err := json.Marshal(config)
+	jsonCfg, err := json.Marshal(cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	result, err := a.Put(annotationCID, cfg)
+	result, err := a.Put(annotationCID, jsonCfg)
 	if err != nil {
 		return nil, err
 	}
@@ -114,17 +109,17 @@ func (a *API) UpdateAnnotation(config *Annotation) (*Annotation, error) {
 }
 
 // CreateAnnotation create a new annotation
-func (a *API) CreateAnnotation(config *Annotation) (*Annotation, error) {
-	if config == nil {
+func (a *API) CreateAnnotation(cfg *Annotation) (*Annotation, error) {
+	if cfg == nil {
 		return nil, fmt.Errorf("Invalid annotation config [nil]")
 	}
 
-	cfg, err := json.Marshal(config)
+	jsonCfg, err := json.Marshal(cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	result, err := a.Post(baseAnnotationPath, cfg)
+	result, err := a.Post(config.AnnotationPrefix, jsonCfg)
 	if err != nil {
 		return nil, err
 	}
@@ -138,13 +133,12 @@ func (a *API) CreateAnnotation(config *Annotation) (*Annotation, error) {
 }
 
 // DeleteAnnotation delete a annotation
-func (a *API) DeleteAnnotation(config *Annotation) (bool, error) {
-	if config == nil {
+func (a *API) DeleteAnnotation(cfg *Annotation) (bool, error) {
+	if cfg == nil {
 		return false, fmt.Errorf("Invalid annotation config [none]")
 	}
 
-	cid := CIDType(&config.CID)
-	return a.DeleteAnnotationByCID(cid)
+	return a.DeleteAnnotationByCID(CIDType(&cfg.CID))
 }
 
 // DeleteAnnotationByCID delete a annotation by cid
@@ -155,7 +149,7 @@ func (a *API) DeleteAnnotationByCID(cid CIDType) (bool, error) {
 
 	annotationCID := string(*cid)
 
-	matched, err := regexp.MatchString(annotationCIDRegex, annotationCID)
+	matched, err := regexp.MatchString(config.AnnotationCIDRegex, annotationCID)
 	if err != nil {
 		return false, err
 	}
@@ -194,7 +188,7 @@ func (a *API) SearchAnnotations(searchCriteria *SearchQueryType, filterCriteria 
 	}
 
 	reqURL := url.URL{
-		Path:     baseAnnotationPath,
+		Path:     config.AnnotationPrefix,
 		RawQuery: q.Encode(),
 	}
 

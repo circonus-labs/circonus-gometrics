@@ -30,11 +30,6 @@ type Acknowledgement struct {
 	Notes             string      `json:"notes,omitempty"`
 }
 
-const (
-	baseAcknowledgementPath = config.AcknowledgementPrefix
-	acknowledgementCIDRegex = "^" + baseAcknowledgementPath + "/[0-9]+$"
-)
-
 // FetchAcknowledgement retrieves a acknowledgement definition
 func (a *API) FetchAcknowledgement(cid CIDType) (*Acknowledgement, error) {
 	if cid == nil || *cid == "" {
@@ -43,7 +38,7 @@ func (a *API) FetchAcknowledgement(cid CIDType) (*Acknowledgement, error) {
 
 	acknowledgementCID := string(*cid)
 
-	matched, err := regexp.MatchString(acknowledgementCIDRegex, acknowledgementCID)
+	matched, err := regexp.MatchString(config.AcknowledgementCIDRegex, acknowledgementCID)
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +61,7 @@ func (a *API) FetchAcknowledgement(cid CIDType) (*Acknowledgement, error) {
 
 // FetchAcknowledgements retrieves all acknowledgements
 func (a *API) FetchAcknowledgements() (*[]Acknowledgement, error) {
-	result, err := a.Get(baseAcknowledgementPath)
+	result, err := a.Get(config.AcknowledgementPrefix)
 	if err != nil {
 		return nil, err
 	}
@@ -80,14 +75,14 @@ func (a *API) FetchAcknowledgements() (*[]Acknowledgement, error) {
 }
 
 // UpdateAcknowledgement update acknowledgement definition
-func (a *API) UpdateAcknowledgement(config *Acknowledgement) (*Acknowledgement, error) {
-	if config == nil {
+func (a *API) UpdateAcknowledgement(cfg *Acknowledgement) (*Acknowledgement, error) {
+	if cfg == nil {
 		return nil, fmt.Errorf("Invalid acknowledgement config [nil]")
 	}
 
-	acknowledgementCID := string(config.CID)
+	acknowledgementCID := string(cfg.CID)
 
-	matched, err := regexp.MatchString(acknowledgementCIDRegex, acknowledgementCID)
+	matched, err := regexp.MatchString(config.AcknowledgementCIDRegex, acknowledgementCID)
 	if err != nil {
 		return nil, err
 	}
@@ -95,12 +90,12 @@ func (a *API) UpdateAcknowledgement(config *Acknowledgement) (*Acknowledgement, 
 		return nil, fmt.Errorf("Invalid acknowledgement CID [%s]", acknowledgementCID)
 	}
 
-	cfg, err := json.Marshal(config)
+	jsonCfg, err := json.Marshal(cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	result, err := a.Put(acknowledgementCID, cfg)
+	result, err := a.Put(acknowledgementCID, jsonCfg)
 	if err != nil {
 		return nil, err
 	}
@@ -114,17 +109,17 @@ func (a *API) UpdateAcknowledgement(config *Acknowledgement) (*Acknowledgement, 
 }
 
 // CreateAcknowledgement create a new acknowledgement
-func (a *API) CreateAcknowledgement(config *Acknowledgement) (*Acknowledgement, error) {
-	if config == nil {
+func (a *API) CreateAcknowledgement(cfg *Acknowledgement) (*Acknowledgement, error) {
+	if cfg == nil {
 		return nil, fmt.Errorf("Invalid acknowledgement config [nil]")
 	}
 
-	cfg, err := json.Marshal(config)
+	jsonCfg, err := json.Marshal(cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	result, err := a.Post(baseAcknowledgementPath, cfg)
+	result, err := a.Post(config.AcknowledgementPrefix, jsonCfg)
 	if err != nil {
 		return nil, err
 	}
@@ -160,7 +155,7 @@ func (a *API) SearchAcknowledgements(searchCriteria *SearchQueryType, filterCrit
 	}
 
 	reqURL := url.URL{
-		Path:     baseAcknowledgementPath,
+		Path:     config.AcknowledgementPrefix,
 		RawQuery: q.Encode(),
 	}
 

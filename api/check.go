@@ -32,11 +32,6 @@ type Check struct {
 	Details        CheckDetails `json:"_details"`
 }
 
-const (
-	baseCheckPath = config.CheckPrefix
-	checkCIDRegex = "^" + baseCheckPath + "/[0-9]+$"
-)
-
 // FetchCheck fetch a check configuration by cid
 func (a *API) FetchCheck(cid CIDType) (*Check, error) {
 	if cid == nil || *cid == "" {
@@ -45,7 +40,7 @@ func (a *API) FetchCheck(cid CIDType) (*Check, error) {
 
 	checkCID := string(*cid)
 
-	matched, err := regexp.MatchString(checkCIDRegex, checkCID)
+	matched, err := regexp.MatchString(config.CheckCIDRegex, checkCID)
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +63,7 @@ func (a *API) FetchCheck(cid CIDType) (*Check, error) {
 
 // FetchChecks fetches check configurations
 func (a *API) FetchChecks() (*[]Check, error) {
-	result, err := a.Get(baseCheckPath)
+	result, err := a.Get(config.CheckPrefix)
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +97,7 @@ func (a *API) SearchChecks(searchCriteria *SearchQueryType, filterCriteria *Sear
 	}
 
 	reqURL := url.URL{
-		Path:     baseCheckPath,
+		Path:     config.CheckPrefix,
 		RawQuery: q.Encode(),
 	}
 
