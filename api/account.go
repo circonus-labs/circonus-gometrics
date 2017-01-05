@@ -79,7 +79,7 @@ func (a *API) FetchAccount(cid CIDType) (*Account, error) {
 	}
 
 	if a.Debug {
-		a.Log.Printf("[DEBUG] account fetch, JSON from API: %s", string(result))
+		a.Log.Printf("[DEBUG] account fetch, received JSON: %s", string(result))
 	}
 
 	account := new(Account)
@@ -112,7 +112,7 @@ func (a *API) UpdateAccount(cfg *Account) (*Account, error) {
 	}
 
 	if a.Debug {
-		a.Log.Printf("[DEBUG] account update, sending JSON API: %s", string(jsonCfg))
+		a.Log.Printf("[DEBUG] account update, sending JSON: %s", string(jsonCfg))
 	}
 
 	result, err := a.Put(accountCID, jsonCfg)
