@@ -99,13 +99,13 @@ func (a *API) UpdateAnnotation(cfg *Annotation) (*Annotation, error) {
 		return nil, err
 	}
 
+	if a.Debug {
+		a.Log.Printf("[DEBUG] update annotation, sending JSON: %s", string(jsonCfg))
+	}
+
 	result, err := a.Put(annotationCID, jsonCfg)
 	if err != nil {
 		return nil, err
-	}
-
-	if a.Debug {
-		a.Log.Printf("[DEBUG] update annotation, sending JSON: %s", string(jsonCfg))
 	}
 
 	annotation := &Annotation{}
@@ -127,13 +127,13 @@ func (a *API) CreateAnnotation(cfg *Annotation) (*Annotation, error) {
 		return nil, err
 	}
 
+	if a.Debug {
+		a.Log.Printf("[DEBUG] create annotation, sending JSON: %s", string(jsonCfg))
+	}
+
 	result, err := a.Post(config.AnnotationPrefix, jsonCfg)
 	if err != nil {
 		return nil, err
-	}
-
-	if a.Debug {
-		a.Log.Printf("[DEBUG] create annotation, sending JSON: %s", string(jsonCfg))
 	}
 
 	annotation := &Annotation{}
