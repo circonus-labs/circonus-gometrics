@@ -51,6 +51,10 @@ func (a *API) FetchAcknowledgement(cid CIDType) (*Acknowledgement, error) {
 		return nil, err
 	}
 
+	if a.Debug {
+		a.Log.Printf("[DEBUG] acknowledgement fetch, received JSON: %s", string(result))
+	}
+
 	acknowledgement := &Acknowledgement{}
 	if err := json.Unmarshal(result, acknowledgement); err != nil {
 		return nil, err
@@ -95,6 +99,10 @@ func (a *API) UpdateAcknowledgement(cfg *Acknowledgement) (*Acknowledgement, err
 		return nil, err
 	}
 
+	if a.Debug {
+		a.Log.Printf("[DEBUG] acknowledgement update, sending JSON: %s", string(jsonCfg))
+	}
+
 	result, err := a.Put(acknowledgementCID, jsonCfg)
 	if err != nil {
 		return nil, err
@@ -122,6 +130,10 @@ func (a *API) CreateAcknowledgement(cfg *Acknowledgement) (*Acknowledgement, err
 	result, err := a.Post(config.AcknowledgementPrefix, jsonCfg)
 	if err != nil {
 		return nil, err
+	}
+
+	if a.Debug {
+		a.Log.Printf("[DEBUG] acknowledgement create, sending JSON: %s", string(jsonCfg))
 	}
 
 	acknowledgement := &Acknowledgement{}
