@@ -17,7 +17,7 @@ import (
 
 var (
 	testMetric = Metric{
-		CID:            "/metric/1234",
+		CID:            "/metric/1234_foo",
 		Active:         true,
 		CheckCID:       "/check/1234",
 		CheckActive:    true,
@@ -35,7 +35,7 @@ var (
 func testMetricServer() *httptest.Server {
 	f := func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
-		if path == "/metric/1234" {
+		if path == "/metric/1234_foo" {
 			switch r.Method {
 			case "GET":
 				ret, err := json.Marshal(testMetric)
@@ -111,7 +111,7 @@ func TestFetchMetric(t *testing.T) {
 
 	t.Log("with valid CID")
 	{
-		cid := "/metric/1234"
+		cid := "/metric/1234_foo"
 		metric, err := apih.FetchMetric(CIDType(&cid))
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)

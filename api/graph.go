@@ -156,11 +156,6 @@ type Graph struct {
 	Title          string                      `json:"title,omitempty"`
 }
 
-const (
-	baseGraphPath = config.GraphPrefix
-	graphCIDRegex = "^" + baseGraphPath + "/[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{8,12}$"
-)
-
 // FetchGraph retrieves a graph definition
 func (a *API) FetchGraph(cid CIDType) (*Graph, error) {
 	if cid == nil || *cid == "" {
@@ -169,7 +164,7 @@ func (a *API) FetchGraph(cid CIDType) (*Graph, error) {
 
 	graphCID := string(*cid)
 
-	matched, err := regexp.MatchString(graphCIDRegex, graphCID)
+	matched, err := regexp.MatchString(config.GraphCIDRegex, graphCID)
 	if err != nil {
 		return nil, err
 	}
@@ -196,7 +191,7 @@ func (a *API) FetchGraph(cid CIDType) (*Graph, error) {
 
 // FetchGraphs retrieves all graphs
 func (a *API) FetchGraphs() (*[]Graph, error) {
-	result, err := a.Get(baseGraphPath)
+	result, err := a.Get(config.GraphPrefix)
 	if err != nil {
 		return nil, err
 	}
@@ -210,30 +205,31 @@ func (a *API) FetchGraphs() (*[]Graph, error) {
 }
 
 // UpdateGraph update graph definition
-func (a *API) UpdateGraph(config *Graph) (*Graph, error) {
-
-	if config == nil {
+func (a *API) UpdateGraph(cfg *Graph) (*Graph, error) {
+	if cfg == nil {
 		return nil, fmt.Errorf("Invalid graph config [nil]")
 	}
 
-	graphCID := string(config.CID)
+	graphCID := string(cfg.CID)
 
-	if matched, err := regexp.MatchString(graphCIDRegex, graphCID); err != nil {
+	matched, err := regexp.MatchString(config.GraphCIDRegex, graphCID)
+	if err != nil {
 		return nil, err
-	} else if !matched {
+	}
+	if !matched {
 		return nil, fmt.Errorf("Invalid graph CID [%s]", graphCID)
 	}
 
-	cfg, err := json.Marshal(config)
+	jsonCfg, err := json.Marshal(cfg)
 	if err != nil {
 		return nil, err
 	}
 
 	if a.Debug {
-		a.Log.Printf("[DEBUG] update graph, sending JSON API: %s", string(cfg))
+		a.Log.Printf("[DEBUG] update graph, sending JSON API: %s", string(jsonCfg))
 	}
 
-	result, err := a.Put(graphCID, cfg)
+	result, err := a.Put(graphCID, jsonCfg)
 	if err != nil {
 		return nil, err
 	}
@@ -247,21 +243,21 @@ func (a *API) UpdateGraph(config *Graph) (*Graph, error) {
 }
 
 // CreateGraph create a new graph
-func (a *API) CreateGraph(config *Graph) (*Graph, error) {
-	if config == nil {
+func (a *API) CreateGraph(cfg *Graph) (*Graph, error) {
+	if cfg == nil {
 		return nil, fmt.Errorf("Invalid graph config [nil]")
 	}
 
-	cfg, err := json.Marshal(config)
+	jsonCfg, err := json.Marshal(cfg)
 	if err != nil {
 		return nil, err
 	}
 
 	if a.Debug {
-		a.Log.Printf("[DEBUG] create graph, sending JSON API: %s", string(cfg))
+		a.Log.Printf("[DEBUG] create graph, sending JSON API: %s", string(jsonCfg))
 	}
 
-	result, err := a.Post(baseGraphPath, cfg)
+	result, err := a.Post(config.GraphPrefix, jsonCfg)
 	if err != nil {
 		return nil, err
 	}
@@ -275,11 +271,11 @@ func (a *API) CreateGraph(config *Graph) (*Graph, error) {
 }
 
 // DeleteGraph delete a graph
-func (a *API) DeleteGraph(config *Graph) (bool, error) {
-	if config == nil {
+func (a *API) DeleteGraph(cfg *Graph) (bool, error) {
+	if cfg == nil {
 		return false, fmt.Errorf("Invalid graph config [nil]")
 	}
-	return a.DeleteGraphByCID(CIDType(&config.CID))
+	return a.DeleteGraphByCID(CIDType(&cfg.CID))
 }
 
 // DeleteGraphByCID delete a graph by cid
@@ -290,7 +286,7 @@ func (a *API) DeleteGraphByCID(cid CIDType) (bool, error) {
 
 	graphCID := string(*cid)
 
-	matched, err := regexp.MatchString(graphCIDRegex, graphCID)
+	matched, err := regexp.MatchString(config.GraphCIDRegex, graphCID)
 	if err != nil {
 		return false, err
 	}
@@ -329,7 +325,7 @@ func (a *API) GraphSearch(searchCriteria *SearchQueryType, filterCriteria *Searc
 	}
 
 	reqURL := url.URL{
-		Path:     baseGraphPath,
+		Path:     config.GraphPrefix,
 		RawQuery: q.Encode(),
 	}
 

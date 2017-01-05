@@ -40,11 +40,6 @@ type Worksheet struct {
 	Title        string                `json:"title"`
 }
 
-const (
-	baseWorksheetPath = config.WorksheetPrefix
-	worksheetCIDRegex = "^" + baseWorksheetPath + "/[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{8,12}$"
-)
-
 // FetchWorksheet retrieves a worksheet definition
 func (a *API) FetchWorksheet(cid CIDType) (*Worksheet, error) {
 	if cid == nil || *cid == "" {
@@ -53,7 +48,7 @@ func (a *API) FetchWorksheet(cid CIDType) (*Worksheet, error) {
 
 	worksheetCID := string(*cid)
 
-	matched, err := regexp.MatchString(worksheetCIDRegex, worksheetCID)
+	matched, err := regexp.MatchString(config.WorksheetCIDRegex, worksheetCID)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +71,7 @@ func (a *API) FetchWorksheet(cid CIDType) (*Worksheet, error) {
 
 // FetchWorksheets retrieves all worksheets
 func (a *API) FetchWorksheets() (*[]Worksheet, error) {
-	result, err := a.Get(baseWorksheetPath)
+	result, err := a.Get(config.WorksheetPrefix)
 	if err != nil {
 		return nil, err
 	}
@@ -90,14 +85,14 @@ func (a *API) FetchWorksheets() (*[]Worksheet, error) {
 }
 
 // UpdateWorksheet update worksheet definition
-func (a *API) UpdateWorksheet(config *Worksheet) (*Worksheet, error) {
-	if config == nil {
+func (a *API) UpdateWorksheet(cfg *Worksheet) (*Worksheet, error) {
+	if cfg == nil {
 		return nil, fmt.Errorf("Invalid worksheet config [nil]")
 	}
 
-	worksheetCID := string(config.CID)
+	worksheetCID := string(cfg.CID)
 
-	matched, err := regexp.MatchString(worksheetCIDRegex, worksheetCID)
+	matched, err := regexp.MatchString(config.WorksheetCIDRegex, worksheetCID)
 	if err != nil {
 		return nil, err
 	}
@@ -105,12 +100,12 @@ func (a *API) UpdateWorksheet(config *Worksheet) (*Worksheet, error) {
 		return nil, fmt.Errorf("Invalid worksheet CID [%s]", worksheetCID)
 	}
 
-	cfg, err := json.Marshal(config)
+	jsonCfg, err := json.Marshal(cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	result, err := a.Put(worksheetCID, cfg)
+	result, err := a.Put(worksheetCID, jsonCfg)
 	if err != nil {
 		return nil, err
 	}
@@ -124,17 +119,17 @@ func (a *API) UpdateWorksheet(config *Worksheet) (*Worksheet, error) {
 }
 
 // CreateWorksheet create a new worksheet
-func (a *API) CreateWorksheet(config *Worksheet) (*Worksheet, error) {
-	if config == nil {
+func (a *API) CreateWorksheet(cfg *Worksheet) (*Worksheet, error) {
+	if cfg == nil {
 		return nil, fmt.Errorf("Invalid worksheet config [nil]")
 	}
 
-	cfg, err := json.Marshal(config)
+	jsonCfg, err := json.Marshal(cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	result, err := a.Post(baseWorksheetPath, cfg)
+	result, err := a.Post(config.WorksheetPrefix, jsonCfg)
 	if err != nil {
 		return nil, err
 	}
@@ -148,12 +143,11 @@ func (a *API) CreateWorksheet(config *Worksheet) (*Worksheet, error) {
 }
 
 // DeleteWorksheet delete a worksheet
-func (a *API) DeleteWorksheet(config *Worksheet) (bool, error) {
-	if config == nil {
+func (a *API) DeleteWorksheet(cfg *Worksheet) (bool, error) {
+	if cfg == nil {
 		return false, fmt.Errorf("Invalid worksheet config [none]")
 	}
-	cid := CIDType(&config.CID)
-	return a.DeleteWorksheetByCID(cid)
+	return a.DeleteWorksheetByCID(CIDType(&cfg.CID))
 }
 
 // DeleteWorksheetByCID delete a worksheet by cid
@@ -164,7 +158,7 @@ func (a *API) DeleteWorksheetByCID(cid CIDType) (bool, error) {
 
 	worksheetCID := string(*cid)
 
-	matched, err := regexp.MatchString(worksheetCIDRegex, worksheetCID)
+	matched, err := regexp.MatchString(config.WorksheetCIDRegex, worksheetCID)
 	if err != nil {
 		return false, err
 	}
@@ -203,7 +197,7 @@ func (a *API) SearchWorksheets(searchCriteria *SearchQueryType, filterCriteria *
 	}
 
 	reqURL := url.URL{
-		Path:     baseWorksheetPath,
+		Path:     config.WorksheetPrefix,
 		RawQuery: q.Encode(),
 	}
 
