@@ -122,9 +122,11 @@ func (a *API) UpdateMetricCluster(cfg *MetricCluster) (*MetricCluster, error) {
 
 	clusterCID := string(cfg.CID)
 
-	if matched, err := regexp.MatchString(config.MetricClusterCIDRegex, clusterCID); err != nil {
+	matched, err := regexp.MatchString(config.MetricClusterCIDRegex, clusterCID)
+	if err != nil {
 		return nil, err
-	} else if !matched {
+	}
+	if !matched {
 		return nil, fmt.Errorf("Invalid metric cluster CID [%s]", clusterCID)
 	}
 

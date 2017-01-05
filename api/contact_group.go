@@ -84,9 +84,11 @@ func (a *API) FetchContactGroup(cid CIDType) (*ContactGroup, error) {
 
 	groupCID := string(*cid)
 
-	if matched, err := regexp.MatchString(config.ContactGroupCIDRegex, groupCID); err != nil {
+	matched, err := regexp.MatchString(config.ContactGroupCIDRegex, groupCID)
+	if err != nil {
 		return nil, err
-	} else if !matched {
+	}
+	if !matched {
 		return nil, fmt.Errorf("Invalid contact group CID [%s]", groupCID)
 	}
 
