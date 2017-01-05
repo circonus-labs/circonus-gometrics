@@ -60,21 +60,31 @@ func testAcknowledgementServer() *httptest.Server {
 		} else if path == "/acknowledgement" {
 			switch r.Method {
 			case "GET":
+				reqURL := r.URL.String()
 				var c []Acknowledgement
 				if r.URL.String() == "/acknowledgement?search=%28notes%3D%22something%22%29" {
 					c = []Acknowledgement{testAcknowledgement}
 				} else if r.URL.String() == "/acknowledgement?f__active=true" {
 					c = []Acknowledgement{testAcknowledgement}
-				} else {
+				} else if r.URL.String() == "/acknowledgement?f__active=true&search=%28notes%3D%22something%22%29" {
 					c = []Acknowledgement{testAcknowledgement}
+				} else if reqURL == "/acknowledgement" {
+					c = []Acknowledgement{testAcknowledgement}
+				} else {
+					c = []Acknowledgement{}
 				}
-				ret, err := json.Marshal(c)
-				if err != nil {
-					panic(err)
+				if len(c) > 0 {
+					ret, err := json.Marshal(c)
+					if err != nil {
+						panic(err)
+					}
+					w.WriteHeader(200)
+					w.Header().Set("Content-Type", "application/json")
+					fmt.Fprintln(w, string(ret))
+				} else {
+					w.WriteHeader(404)
+					fmt.Fprintln(w, fmt.Sprintf("not found: %s %s", r.Method, reqURL))
 				}
-				w.WriteHeader(200)
-				w.Header().Set("Content-Type", "application/json")
-				fmt.Fprintln(w, string(ret))
 			case "POST":
 				defer r.Body.Close()
 				_, err := ioutil.ReadAll(r.Body)
