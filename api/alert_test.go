@@ -56,14 +56,31 @@ func testAlertServer() *httptest.Server {
 		} else if path == "/alert" {
 			switch r.Method {
 			case "GET":
-				c := []Alert{testAlert}
-				ret, err := json.Marshal(c)
-				if err != nil {
-					panic(err)
+				reqURL := r.URL.String()
+				var c []Alert
+				if reqURL == "/alert?search=%28host%3D%22somehost.example.com%22%29" {
+					c = []Alert{testAlert}
+				} else if reqURL == "/alert?f__cleared_on=null" {
+					c = []Alert{testAlert}
+				} else if reqURL == "/alert?f__cleared_on=null&search=%28host%3D%22somehost.example.com%22%29" {
+					c = []Alert{testAlert}
+				} else if reqURL == "/alert" {
+					c = []Alert{testAlert}
+				} else {
+					c = []Alert{}
 				}
-				w.WriteHeader(200)
-				w.Header().Set("Content-Type", "application/json")
-				fmt.Fprintln(w, string(ret))
+				if len(c) > 0 {
+					ret, err := json.Marshal(c)
+					if err != nil {
+						panic(err)
+					}
+					w.WriteHeader(200)
+					w.Header().Set("Content-Type", "application/json")
+					fmt.Fprintln(w, string(ret))
+				} else {
+					w.WriteHeader(404)
+					fmt.Fprintln(w, fmt.Sprintf("not found: %s %s", r.Method, reqURL))
+				}
 			default:
 				w.WriteHeader(404)
 				fmt.Fprintln(w, fmt.Sprintf("not found: %s %s", r.Method, path))
@@ -162,4 +179,81 @@ func TestFetchAlerts(t *testing.T) {
 		t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 	}
 
+}
+
+func TestSearchAlerts(t *testing.T) {
+	server := testAlertServer()
+	defer server.Close()
+
+	var apih *API
+
+	ac := &Config{
+		TokenKey: "abc123",
+		TokenApp: "test",
+		URL:      server.URL,
+	}
+	apih, err := NewAPI(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	t.Log("no search, no filter")
+	{
+		acknowledgements, err := apih.SearchAlerts(nil, nil)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(acknowledgements)
+		expectedType := "*[]api.Alert"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
+	}
+
+	t.Log("search, no filter")
+	{
+		search := SearchQueryType(`(host="somehost.example.com")`)
+		acknowledgements, err := apih.SearchAlerts(&search, nil)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(acknowledgements)
+		expectedType := "*[]api.Alert"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
+	}
+
+	t.Log("no search, filter")
+	{
+		filter := SearchFilterType(map[string][]string{"f__cleared_on": []string{"null"}})
+		acknowledgements, err := apih.SearchAlerts(nil, &filter)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(acknowledgements)
+		expectedType := "*[]api.Alert"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
+	}
+
+	t.Log("search, filter")
+	{
+		search := SearchQueryType(`(host="somehost.example.com")`)
+		filter := SearchFilterType(map[string][]string{"f__cleared_on": []string{"null"}})
+		acknowledgements, err := apih.SearchAlerts(&search, &filter)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(acknowledgements)
+		expectedType := "*[]api.Alert"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
+	}
 }
