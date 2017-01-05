@@ -199,12 +199,12 @@ func TestSearchAlerts(t *testing.T) {
 
 	t.Log("no search, no filter")
 	{
-		acknowledgements, err := apih.SearchAlerts(nil, nil)
+		alerts, err := apih.SearchAlerts(nil, nil)
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
 
-		actualType := reflect.TypeOf(acknowledgements)
+		actualType := reflect.TypeOf(alerts)
 		expectedType := "*[]api.Alert"
 		if actualType.String() != expectedType {
 			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
@@ -214,12 +214,12 @@ func TestSearchAlerts(t *testing.T) {
 	t.Log("search, no filter")
 	{
 		search := SearchQueryType(`(host="somehost.example.com")`)
-		acknowledgements, err := apih.SearchAlerts(&search, nil)
+		alerts, err := apih.SearchAlerts(&search, nil)
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
 
-		actualType := reflect.TypeOf(acknowledgements)
+		actualType := reflect.TypeOf(alerts)
 		expectedType := "*[]api.Alert"
 		if actualType.String() != expectedType {
 			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
@@ -229,12 +229,12 @@ func TestSearchAlerts(t *testing.T) {
 	t.Log("no search, filter")
 	{
 		filter := SearchFilterType(map[string][]string{"f__cleared_on": []string{"null"}})
-		acknowledgements, err := apih.SearchAlerts(nil, &filter)
+		alerts, err := apih.SearchAlerts(nil, &filter)
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
 
-		actualType := reflect.TypeOf(acknowledgements)
+		actualType := reflect.TypeOf(alerts)
 		expectedType := "*[]api.Alert"
 		if actualType.String() != expectedType {
 			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
@@ -245,12 +245,12 @@ func TestSearchAlerts(t *testing.T) {
 	{
 		search := SearchQueryType(`(host="somehost.example.com")`)
 		filter := SearchFilterType(map[string][]string{"f__cleared_on": []string{"null"}})
-		acknowledgements, err := apih.SearchAlerts(&search, &filter)
+		alerts, err := apih.SearchAlerts(&search, &filter)
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
 
-		actualType := reflect.TypeOf(acknowledgements)
+		actualType := reflect.TypeOf(alerts)
 		expectedType := "*[]api.Alert"
 		if actualType.String() != expectedType {
 			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
