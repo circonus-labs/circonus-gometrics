@@ -51,6 +51,10 @@ func (a *API) FetchAnnotation(cid CIDType) (*Annotation, error) {
 		return nil, err
 	}
 
+	if a.Debug {
+		a.Log.Printf("[DEBUG] fetch annotation, received JSON: %s", string(result))
+	}
+
 	annotation := &Annotation{}
 	if err := json.Unmarshal(result, annotation); err != nil {
 		return nil, err
@@ -100,6 +104,10 @@ func (a *API) UpdateAnnotation(cfg *Annotation) (*Annotation, error) {
 		return nil, err
 	}
 
+	if a.Debug {
+		a.Log.Printf("[DEBUG] update annotation, sending JSON: %s", string(jsonCfg))
+	}
+
 	annotation := &Annotation{}
 	if err := json.Unmarshal(result, annotation); err != nil {
 		return nil, err
@@ -122,6 +130,10 @@ func (a *API) CreateAnnotation(cfg *Annotation) (*Annotation, error) {
 	result, err := a.Post(config.AnnotationPrefix, jsonCfg)
 	if err != nil {
 		return nil, err
+	}
+
+	if a.Debug {
+		a.Log.Printf("[DEBUG] create annotation, sending JSON: %s", string(jsonCfg))
 	}
 
 	annotation := &Annotation{}
