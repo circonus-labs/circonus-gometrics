@@ -58,6 +58,10 @@ func (a *API) FetchAlert(cid CIDType) (*Alert, error) {
 		return nil, err
 	}
 
+	if a.Debug {
+		a.Log.Printf("[DEBUG] fetch alert, received JSON: %s", string(result))
+	}
+
 	alert := &Alert{}
 	if err := json.Unmarshal(result, alert); err != nil {
 		return nil, err
