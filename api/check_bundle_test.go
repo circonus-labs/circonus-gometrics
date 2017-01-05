@@ -12,7 +12,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"reflect"
-	"strings"
 	"testing"
 
 	"github.com/circonus-labs/circonus-gometrics/api/config"
@@ -74,31 +73,31 @@ func testCheckBundleServer() *httptest.Server {
 		} else if path == "/check_bundle" {
 			switch r.Method {
 			case "GET":
+				reqURL := r.URL.String()
 				var c []CheckBundle
-				if strings.Contains(r.URL.String(), "search=test1") {
-					c = []CheckBundle{}
-				} else if strings.Contains(r.URL.String(), "f__tags_has=cat%3Atag") {
-					c = []CheckBundle{testCheckBundle, testCheckBundle}
-				} else if strings.Contains(r.URL.String(), "search=HTTPTrap") {
-					c = []CheckBundle{testCheckBundle, testCheckBundle}
-				} else if strings.Contains(r.URL.String(), "search=notfound") {
-					c = []CheckBundle{}
-				} else if strings.Contains(r.URL.String(), "f__tags_has=Found&search=Found") {
-					c = []CheckBundle{testCheckBundle, testCheckBundle}
-				} else if strings.Contains(r.URL.String(), "f__tags_has=NotFound&search=NotFound") {
-					c = []CheckBundle{}
-				} else {
+				if reqURL == "/check_bundle?search=test" {
 					c = []CheckBundle{testCheckBundle}
+				} else if reqURL == "/check_bundle?f__tags_has=cat%3Atag" {
+					c = []CheckBundle{testCheckBundle}
+				} else if reqURL == "/check_bundle?f__tags_has=cat%3Atag&search=test" {
+					c = []CheckBundle{testCheckBundle}
+				} else if reqURL == "/check_bundle" {
+					c = []CheckBundle{testCheckBundle}
+				} else {
+					c = []CheckBundle{}
 				}
-
-				ret, err := json.Marshal(c)
-				if err != nil {
-					panic(err)
+				if len(c) > 0 {
+					ret, err := json.Marshal(c)
+					if err != nil {
+						panic(err)
+					}
+					w.WriteHeader(200)
+					w.Header().Set("Content-Type", "application/json")
+					fmt.Fprintln(w, string(ret))
+				} else {
+					w.WriteHeader(404)
+					fmt.Fprintln(w, fmt.Sprintf("not found: %s %s", r.Method, reqURL))
 				}
-
-				w.WriteHeader(200)
-				w.Header().Set("Content-Type", "application/json")
-				fmt.Fprintln(w, string(ret))
 			case "POST": // create
 				defer r.Body.Close()
 				b, err := ioutil.ReadAll(r.Body)
@@ -121,6 +120,21 @@ func testCheckBundleServer() *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(f))
 }
 
+func TestNewCheckBundle(t *testing.T) {
+	ac := &Config{TokenKey: "abc123", TokenApp: "test"}
+
+	apih, err := New(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+	bundle := apih.NewCheckBundle()
+	actualType := reflect.TypeOf(bundle)
+	expectedType := "*api.CheckBundle"
+	if actualType.String() != expectedType {
+		t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+	}
+}
+
 func TestFetchCheckBundle(t *testing.T) {
 	server := testCheckBundleServer()
 	defer server.Close()
@@ -130,7 +144,7 @@ func TestFetchCheckBundle(t *testing.T) {
 		TokenApp: "test",
 		URL:      server.URL,
 	}
-	apih, err := NewAPI(ac)
+	apih, err := New(ac)
 	if err != nil {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
@@ -165,69 +179,6 @@ func TestFetchCheckBundle(t *testing.T) {
 
 		if bundle.CID != testCheckBundle.CID {
 			t.Fatalf("CIDs do not match: %+v != %+v\n", bundle, testCheckBundle)
-		}
-	}
-}
-
-func TestCheckBundleSearch(t *testing.T) {
-	server := testCheckBundleServer()
-	defer server.Close()
-
-	var apih *API
-	var err error
-
-	ac := &Config{
-		TokenKey: "abc123",
-		TokenApp: "test",
-		URL:      server.URL,
-	}
-	apih, err = NewAPI(ac)
-	if err != nil {
-		t.Errorf("Expected no error, got '%v'", err)
-	}
-
-	t.Log("Testing w/o search criteria")
-	{
-		bundles, err := apih.SearchCheckBundles(nil, nil)
-		if err != nil {
-			t.Fatalf("Expected no error, got '%v'", err)
-		}
-
-		actualType := reflect.TypeOf(bundles)
-		expectedType := "*[]api.CheckBundle"
-		if actualType.String() != expectedType {
-			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
-		}
-	}
-
-	t.Log("Testing with search criteria")
-	{
-		search := SearchQueryType("test1")
-		bundles, err := apih.SearchCheckBundles(&search, nil)
-		if err != nil {
-			t.Fatalf("Expected no error, got '%v'", err)
-		}
-
-		actualType := reflect.TypeOf(bundles)
-		expectedType := "*[]api.CheckBundle"
-		if actualType.String() != expectedType {
-			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
-		}
-	}
-
-	t.Log("Testing with search and filter criteria")
-	{
-		search := SearchQueryType("test")
-		filter := map[string][]string{"f_notes": []string{"foo"}}
-		bundles, err := apih.SearchCheckBundles(&search, &filter)
-		if err != nil {
-			t.Fatalf("Expected no error, got '%v'", err)
-		}
-
-		actualType := reflect.TypeOf(bundles)
-		expectedType := "*[]api.CheckBundle"
-		if actualType.String() != expectedType {
-			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 		}
 	}
 }
@@ -366,5 +317,83 @@ func TestDeleteCheckBundle(t *testing.T) {
 
 	if !success {
 		t.Fatalf("Expected success to be true")
+	}
+}
+
+func TestSearchCheckBundles(t *testing.T) {
+	server := testCheckBundleServer()
+	defer server.Close()
+
+	var apih *API
+	var err error
+
+	ac := &Config{
+		TokenKey: "abc123",
+		TokenApp: "test",
+		URL:      server.URL,
+	}
+	apih, err = NewAPI(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	t.Log("no search, no filter")
+	{
+		bundles, err := apih.SearchCheckBundles(nil, nil)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(bundles)
+		expectedType := "*[]api.CheckBundle"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
+	}
+
+	t.Log("search, no filter")
+	{
+		search := SearchQueryType("test")
+		bundles, err := apih.SearchCheckBundles(&search, nil)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(bundles)
+		expectedType := "*[]api.CheckBundle"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
+	}
+
+	t.Log("no search, filter")
+	{
+		filter := map[string][]string{"f__tags_has": []string{"cat:tag"}}
+		bundles, err := apih.SearchCheckBundles(nil, &filter)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(bundles)
+		expectedType := "*[]api.CheckBundle"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
+	}
+
+	t.Log("search, filter")
+	{
+		search := SearchQueryType("test")
+		filter := map[string][]string{"f__tags_has": []string{"cat:tag"}}
+		bundles, err := apih.SearchCheckBundles(&search, &filter)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(bundles)
+		expectedType := "*[]api.CheckBundle"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
 	}
 }
