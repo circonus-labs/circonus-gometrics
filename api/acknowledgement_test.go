@@ -60,7 +60,14 @@ func testAcknowledgementServer() *httptest.Server {
 		} else if path == "/acknowledgement" {
 			switch r.Method {
 			case "GET":
-				c := []Acknowledgement{testAcknowledgement}
+				var c []Acknowledgement
+				if r.URL.String() == "/acknowledgement?search=%28notes%3D%22something%22%29" {
+					c = []Acknowledgement{testAcknowledgement}
+				} else if r.URL.String() == "/acknowledgement?f__active=true" {
+					c = []Acknowledgement{testAcknowledgement}
+				} else {
+					c = []Acknowledgement{testAcknowledgement}
+				}
 				ret, err := json.Marshal(c)
 				if err != nil {
 					panic(err)
@@ -181,34 +188,6 @@ func TestFetchAcknowledgements(t *testing.T) {
 
 }
 
-func TestCreateAcknowledgement(t *testing.T) {
-	server := testAcknowledgementServer()
-	defer server.Close()
-
-	var apih *API
-
-	ac := &Config{
-		TokenKey: "abc123",
-		TokenApp: "test",
-		URL:      server.URL,
-	}
-	apih, err := NewAPI(ac)
-	if err != nil {
-		t.Errorf("Expected no error, got '%v'", err)
-	}
-
-	acknowledgement, err := apih.CreateAcknowledgement(&testAcknowledgement)
-	if err != nil {
-		t.Fatalf("Expected no error, got '%v'", err)
-	}
-
-	actualType := reflect.TypeOf(acknowledgement)
-	expectedType := "*api.Acknowledgement"
-	if actualType.String() != expectedType {
-		t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
-	}
-}
-
 func TestUpdateAcknowledgement(t *testing.T) {
 	server := testAcknowledgementServer()
 	defer server.Close()
@@ -249,6 +228,111 @@ func TestUpdateAcknowledgement(t *testing.T) {
 		}
 		if err.Error() != expectedError.Error() {
 			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+}
+
+func TestCreateAcknowledgement(t *testing.T) {
+	server := testAcknowledgementServer()
+	defer server.Close()
+
+	var apih *API
+
+	ac := &Config{
+		TokenKey: "abc123",
+		TokenApp: "test",
+		URL:      server.URL,
+	}
+	apih, err := NewAPI(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	acknowledgement, err := apih.CreateAcknowledgement(&testAcknowledgement)
+	if err != nil {
+		t.Fatalf("Expected no error, got '%v'", err)
+	}
+
+	actualType := reflect.TypeOf(acknowledgement)
+	expectedType := "*api.Acknowledgement"
+	if actualType.String() != expectedType {
+		t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+	}
+}
+
+func TestSearchAcknowledgement(t *testing.T) {
+	server := testAcknowledgementServer()
+	defer server.Close()
+
+	var apih *API
+
+	ac := &Config{
+		TokenKey: "abc123",
+		TokenApp: "test",
+		URL:      server.URL,
+	}
+	apih, err := NewAPI(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	t.Log("no search, no filter")
+	{
+		acknowledgements, err := apih.SearchAcknowledgements(nil, nil)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(acknowledgements)
+		expectedType := "*[]api.Acknowledgement"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
+	}
+
+	t.Log("search, no filter")
+	{
+		search := SearchQueryType(`(notes="something")`)
+		acknowledgements, err := apih.SearchAcknowledgements(&search, nil)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(acknowledgements)
+		expectedType := "*[]api.Acknowledgement"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
+	}
+
+	t.Log("no search, filter")
+	{
+		filter := SearchFilterType(map[string][]string{"f__active": []string{"true"}})
+		acknowledgements, err := apih.SearchAcknowledgements(nil, &filter)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(acknowledgements)
+		expectedType := "*[]api.Acknowledgement"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
+	}
+
+	t.Log("search, filter")
+	{
+		search := SearchQueryType(`(notes="something")`)
+		filter := SearchFilterType(map[string][]string{"f__active": []string{"true"}})
+		acknowledgements, err := apih.SearchAcknowledgements(&search, &filter)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(acknowledgements)
+		expectedType := "*[]api.Acknowledgement"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 		}
 	}
 }
