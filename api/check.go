@@ -53,6 +53,10 @@ func (a *API) FetchCheck(cid CIDType) (*Check, error) {
 		return nil, err
 	}
 
+	if a.Debug {
+		a.Log.Printf("[DEBUG] fetch check, received JSON: %s", string(result))
+	}
+
 	check := new(Check)
 	if err := json.Unmarshal(result, check); err != nil {
 		return nil, err
