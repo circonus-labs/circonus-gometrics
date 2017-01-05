@@ -85,6 +85,10 @@ func (a *API) FetchCheckBundle(cid CIDType) (*CheckBundle, error) {
 		return nil, err
 	}
 
+	if a.Debug {
+		a.Log.Printf("[DEBUG] fetch check bundle, received JSON: %s", string(result))
+	}
+
 	checkBundle := &CheckBundle{}
 	if err := json.Unmarshal(result, checkBundle); err != nil {
 		return nil, err
@@ -129,6 +133,10 @@ func (a *API) UpdateCheckBundle(cfg *CheckBundle) (*CheckBundle, error) {
 		return nil, err
 	}
 
+	if a.Debug {
+		a.Log.Printf("[DEBUG] update check bundle, sending JSON: %s", string(jsonCfg))
+	}
+
 	result, err := a.Put(bundleCID, jsonCfg)
 	if err != nil {
 		return nil, err
@@ -151,6 +159,10 @@ func (a *API) CreateCheckBundle(cfg *CheckBundle) (*CheckBundle, error) {
 	jsonCfg, err := json.Marshal(cfg)
 	if err != nil {
 		return nil, err
+	}
+
+	if a.Debug {
+		a.Log.Printf("[DEBUG] create check bundle, sending JSON: %s", string(jsonCfg))
 	}
 
 	result, err := a.Post(config.CheckBundlePrefix, jsonCfg)
