@@ -46,6 +46,10 @@ func (a *API) FetchCheckBundleMetrics(cid CIDType) (*CheckBundleMetrics, error) 
 		return nil, err
 	}
 
+	if a.Debug {
+		a.Log.Printf("[DEBUG] fetch check bundle metrics, received JSON: %s", string(result))
+	}
+
 	metrics := &CheckBundleMetrics{}
 	if err := json.Unmarshal(result, metrics); err != nil {
 		return nil, err
@@ -73,6 +77,10 @@ func (a *API) UpdateCheckBundleMetrics(cfg *CheckBundleMetrics) (*CheckBundleMet
 	jsonCfg, err := json.Marshal(cfg)
 	if err != nil {
 		return nil, err
+	}
+
+	if a.Debug {
+		a.Log.Printf("[DEBUG] update check bundle metrics, sending JSON: %s", string(jsonCfg))
 	}
 
 	result, err := a.Put(metricsCID, jsonCfg)
