@@ -42,6 +42,11 @@ type Ruleset struct {
 	Tags          []string           `json:"tags"`
 }
 
+// NewRuleset returns a new Ruleset (with defaults if applicable)
+func NewRuleset() *Ruleset {
+	return &Ruleset{}
+}
+
 // FetchRuleset retrieves a ruleset definition
 func (a *API) FetchRuleset(cid CIDType) (*Ruleset, error) {
 	if cid == nil || *cid == "" {
