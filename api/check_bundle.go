@@ -54,8 +54,8 @@ type CheckBundle struct {
 	Type               string              `json:"type"`
 }
 
-// NewCheckBundle returns a check bundle with defaults
-func (a *API) NewCheckBundle() *CheckBundle {
+// NewCheckBundle returns new CheckBundle (with defaults, if applicable)
+func NewCheckBundle() *CheckBundle {
 	return &CheckBundle{
 		MetricLimit: config.DefaultCheckBundleMetricLimit,
 		Period:      config.DefaultCheckBundlePeriod,

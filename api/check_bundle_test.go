@@ -121,13 +121,14 @@ func testCheckBundleServer() *httptest.Server {
 }
 
 func TestNewCheckBundle(t *testing.T) {
-	ac := &Config{TokenKey: "abc123", TokenApp: "test"}
+	// ac := &Config{TokenKey: "abc123", TokenApp: "test"}
+	// apih, err := New(ac)
+	// if err != nil {
+	//     t.Errorf("Expected no error, got '%v'", err)
+	// }
+	// bundle := apih.NewCheckBundle()
 
-	apih, err := New(ac)
-	if err != nil {
-		t.Errorf("Expected no error, got '%v'", err)
-	}
-	bundle := apih.NewCheckBundle()
+	bundle := NewCheckBundle()
 	actualType := reflect.TypeOf(bundle)
 	expectedType := "*api.CheckBundle"
 	if actualType.String() != expectedType {
