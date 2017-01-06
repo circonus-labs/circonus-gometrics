@@ -30,12 +30,12 @@ type Acknowledgement struct {
 	Notes             string      `json:"notes,omitempty"`
 }
 
-// NewAcknowledgement returns new Acknowledgement (with defaults, if applicable)
+// NewAcknowledgement returns new Acknowledgement (with defaults, if applicable).
 func NewAcknowledgement() *Acknowledgement {
 	return &Acknowledgement{}
 }
 
-// FetchAcknowledgement retrieves a acknowledgement definition
+// FetchAcknowledgement retrieves acknowledgement with passed cid.
 func (a *API) FetchAcknowledgement(cid CIDType) (*Acknowledgement, error) {
 	if cid == nil || *cid == "" {
 		return nil, fmt.Errorf("Invalid acknowledgement CID [none]")
@@ -68,7 +68,7 @@ func (a *API) FetchAcknowledgement(cid CIDType) (*Acknowledgement, error) {
 	return acknowledgement, nil
 }
 
-// FetchAcknowledgements retrieves all acknowledgements
+// FetchAcknowledgements retrieves all acknowledgements.
 func (a *API) FetchAcknowledgements() (*[]Acknowledgement, error) {
 	result, err := a.Get(config.AcknowledgementPrefix)
 	if err != nil {
@@ -83,7 +83,7 @@ func (a *API) FetchAcknowledgements() (*[]Acknowledgement, error) {
 	return &acknowledgements, nil
 }
 
-// UpdateAcknowledgement update acknowledgement definition
+// UpdateAcknowledgement update passed acknowledgement.
 func (a *API) UpdateAcknowledgement(cfg *Acknowledgement) (*Acknowledgement, error) {
 	if cfg == nil {
 		return nil, fmt.Errorf("Invalid acknowledgement config [nil]")
@@ -121,7 +121,7 @@ func (a *API) UpdateAcknowledgement(cfg *Acknowledgement) (*Acknowledgement, err
 	return acknowledgement, nil
 }
 
-// CreateAcknowledgement create a new acknowledgement
+// CreateAcknowledgement creates a new acknowledgement.
 func (a *API) CreateAcknowledgement(cfg *Acknowledgement) (*Acknowledgement, error) {
 	if cfg == nil {
 		return nil, fmt.Errorf("Invalid acknowledgement config [nil]")
@@ -149,9 +149,7 @@ func (a *API) CreateAcknowledgement(cfg *Acknowledgement) (*Acknowledgement, err
 	return acknowledgement, nil
 }
 
-// SearchAcknowledgements returns list of acknowledgements matching a search query and/or filter
-//    - a search query (see: https://login.circonus.com/resources/api#searching)
-//    - a filter (see: https://login.circonus.com/resources/api#filtering)
+// SearchAcknowledgements returns list of acknowledgements matching the specified search query and/or filter, if nil is passed for both parameters all acknowledgements will be returned.
 func (a *API) SearchAcknowledgements(searchCriteria *SearchQueryType, filterCriteria *SearchFilterType) (*[]Acknowledgement, error) {
 	q := url.Values{}
 

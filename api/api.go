@@ -2,7 +2,6 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package api provides methods for interacting with the Circonus API. See the full API Documentation at https://login.circonus.com/resources/api for more information.
 package api
 
 import (
@@ -44,10 +43,10 @@ type IDType int
 // URLType submission url type
 type URLType string
 
-// SearchQueryType search query
+// SearchQueryType search query (see: https://login.circonus.com/resources/api#searching)
 type SearchQueryType string
 
-// SearchFilterType search filter
+// SearchFilterType search filter (see: https://login.circonus.com/resources/api#filtering)
 type SearchFilterType map[string][]string
 
 // TagType search/select/custom tag(s) type

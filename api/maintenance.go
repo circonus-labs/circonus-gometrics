@@ -33,7 +33,7 @@ func NewMaintenanceWindow() *Maintenance {
 	return &Maintenance{}
 }
 
-// FetchMaintenanceWindow retrieves a maintenance window definition
+// FetchMaintenanceWindow retrieves maintenance [window] with passed cid.
 func (a *API) FetchMaintenanceWindow(cid CIDType) (*Maintenance, error) {
 	if cid == nil || *cid == "" {
 		return nil, fmt.Errorf("Invalid maintenance window CID [none]")

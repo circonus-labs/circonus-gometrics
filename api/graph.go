@@ -161,7 +161,7 @@ func NewGraph() *Graph {
 	return &Graph{}
 }
 
-// FetchGraph retrieves a graph definition
+// FetchGraph retrieves graph with passed cid.
 func (a *API) FetchGraph(cid CIDType) (*Graph, error) {
 	if cid == nil || *cid == "" {
 		return nil, fmt.Errorf("Invalid graph CID [none]")

@@ -47,7 +47,7 @@ func NewRuleset() *Ruleset {
 	return &Ruleset{}
 }
 
-// FetchRuleset retrieves a ruleset definition
+// FetchRuleset retrieves rule set with passed cid.
 func (a *API) FetchRuleset(cid CIDType) (*Ruleset, error) {
 	if cid == nil || *cid == "" {
 		return nil, fmt.Errorf("Invalid rule set CID [none]")

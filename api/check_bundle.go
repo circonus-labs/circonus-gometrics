@@ -64,7 +64,7 @@ func NewCheckBundle() *CheckBundle {
 	}
 }
 
-// FetchCheckBundle fetch a check bundle configuration by cid
+// FetchCheckBundle retrieves check bundle with passed cid.
 func (a *API) FetchCheckBundle(cid CIDType) (*CheckBundle, error) {
 	if cid == nil || *cid == "" {
 		return nil, fmt.Errorf("Invalid check bundle CID [none]")

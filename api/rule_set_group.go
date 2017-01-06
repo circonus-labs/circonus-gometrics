@@ -54,7 +54,7 @@ func NewRulesetGroup() *RulesetGroup {
 	return &RulesetGroup{}
 }
 
-// FetchRulesetGroup retrieves a rulesetGroup definition
+// FetchRulesetGroup retrieves rule set group with passed cid.
 func (a *API) FetchRulesetGroup(cid CIDType) (*RulesetGroup, error) {
 	if cid == nil || *cid == "" {
 		return nil, fmt.Errorf("Invalid rule set group CID [none]")

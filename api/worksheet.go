@@ -45,7 +45,7 @@ func NewWorksheet() *Worksheet {
 	return &Worksheet{}
 }
 
-// FetchWorksheet retrieves a worksheet definition
+// FetchWorksheet retrieves worksheet with passed cid.
 func (a *API) FetchWorksheet(cid CIDType) (*Worksheet, error) {
 	if cid == nil || *cid == "" {
 		return nil, fmt.Errorf("Invalid worksheet CID [none]")

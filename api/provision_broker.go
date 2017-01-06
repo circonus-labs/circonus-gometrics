@@ -47,7 +47,7 @@ func NewProvisionBroker() *ProvisionBroker {
 	return &ProvisionBroker{}
 }
 
-// FetchProvisionBroker retrieves a broker definition
+// FetchProvisionBroker retrieves provision broker [request] with passed cid.
 func (a *API) FetchProvisionBroker(cid CIDType) (*ProvisionBroker, error) {
 	if cid == nil || *cid == "" {
 		return nil, fmt.Errorf("Invalid broker CID [none]")

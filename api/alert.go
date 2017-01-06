@@ -42,7 +42,7 @@ func NewAlert() *Alert {
 	return &Alert{}
 }
 
-// FetchAlert retrieves a alert definition
+// FetchAlert retrieves alert with passed cid.
 func (a *API) FetchAlert(cid CIDType) (*Alert, error) {
 	if cid == nil || *cid == "" {
 		return nil, fmt.Errorf("Invalid alert CID [none]")

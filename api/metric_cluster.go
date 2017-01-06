@@ -38,7 +38,7 @@ func NewMetricCluster() *MetricCluster {
 	return &MetricCluster{}
 }
 
-// FetchMetricCluster fetch a metric cluster configuration by cid
+// FetchMetricCluster retrieves metric cluster with passed cid.
 func (a *API) FetchMetricCluster(cid CIDType, extras string) (*MetricCluster, error) {
 	if cid == nil || *cid == "" {
 		return nil, fmt.Errorf("Invalid metric cluster CID [none]")

@@ -35,7 +35,7 @@ func NewAnnotation() *Annotation {
 	return &Annotation{}
 }
 
-// FetchAnnotation retrieves a annotation definition
+// FetchAnnotation retrieves annotation with passed cid.
 func (a *API) FetchAnnotation(cid CIDType) (*Annotation, error) {
 	if cid == nil || *cid == "" {
 		return nil, fmt.Errorf("Invalid annotation CID [none]")

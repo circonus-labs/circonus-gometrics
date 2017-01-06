@@ -32,7 +32,7 @@ type Check struct {
 	Details        CheckDetails `json:"_details"`
 }
 
-// FetchCheck fetch a check configuration by cid
+// FetchCheck retrieves check with passed cid.
 func (a *API) FetchCheck(cid CIDType) (*Check, error) {
 	if cid == nil || *cid == "" {
 		return nil, fmt.Errorf("Invalid check CID [none]")

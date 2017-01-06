@@ -41,7 +41,7 @@ type Broker struct {
 	Type      string         `json:"_type"`
 }
 
-// FetchBroker fetch a broker configuration by cid
+// FetchBroker retrieves broker with passed cid.
 func (a *API) FetchBroker(cid CIDType) (*Broker, error) {
 	if cid == nil || *cid == "" {
 		return nil, fmt.Errorf("Invalid broker CID [none]")

@@ -214,7 +214,7 @@ func NewDashboard() *Dashboard {
 	return &Dashboard{}
 }
 
-// FetchDashboard retrieves a dashboard definition
+// FetchDashboard retrieves dashboard with passed cid.
 func (a *API) FetchDashboard(cid CIDType) (*Dashboard, error) {
 	if cid == nil || *cid == "" {
 		return nil, fmt.Errorf("Invalid dashboard CID [none]")

@@ -34,7 +34,7 @@ func NewOutlierReport() *OutlierReport {
 	return &OutlierReport{}
 }
 
-// FetchOutlierReport retrieves a outlier report definition
+// FetchOutlierReport retrieves outlier report with passed cid.
 func (a *API) FetchOutlierReport(cid CIDType) (*OutlierReport, error) {
 	if cid == nil || *cid == "" {
 		return nil, fmt.Errorf("Invalid outlier report CID [none]")

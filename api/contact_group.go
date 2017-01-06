@@ -76,7 +76,7 @@ func NewContactGroup() *ContactGroup {
 	}
 }
 
-// FetchContactGroup retrieves a contact group definition
+// FetchContactGroup retrieves contact group with passed cid.
 func (a *API) FetchContactGroup(cid CIDType) (*ContactGroup, error) {
 	if cid == nil || *cid == "" {
 		return nil, fmt.Errorf("Invalid contact group CID [none]")

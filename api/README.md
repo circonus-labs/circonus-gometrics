@@ -157,3 +157,7 @@ of the API may change if common use contexts would benefit significantly.
     * DeleteWorksheet
     * DeleteWorksheetByCID
     * SearchWorksheets
+
+---
+
+Unless otherwise noted, the source files are distributed under the BSD-style license found in the LICENSE file.

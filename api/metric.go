@@ -35,7 +35,7 @@ type Metric struct {
 	Notes          *string  `json:"notes,omitempty"` // string or null
 }
 
-// FetchMetric retrieves a metric definition
+// FetchMetric retrieves metric with passed cid.
 func (a *API) FetchMetric(cid CIDType) (*Metric, error) {
 	if cid == nil || *cid == "" {
 		return nil, fmt.Errorf("Invalid metric CID [none]")
