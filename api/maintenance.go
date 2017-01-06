@@ -49,6 +49,10 @@ func (a *API) FetchMaintenanceWindow(cid CIDType) (*Maintenance, error) {
 		return nil, err
 	}
 
+	if a.Debug {
+		a.Log.Printf("[DEBUG] fetch maintenance window, received JSON: %s", string(result))
+	}
+
 	window := &Maintenance{}
 	if err := json.Unmarshal(result, window); err != nil {
 		return nil, err
@@ -93,6 +97,10 @@ func (a *API) UpdateMaintenanceWindow(cfg *Maintenance) (*Maintenance, error) {
 		return nil, err
 	}
 
+	if a.Debug {
+		a.Log.Printf("[DEBUG] update maintenance window, sending JSON: %s", string(jsonCfg))
+	}
+
 	result, err := a.Put(maintenanceCID, jsonCfg)
 	if err != nil {
 		return nil, err
@@ -115,6 +123,10 @@ func (a *API) CreateMaintenanceWindow(cfg *Maintenance) (*Maintenance, error) {
 	jsonCfg, err := json.Marshal(cfg)
 	if err != nil {
 		return nil, err
+	}
+
+	if a.Debug {
+		a.Log.Printf("[DEBUG] create maintenance window, sending JSON: %s", string(jsonCfg))
 	}
 
 	result, err := a.Post(config.MaintenancePrefix, jsonCfg)
