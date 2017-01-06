@@ -112,6 +112,15 @@ func testOutlierReportServer() *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(f))
 }
 
+func TestNewOutlierReport(t *testing.T) {
+	bundle := NewOutlierReport()
+	actualType := reflect.TypeOf(bundle)
+	expectedType := "*api.OutlierReport"
+	if actualType.String() != expectedType {
+		t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+	}
+}
+
 func TestFetchOutlierReport(t *testing.T) {
 	server := testOutlierReportServer()
 	defer server.Close()

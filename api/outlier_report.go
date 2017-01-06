@@ -29,6 +29,11 @@ type OutlierReport struct {
 	Title            string   `json:"title,omitempty"`
 }
 
+// NewOutlierReport returns a new OutlierReport (with defaults, if applicable)
+func NewOutlierReport() *OutlierReport {
+	return &OutlierReport{}
+}
+
 // FetchOutlierReport retrieves a outlier report definition
 func (a *API) FetchOutlierReport(cid CIDType) (*OutlierReport, error) {
 	if cid == nil || *cid == "" {
