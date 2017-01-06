@@ -28,6 +28,11 @@ type Maintenance struct {
 	Type       string      `json:"type,omitempty"`
 }
 
+// NewMaintenanceWindow returns a new Maintenance window (with defaults, if applicable)
+func NewMaintenanceWindow() *Maintenance {
+	return &Maintenance{}
+}
+
 // FetchMaintenanceWindow retrieves a maintenance window definition
 func (a *API) FetchMaintenanceWindow(cid CIDType) (*Maintenance, error) {
 	if cid == nil || *cid == "" {

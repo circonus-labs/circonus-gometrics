@@ -111,6 +111,15 @@ func testMaintenanceServer() *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(f))
 }
 
+func TestNewMaintenanceWindow(t *testing.T) {
+	bundle := NewMaintenanceWindow()
+	actualType := reflect.TypeOf(bundle)
+	expectedType := "*api.Maintenance"
+	if actualType.String() != expectedType {
+		t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+	}
+}
+
 func TestFetchMaintenanceWindow(t *testing.T) {
 	server := testMaintenanceServer()
 	defer server.Close()
