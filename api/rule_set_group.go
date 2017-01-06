@@ -49,6 +49,11 @@ type RulesetGroup struct {
 	Tags              []string                `json:"tags"`
 }
 
+// NewRulesetGroup returns a new RulesetGroup (with defaults, if applicable)
+func NewRulesetGroup() *RulesetGroup {
+	return &RulesetGroup{}
+}
+
 // FetchRulesetGroup retrieves a rulesetGroup definition
 func (a *API) FetchRulesetGroup(cid CIDType) (*RulesetGroup, error) {
 	if cid == nil || *cid == "" {

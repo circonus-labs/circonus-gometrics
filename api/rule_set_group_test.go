@@ -138,6 +138,15 @@ func testRulesetGroupServer() *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(f))
 }
 
+func TestNewRulesetGroup(t *testing.T) {
+	bundle := NewRulesetGroup()
+	actualType := reflect.TypeOf(bundle)
+	expectedType := "*api.RulesetGroup"
+	if actualType.String() != expectedType {
+		t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+	}
+}
+
 func TestFetchRulesetGroup(t *testing.T) {
 	server := testRulesetGroupServer()
 	defer server.Close()
