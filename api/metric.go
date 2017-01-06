@@ -56,6 +56,10 @@ func (a *API) FetchMetric(cid CIDType) (*Metric, error) {
 		return nil, err
 	}
 
+	if a.Debug {
+		a.Log.Printf("[DEBUG] fetch metric, received JSON: %s", string(result))
+	}
+
 	metric := &Metric{}
 	if err := json.Unmarshal(result, metric); err != nil {
 		return nil, err
@@ -98,6 +102,10 @@ func (a *API) UpdateMetric(cfg *Metric) (*Metric, error) {
 	jsonCfg, err := json.Marshal(cfg)
 	if err != nil {
 		return nil, err
+	}
+
+	if a.Debug {
+		a.Log.Printf("[DEBUG] update metric, sending JSON: %s", string(jsonCfg))
 	}
 
 	result, err := a.Put(metricCID, jsonCfg)
