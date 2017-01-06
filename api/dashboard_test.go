@@ -65,14 +65,31 @@ func testDashboardServer() *httptest.Server {
 		} else if path == "/dashboard" {
 			switch r.Method {
 			case "GET":
-				c := []Dashboard{testDashboard}
-				ret, err := json.Marshal(c)
-				if err != nil {
-					panic(err)
+				reqURL := r.URL.String()
+				var c []Dashboard
+				if reqURL == "/dashboard?search=my+dashboard" {
+					c = []Dashboard{testDashboard}
+				} else if reqURL == "/dashboard?f__created_gt=1483639916" {
+					c = []Dashboard{testDashboard}
+				} else if reqURL == "/dashboard?f__created_gt=1483639916&search=my+dashboard" {
+					c = []Dashboard{testDashboard}
+				} else if reqURL == "/dashboard" {
+					c = []Dashboard{testDashboard}
+				} else {
+					c = []Dashboard{}
 				}
-				w.WriteHeader(200)
-				w.Header().Set("Content-Type", "application/json")
-				fmt.Fprintln(w, string(ret))
+				if len(c) > 0 {
+					ret, err := json.Marshal(c)
+					if err != nil {
+						panic(err)
+					}
+					w.WriteHeader(200)
+					w.Header().Set("Content-Type", "application/json")
+					fmt.Fprintln(w, string(ret))
+				} else {
+					w.WriteHeader(404)
+					fmt.Fprintln(w, fmt.Sprintf("not found: %s %s", r.Method, reqURL))
+				}
 			case "POST":
 				defer r.Body.Close()
 				_, err := ioutil.ReadAll(r.Body)
@@ -292,6 +309,82 @@ func TestDeleteDashboard(t *testing.T) {
 		}
 		if err.Error() != expectedError.Error() {
 			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+}
+
+func TestSearchDashboards(t *testing.T) {
+	server := testDashboardServer()
+	defer server.Close()
+
+	var apih *API
+
+	ac := &Config{
+		TokenKey: "abc123",
+		TokenApp: "test",
+		URL:      server.URL,
+	}
+	apih, err := NewAPI(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	search := SearchQueryType("my dashboard")
+	filter := SearchFilterType(map[string][]string{"f__created_gt": []string{"1483639916"}})
+
+	t.Log("no search, no filter")
+	{
+		dashboards, err := apih.SearchDashboards(nil, nil)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(dashboards)
+		expectedType := "*[]api.Dashboard"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
+	}
+
+	t.Log("search, no filter")
+	{
+		dashboards, err := apih.SearchDashboards(&search, nil)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(dashboards)
+		expectedType := "*[]api.Dashboard"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
+	}
+
+	t.Log("no search, filter")
+	{
+		dashboards, err := apih.SearchDashboards(nil, &filter)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(dashboards)
+		expectedType := "*[]api.Dashboard"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
+	}
+
+	t.Log("search, filter")
+	{
+		dashboards, err := apih.SearchDashboards(&search, &filter)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(dashboards)
+		expectedType := "*[]api.Dashboard"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 		}
 	}
 }
