@@ -109,6 +109,15 @@ func testMetricClusterServer() *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(f))
 }
 
+func TestNewMetricCluster(t *testing.T) {
+	bundle := NewMetricCluster()
+	actualType := reflect.TypeOf(bundle)
+	expectedType := "*api.MetricCluster"
+	if actualType.String() != expectedType {
+		t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+	}
+}
+
 func TestFetchMetricClusterByCID(t *testing.T) {
 	server := testMetricClusterServer()
 	defer server.Close()

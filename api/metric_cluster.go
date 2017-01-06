@@ -33,6 +33,11 @@ type MetricCluster struct {
 	Tags                []string            `json:"tags"`
 }
 
+// NewMetricClustger returns a new MetricCluster (with defaults, if applicable)
+func NewMetricCluster() *MetricCluster {
+	return &MetricCluster{}
+}
+
 // FetchMetricCluster fetch a metric cluster configuration by cid
 func (a *API) FetchMetricCluster(cid CIDType, extras string) (*MetricCluster, error) {
 	if cid == nil || *cid == "" {
