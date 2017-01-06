@@ -11,6 +11,9 @@ Full api documentation available at [godoc.org](https://godoc.org/github.com/cir
 
 ### Helpers (for currently supported API objects)
 
+> Note, these interfaces are still being actively developed. For example, many of the `New*` methods only return an empty struct; sensible defaults will be added going forward. Other, common helper methods for the various endpoints may be added as use cases emerge. The organization
+of the API may change if common use contexts would benefit significantly.
+
 * [Account](https://login.circonus.com/resources/api/calls/account)
     * FetchAccount
     * FetchAccounts
