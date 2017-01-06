@@ -146,6 +146,15 @@ func testContactGroupServer() *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(f))
 }
 
+func TestNewContactGroup(t *testing.T) {
+	bundle := NewContactGroup()
+	actualType := reflect.TypeOf(bundle)
+	expectedType := "*api.ContactGroup"
+	if actualType.String() != expectedType {
+		t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+	}
+}
+
 func TestFetchContactGroup(t *testing.T) {
 	server := testContactGroupServer()
 	defer server.Close()

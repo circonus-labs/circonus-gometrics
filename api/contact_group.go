@@ -64,8 +64,8 @@ type ContactGroup struct {
 	Tags              []string                  `json:"tags,omitempty"`
 }
 
-// NewContactGroup returns a ContactGroup
-func (a *API) NewContactGroup() *ContactGroup {
+// NewContactGroup returns a ContactGroup (with defaults, if applicable)
+func NewContactGroup() *ContactGroup {
 	return &ContactGroup{
 		Escalations: make([]*ContactGroupEscalation, config.NumSeverityLevels),
 		Reminders:   make([]uint, config.NumSeverityLevels),
