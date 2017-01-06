@@ -324,6 +324,9 @@ func TestSearchAnnotations(t *testing.T) {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
+	search := SearchQueryType(`(category="updates")`)
+	filter := SearchFilterType(map[string][]string{"f__created_gt": []string{"1483639916"}})
+
 	t.Log("no search, no filter")
 	{
 		annotations, err := apih.SearchAnnotations(nil, nil)
@@ -340,7 +343,6 @@ func TestSearchAnnotations(t *testing.T) {
 
 	t.Log("search, no filter")
 	{
-		search := SearchQueryType(`(category="updates")`)
 		annotations, err := apih.SearchAnnotations(&search, nil)
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
@@ -355,7 +357,6 @@ func TestSearchAnnotations(t *testing.T) {
 
 	t.Log("no search, filter")
 	{
-		filter := SearchFilterType(map[string][]string{"f__created_gt": []string{"1483639916"}})
 		annotations, err := apih.SearchAnnotations(nil, &filter)
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
@@ -370,8 +371,6 @@ func TestSearchAnnotations(t *testing.T) {
 
 	t.Log("search, filter")
 	{
-		search := SearchQueryType(`(category="updates")`)
-		filter := SearchFilterType(map[string][]string{"f__created_gt": []string{"1483639916"}})
 		annotations, err := apih.SearchAnnotations(&search, &filter)
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
