@@ -30,6 +30,11 @@ type Annotation struct {
 	Title          string   `json:"title"`
 }
 
+// NewAnnotation returns a new Annotation (with defaults, if applicable)
+func NewAnnotation() *Annotation {
+	return &Annotation{}
+}
+
 // FetchAnnotation retrieves a annotation definition
 func (a *API) FetchAnnotation(cid CIDType) (*Annotation, error) {
 	if cid == nil || *cid == "" {

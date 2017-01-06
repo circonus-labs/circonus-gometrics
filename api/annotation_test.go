@@ -111,6 +111,15 @@ func testAnnotationServer() *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(f))
 }
 
+func TestNewAnnotation(t *testing.T) {
+	bundle := NewAnnotation()
+	actualType := reflect.TypeOf(bundle)
+	expectedType := "*api.Annotation"
+	if actualType.String() != expectedType {
+		t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+	}
+}
+
 func TestFetchAnnotation(t *testing.T) {
 	server := testAnnotationServer()
 	defer server.Close()
