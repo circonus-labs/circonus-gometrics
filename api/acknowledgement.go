@@ -25,7 +25,7 @@ type Acknowledgement struct {
 	Active            bool        `json:"_active,omitempty"`
 	LastModified      uint        `json:"_last_modified,omitempty"`
 	LastModifiedBy    string      `json:"_last_modified_by,omitempty"`
-	AcknowledgedUntil interface{} `json:"acknowledged_until,omitempty"` // always received as uint; can be set using string or uint
+	AcknowledgedUntil interface{} `json:"acknowledged_until,omitempty"` // NOTE always received as uint; can be set using string or uint
 	AlertCID          string      `json:"alert,omitempty"`
 	Notes             string      `json:"notes,omitempty"`
 }

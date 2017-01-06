@@ -17,12 +17,10 @@ import (
 	"github.com/circonus-labs/circonus-gometrics/api/config"
 )
 
-// See check_bundle.go for CheckBundleMetric definition
-
 // CheckBundleMetrics defines metrics
 type CheckBundleMetrics struct {
 	CID     string              `json:"_cid,omitempty"`
-	Metrics []CheckBundleMetric `json:"metrics"`
+	Metrics []CheckBundleMetric `json:"metrics"` // See check_bundle.go for CheckBundleMetric definition
 }
 
 // FetchCheckBundleMetrics retrieves metrics

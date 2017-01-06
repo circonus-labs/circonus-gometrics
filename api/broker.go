@@ -25,7 +25,7 @@ type BrokerDetail struct {
 	MinVer       uint     `json:"minimum_version_required"`
 	Modules      []string `json:"modules"`
 	Port         uint16   `json:"port"`
-	Skew         string   `json:"skew"` // doc: floating point number, api object: string
+	Skew         string   `json:"skew"` // BUG doc: floating point number, api object: string
 	Status       string   `json:"status"`
 	Version      uint     `json:"version"`
 }

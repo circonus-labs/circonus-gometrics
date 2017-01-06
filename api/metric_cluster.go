@@ -33,7 +33,7 @@ type MetricCluster struct {
 	Tags                []string            `json:"tags"`
 }
 
-// NewMetricClustger returns a new MetricCluster (with defaults, if applicable)
+// NewMetricCluster returns a new MetricCluster (with defaults, if applicable)
 func NewMetricCluster() *MetricCluster {
 	return &MetricCluster{}
 }

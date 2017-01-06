@@ -21,7 +21,7 @@ type Maintenance struct {
 	CID        string      `json:"_cid,omitempty"`
 	Item       string      `json:"item,omitempty"`
 	Notes      string      `json:"notes,omitempty"`
-	Severities interface{} `json:"severities,omitempty"` // CSV string or []string
+	Severities interface{} `json:"severities,omitempty"` // NOTE CSV string or []string
 	Start      uint        `json:"start,omitempty"`
 	Stop       uint        `json:"stop,omitempty"`
 	Tags       []string    `json:"tags,omitempty"`

@@ -54,7 +54,7 @@ type GraphDatapoint struct {
 	CheckID       uint        `json:"check_id,omitempty"`
 	Color         string      `json:"color,omitempty"`
 	DataFormula   *string     `json:"data_formula,omitempty"` // null or string
-	Derive        interface{} `json:"derive,omitempty"`       // this is supposed to be a string but for CAQL statements it comes out as a boolean
+	Derive        interface{} `json:"derive,omitempty"`       // BUG this is supposed to be a string but for CAQL statements it comes out as a boolean
 	Hidden        bool        `json:"hidden,omitempty"`
 	LegendFormula string      `json:"legend_formula,omitempty"`
 	MetricName    string      `json:"metric_name,omitempty"`
@@ -142,13 +142,13 @@ type Graph struct {
 	Description    string                      `json:"description,omitempty"`
 	Guides         []GraphGuide                `json:"guides,omitempty"`
 	LineStyle      string                      `json:"line_style,omitempty"`
-	LogLeftY       int                         `json:"logarithmitc_left_y,omitempty"`  // doc: number, comes as null|string
-	LogRightY      int                         `json:"logarithmitc_right_y,omitempty"` // doc: number, comes as null|string
-	MaxLeftY       *string                     `json:"max_left_y,omitempty"`           // doc: number, comes as null|string
-	MaxRightY      *string                     `json:"max_right_y,omitempty"`          // doc: number, comes as null|string
+	LogLeftY       int                         `json:"logarithmitc_left_y,omitempty"`  // BUG doc: number, comes as null|string
+	LogRightY      int                         `json:"logarithmitc_right_y,omitempty"` // BUG doc: number, comes as null|string
+	MaxLeftY       *string                     `json:"max_left_y,omitempty"`           // BUG doc: number, comes as null|string
+	MaxRightY      *string                     `json:"max_right_y,omitempty"`          // BUG doc: number, comes as null|string
 	MetricClusters []GraphMetricCluster        `json:"metric_clusters,omitempty"`
-	MinLeftY       *string                     `json:"min_left_y,omitempty"`  // doc: number, comes as null|string
-	MinRightY      *string                     `json:"min_right_y,omitempty"` // doc: number, comes as null|string
+	MinLeftY       *string                     `json:"min_left_y,omitempty"`  // BUG doc: number, comes as null|string
+	MinRightY      *string                     `json:"min_right_y,omitempty"` // BUG doc: number, comes as null|string
 	Notes          string                      `json:"notes,omitempty"`
 	OverlaySets    *map[string]GraphOverlaySet `json:"overlay_sets,omitempty"` // null or overlay sets object
 	Style          string                      `json:"style,omitempty"`
