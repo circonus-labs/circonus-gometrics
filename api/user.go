@@ -122,9 +122,9 @@ func (a *API) UpdateUser(cfg *User) (*User, error) {
 	return user, nil
 }
 
-// SearchUsers returns list of users matching a search query and/or filter
-//    - note: search queries are not supported for user, only filtering
-//    - a filter (see: https://login.circonus.com/resources/api#filtering)
+// SearchUsers returns list of users matching a filter (search queries
+// are not suppoted by the user endpoint). Pass nil as filter for all
+// users the API Token can access.
 func (a *API) SearchUsers(filterCriteria *SearchFilterType) (*[]User, error) {
 	q := url.Values{}
 
