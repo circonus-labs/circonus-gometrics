@@ -1,4 +1,6 @@
-## Circonus API helpers
+## Circonus API package
+
+Full api documentation available at [godoc.org](https://godoc.org/github.com/circonus-labs/circonus-gometrics/api)
 
 ### Straight API access
 
@@ -15,6 +17,7 @@
     * UpdateAccount
     * SearchAccounts
 * [Acknowledgement](https://login.circonus.com/resources/api/calls/acknowledgement)
+    * NewAcknowledgement
     * FetchAcknowledgement
     * FetchAcknowledgements
     * UpdateAcknowledgement
@@ -27,6 +30,7 @@
     * FetchAlerts
     * SearchAlerts
 * [Annotation](https://login.circonus.com/resources/api/calls/annotation)
+    * NewAnnotation
     * FetchAnnotation
     * FetchAnnotations
     * UpdateAnnotation
@@ -55,6 +59,7 @@
     * FetchChecks
     * SearchChecks
 * [Contact Group](https://login.circonus.com/resources/api/calls/contact_group)
+    * NewContactGroup
     * FetchContactGroup
     * FetchContactGroups
     * UpdateContactGroup
@@ -62,7 +67,17 @@
     * DeleteContactGroup
     * DeleteContactGroupByCID
     * SearchContactGroups
+* [Dashboard](https://login.circonus.com/resources/api/calls/dashboard) -- note, this is a work in progress, the methods/types may still change
+    * NewDashboard
+    * FetchDashboard
+    * FetchDashboards
+    * UpdateDashboard
+    * CreateDashboard
+    * DeleteDashboard
+    * DeleteDashboardByCID
+    * SearchDashboards
 * [Graph](https://login.circonus.com/resources/api/calls/graph)
+    * NewGraph
     * FetchGraph
     * FetchGraphs
     * UpdateGraph
@@ -71,6 +86,7 @@
     * DeleteGraphByCID
     * SearchGraphs
 * [Metric Cluster](https://login.circonus.com/resources/api/calls/metric_cluster)
+    * NewMetricCluster
     * FetchMetricCluster
     * FetchMetricClusters
     * UpdateMetricCluster
@@ -84,6 +100,7 @@
     * UpdateMetric
     * SearchMetrics
 * [Maintenance window](https://login.circonus.com/resources/api/calls/maintenance)
+    * NewMaintenanceWindow
     * FetchMaintenanceWindow
     * FetchMaintenanceWindows
     * UpdateMaintenanceWindow
@@ -92,6 +109,7 @@
     * DeleteMaintenanceWindowByCID
     * SearchMaintenanceWindows
 * [Outlier Report](https://login.circonus.com/resources/api/calls/outlier_report)
+    * NewOutlierReport
     * FetchOutlierReport
     * FetchOutlierReports
     * UpdateOutlierReport
@@ -100,10 +118,12 @@
     * DeleteOutlierReportByCID
     * SearchOutlierReports
 * [Provision Broker](https://login.circonus.com/resources/api/calls/provision_broker)
+    * NewProvisionBroker
     * FetchProvisionBroker
     * UpdateProvisionBroker
     * CreateProvisionBroker
 * [Rule Set](https://login.circonus.com/resources/api/calls/rule_set)
+    * NewRuleset
     * FetchRuleset
     * FetchRulesets
     * UpdateRuleset
@@ -112,6 +132,7 @@
     * DeleteRulesetByCID
     * SearchRulesets
 * [Rule Set Group](https://login.circonus.com/resources/api/calls/rule_set_group)
+    * NewRulesetGroup
     * FetchRulesetGroup
     * FetchRulesetGroups
     * UpdateRulesetGroup
@@ -125,6 +146,7 @@
     * UpdateUser
     * SearchUsers
 * [Worksheet](https://login.circonus.com/resources/api/calls/worksheet)
+    * NewWorksheet
     * FetchWorksheet
     * FetchWorksheets
     * UpdateWorksheet
