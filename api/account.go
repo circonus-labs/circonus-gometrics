@@ -144,7 +144,9 @@ func (a *API) UpdateAccount(cfg *Account) (*Account, error) {
 	return account, nil
 }
 
-// SearchAccounts returns list of accounts matching a filter (search queries are not suppoted by the account endpoint). Pass nil as filter for all accounts.
+// SearchAccounts returns list of accounts matching a filter (search queries are not
+// suppoted by the account endpoint). Pass nil as filter for all accounts the
+// API Token can access.
 func (a *API) SearchAccounts(filterCriteria *SearchFilterType) (*[]Account, error) {
 	q := url.Values{}
 
