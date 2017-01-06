@@ -116,6 +116,15 @@ func testDashboardServer() *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(f))
 }
 
+func TestNewDashboard(t *testing.T) {
+	bundle := NewDashboard()
+	actualType := reflect.TypeOf(bundle)
+	expectedType := "*api.Dashboard"
+	if actualType.String() != expectedType {
+		t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+	}
+}
+
 func TestFetchDashboard(t *testing.T) {
 	server := testDashboardServer()
 	defer server.Close()

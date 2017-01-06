@@ -209,6 +209,11 @@ type Dashboard struct {
 	Widgets        []DashboardWidget   `json:"widgets"`
 }
 
+// NewDashboard returns a new Dashboard (with defaults, if applicable)
+func NewDashboard() *Dashboard {
+	return &Dashboard{}
+}
+
 // FetchDashboard retrieves a dashboard definition
 func (a *API) FetchDashboard(cid CIDType) (*Dashboard, error) {
 	if cid == nil || *cid == "" {
