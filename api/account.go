@@ -11,6 +11,7 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"regexp"
 
 	"github.com/circonus-labs/circonus-gometrics/api/config"
@@ -90,6 +91,21 @@ func (a *API) FetchAccount(cid CIDType) (*Account, error) {
 	return account, nil
 }
 
+// FetchAccounts retrieves account definitions
+func (a *API) FetchAccounts() (*[]Account, error) {
+	result, err := a.Get(config.AccountPrefix)
+	if err != nil {
+		return nil, err
+	}
+
+	var accounts []Account
+	if err := json.Unmarshal(result, &accounts); err != nil {
+		return nil, err
+	}
+
+	return &accounts, nil
+}
+
 // UpdateAccount update account configuration
 func (a *API) UpdateAccount(cfg *Account) (*Account, error) {
 	if cfg == nil {
@@ -126,4 +142,40 @@ func (a *API) UpdateAccount(cfg *Account) (*Account, error) {
 	}
 
 	return account, nil
+}
+
+// SearchAccounts returns list of accounts matching a search query and/or filter
+//    - note: search queries are not supported for account, only filtering
+//    - a filter (see: https://login.circonus.com/resources/api#filtering)
+func (a *API) SearchAccounts(filterCriteria *SearchFilterType) (*[]Account, error) {
+	q := url.Values{}
+
+	if filterCriteria != nil && len(*filterCriteria) > 0 {
+		for filter, criteria := range *filterCriteria {
+			for _, val := range criteria {
+				q.Add(filter, val)
+			}
+		}
+	}
+
+	if q.Encode() == "" {
+		return a.FetchAccounts()
+	}
+
+	reqURL := url.URL{
+		Path:     config.AccountPrefix,
+		RawQuery: q.Encode(),
+	}
+
+	result, err := a.Get(reqURL.String())
+	if err != nil {
+		return nil, fmt.Errorf("[ERROR] API call error %+v", err)
+	}
+
+	var accounts []Account
+	if err := json.Unmarshal(result, &accounts); err != nil {
+		return nil, err
+	}
+
+	return &accounts, nil
 }

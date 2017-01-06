@@ -87,14 +87,27 @@ func testAccountServer() *httptest.Server {
 		} else if path == "/account" {
 			switch r.Method {
 			case "GET":
-				c := []Account{testAccount}
-				ret, err := json.Marshal(c)
-				if err != nil {
-					panic(err)
+				reqURL := r.URL.String()
+				var c []Account
+				if reqURL == "/account?f_name_wildcard=%2Aops%2A" {
+					c = []Account{testAccount}
+				} else if reqURL == "/account" {
+					c = []Account{testAccount}
+				} else {
+					c = []Account{}
 				}
-				w.WriteHeader(200)
-				w.Header().Set("Content-Type", "application/json")
-				fmt.Fprintln(w, string(ret))
+				if len(c) > 0 {
+					ret, err := json.Marshal(c)
+					if err != nil {
+						panic(err)
+					}
+					w.WriteHeader(200)
+					w.Header().Set("Content-Type", "application/json")
+					fmt.Fprintln(w, string(ret))
+				} else {
+					w.WriteHeader(404)
+					fmt.Fprintln(w, fmt.Sprintf("not found: %s %s", r.Method, reqURL))
+				}
 			default:
 				w.WriteHeader(404)
 				fmt.Fprintln(w, "not found")
@@ -184,6 +197,33 @@ func TestFetchAccount(t *testing.T) {
 	}
 }
 
+func TestFetchAccounts(t *testing.T) {
+	server := testAccountServer()
+	defer server.Close()
+
+	ac := &Config{
+		TokenKey: "abc123",
+		TokenApp: "test",
+		URL:      server.URL,
+	}
+	apih, err := NewAPI(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	accounts, err := apih.FetchAccounts()
+	if err != nil {
+		t.Fatalf("Expected no error, got '%v'", err)
+	}
+
+	actualType := reflect.TypeOf(accounts)
+	expectedType := "*[]api.Account"
+	if actualType.String() != expectedType {
+		t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+	}
+
+}
+
 func TestUpdateAccount(t *testing.T) {
 	server := testAccountServer()
 	defer server.Close()
@@ -234,6 +274,53 @@ func TestUpdateAccount(t *testing.T) {
 
 		actualType := reflect.TypeOf(account)
 		expectedType := "*api.Account"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
+	}
+}
+
+func TestSearchAccounts(t *testing.T) {
+	server := testAccountServer()
+	defer server.Close()
+
+	var apih *API
+
+	ac := &Config{
+		TokenKey: "abc123",
+		TokenApp: "test",
+		URL:      server.URL,
+	}
+	apih, err := NewAPI(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	filter := SearchFilterType(map[string][]string{"f_name_wildcard": []string{"*ops*"}})
+
+	t.Log("no filter")
+	{
+		accounts, err := apih.SearchAccounts(nil)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(accounts)
+		expectedType := "*[]api.Account"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
+	}
+
+	t.Log("filter")
+	{
+		accounts, err := apih.SearchAccounts(&filter)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(accounts)
+		expectedType := "*[]api.Account"
 		if actualType.String() != expectedType {
 			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 		}

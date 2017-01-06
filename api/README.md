@@ -11,7 +11,9 @@
 
 * [Account](https://login.circonus.com/resources/api/calls/account)
     * FetchAccount
+    * FetchAccounts
     * UpdateAccount
+    * SearchAccounts
 * [Acknowledgement](https://login.circonus.com/resources/api/calls/acknowledgement)
     * FetchAcknowledgement
     * FetchAcknowledgements
