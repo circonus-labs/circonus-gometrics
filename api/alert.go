@@ -37,6 +37,11 @@ type Alert struct {
 	Value              string   `json:"_value,omitempty"`
 }
 
+// NewAlert returns a new alert (with defaults, if applicable)
+func NewAlert() *Alert {
+	return &Alert{}
+}
+
 // FetchAlert retrieves a alert definition
 func (a *API) FetchAlert(cid CIDType) (*Alert, error) {
 	if cid == nil || *cid == "" {

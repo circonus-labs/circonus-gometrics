@@ -94,6 +94,15 @@ func testAlertServer() *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(f))
 }
 
+func TestNewAlert(t *testing.T) {
+	bundle := NewAlert()
+	actualType := reflect.TypeOf(bundle)
+	expectedType := "*api.Alert"
+	if actualType.String() != expectedType {
+		t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+	}
+}
+
 func TestFetchAlert(t *testing.T) {
 	server := testAlertServer()
 	defer server.Close()
