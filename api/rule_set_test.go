@@ -83,14 +83,31 @@ func testRulesetServer() *httptest.Server {
 		} else if path == "/rule_set" {
 			switch r.Method {
 			case "GET":
-				c := []Ruleset{testRuleset}
-				ret, err := json.Marshal(c)
-				if err != nil {
-					panic(err)
+				reqURL := r.URL.String()
+				var c []Ruleset
+				if reqURL == "/rule_set?search=request%60latency_ms" {
+					c = []Ruleset{testRuleset}
+				} else if reqURL == "/rule_set?f_tags_has=service%3Aweb" {
+					c = []Ruleset{testRuleset}
+				} else if reqURL == "/rule_set?f_tags_has=service%3Aweb&search=request%60latency_ms" {
+					c = []Ruleset{testRuleset}
+				} else if reqURL == "/rule_set" {
+					c = []Ruleset{testRuleset}
+				} else {
+					c = []Ruleset{}
 				}
-				w.WriteHeader(200)
-				w.Header().Set("Content-Type", "application/json")
-				fmt.Fprintln(w, string(ret))
+				if len(c) > 0 {
+					ret, err := json.Marshal(c)
+					if err != nil {
+						panic(err)
+					}
+					w.WriteHeader(200)
+					w.Header().Set("Content-Type", "application/json")
+					fmt.Fprintln(w, string(ret))
+				} else {
+					w.WriteHeader(404)
+					fmt.Fprintln(w, fmt.Sprintf("not found: %s %s", r.Method, reqURL))
+				}
 			case "POST":
 				defer r.Body.Close()
 				_, err := ioutil.ReadAll(r.Body)
@@ -310,6 +327,82 @@ func TestDeleteRuleset(t *testing.T) {
 		}
 		if err.Error() != expectedError.Error() {
 			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+}
+
+func TestSearchRulesets(t *testing.T) {
+	server := testRulesetServer()
+	defer server.Close()
+
+	var apih *API
+
+	ac := &Config{
+		TokenKey: "abc123",
+		TokenApp: "test",
+		URL:      server.URL,
+	}
+	apih, err := NewAPI(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	search := SearchQueryType("request`latency_ms")
+	filter := SearchFilterType(map[string][]string{"f_tags_has": []string{"service:web"}})
+
+	t.Log("no search, no filter")
+	{
+		rulesets, err := apih.SearchRulesets(nil, nil)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(rulesets)
+		expectedType := "*[]api.Ruleset"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
+	}
+
+	t.Log("search, no filter")
+	{
+		rulesets, err := apih.SearchRulesets(&search, nil)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(rulesets)
+		expectedType := "*[]api.Ruleset"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
+	}
+
+	t.Log("no search, filter")
+	{
+		rulesets, err := apih.SearchRulesets(nil, &filter)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(rulesets)
+		expectedType := "*[]api.Ruleset"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
+	}
+
+	t.Log("search, filter")
+	{
+		rulesets, err := apih.SearchRulesets(&search, &filter)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(rulesets)
+		expectedType := "*[]api.Ruleset"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 		}
 	}
 }
