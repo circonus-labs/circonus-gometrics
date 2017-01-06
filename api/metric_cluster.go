@@ -67,13 +67,17 @@ func (a *API) FetchMetricCluster(cid CIDType, extras string) (*MetricCluster, er
 		reqURL.RawQuery = q.Encode()
 	}
 
-	resp, err := a.Get(reqURL.String())
+	result, err := a.Get(reqURL.String())
 	if err != nil {
 		return nil, err
 	}
 
+	if a.Debug {
+		a.Log.Printf("[DEBUG] fetch metric cluster, received JSON: %s", string(result))
+	}
+
 	cluster := &MetricCluster{}
-	if err := json.Unmarshal(resp, cluster); err != nil {
+	if err := json.Unmarshal(result, cluster); err != nil {
 		return nil, err
 	}
 
@@ -101,13 +105,13 @@ func (a *API) FetchMetricClusters(extras string) (*[]MetricCluster, error) {
 		reqURL.RawQuery = q.Encode()
 	}
 
-	resp, err := a.Get(reqURL.String())
+	result, err := a.Get(reqURL.String())
 	if err != nil {
 		return nil, err
 	}
 
 	var clusters []MetricCluster
-	if err := json.Unmarshal(resp, &clusters); err != nil {
+	if err := json.Unmarshal(result, &clusters); err != nil {
 		return nil, err
 	}
 
@@ -135,6 +139,10 @@ func (a *API) UpdateMetricCluster(cfg *MetricCluster) (*MetricCluster, error) {
 		return nil, err
 	}
 
+	if a.Debug {
+		a.Log.Printf("[DEBUG] update metric cluster, sending JSON: %s", string(jsonCfg))
+	}
+
 	result, err := a.Put(clusterCID, jsonCfg)
 	if err != nil {
 		return nil, err
@@ -157,6 +165,10 @@ func (a *API) CreateMetricCluster(cfg *MetricCluster) (*MetricCluster, error) {
 	jsonCfg, err := json.Marshal(cfg)
 	if err != nil {
 		return nil, err
+	}
+
+	if a.Debug {
+		a.Log.Printf("[DEBUG] create metric cluster, sending JSON: %s", string(jsonCfg))
 	}
 
 	result, err := a.Post(config.MetricClusterPrefix, jsonCfg)
