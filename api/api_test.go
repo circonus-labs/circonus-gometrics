@@ -219,12 +219,12 @@ func TestApiGet(t *testing.T) {
 		URL:      server.URL,
 	}
 
-	apih, err := NewAPI(ac)
+	client, err := NewClient(ac)
 	if err != nil {
 		t.Errorf("Expected no error, got '%+v'", err)
 	}
 
-	resp, err := apih.Get("/")
+	resp, err := client.Get("/")
 
 	if err != nil {
 		t.Errorf("Expected no error, got '%+v'", resp)
@@ -247,12 +247,12 @@ func TestApiPut(t *testing.T) {
 		URL:      server.URL,
 	}
 
-	apih, err := NewAPI(ac)
+	client, err := NewClient(ac)
 	if err != nil {
 		t.Errorf("Expected no error, got '%+v'", err)
 	}
 
-	resp, err := apih.Put("/", nil)
+	resp, err := client.Put("/", nil)
 
 	if err != nil {
 		t.Errorf("Expected no error, got '%+v'", resp)
@@ -275,12 +275,12 @@ func TestApiPost(t *testing.T) {
 		URL:      server.URL,
 	}
 
-	apih, err := NewAPI(ac)
+	client, err := NewClient(ac)
 	if err != nil {
 		t.Errorf("Expected no error, got '%+v'", err)
 	}
 
-	resp, err := apih.Post("/", nil)
+	resp, err := client.Post("/", nil)
 
 	if err != nil {
 		t.Errorf("Expected no error, got '%+v'", resp)
@@ -303,12 +303,12 @@ func TestApiDelete(t *testing.T) {
 		URL:      server.URL,
 	}
 
-	apih, err := NewAPI(ac)
+	client, err := NewClient(ac)
 	if err != nil {
 		t.Errorf("Expected no error, got '%+v'", err)
 	}
 
-	resp, err := apih.Delete("/")
+	resp, err := client.Delete("/")
 
 	if err != nil {
 		t.Errorf("Expected no error, got '%+v'", resp)

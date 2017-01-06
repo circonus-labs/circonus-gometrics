@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package api provides methods for interacting with the Circonus API
+// Package api provides methods for interacting with the Circonus API. See the full API Documentation at https://login.circonus.com/resources/api for more information.
 package api
 
 import (
@@ -71,7 +71,12 @@ type API struct {
 	Log    *log.Logger
 }
 
-// NewAPI returns a new Circonus API
+// NewClient returns a new Circonus API (alias for New)
+func NewClient(ac *Config) (*API, error) {
+	return New(ac)
+}
+
+// NewAPI returns a new Circonus API (alias for New)
 func NewAPI(ac *Config) (*API, error) {
 	return New(ac)
 }
