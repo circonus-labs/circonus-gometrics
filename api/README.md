@@ -1,15 +1,15 @@
 ## Circonus API package
 
-Full api documentation available at [godoc.org](https://godoc.org/github.com/circonus-labs/circonus-gometrics/api)
+Full api documentation (for using *this* package) is available at [godoc.org](https://godoc.org/github.com/circonus-labs/circonus-gometrics/api). Links in the lists below go directly to the generic Circonus API documentation for the endpoint.
 
-### Straight API access
+### Straight [raw] API access
 
 * Get
 * Post (for creates)
 * Put (for updates)
 * Delete
 
-### Helpers (for currently supported API objects)
+### Helpers for currently supported API endpoints
 
 > Note, these interfaces are still being actively developed. For example, many of the `New*` methods only return an empty struct; sensible defaults will be added going forward. Other, common helper methods for the various endpoints may be added as use cases emerge. The organization
 of the API may change if common use contexts would benefit significantly.
