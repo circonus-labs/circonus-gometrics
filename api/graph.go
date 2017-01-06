@@ -176,9 +176,8 @@ func (a *API) FetchGraph(cid CIDType) (*Graph, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	if a.Debug {
-		a.Log.Printf("[DEBUG] fetch graph, JSON from API: %s", string(result))
+		a.Log.Printf("[DEBUG] fetch graph, received JSON: %s", string(result))
 	}
 
 	graph := new(Graph)
@@ -226,7 +225,7 @@ func (a *API) UpdateGraph(cfg *Graph) (*Graph, error) {
 	}
 
 	if a.Debug {
-		a.Log.Printf("[DEBUG] update graph, sending JSON API: %s", string(jsonCfg))
+		a.Log.Printf("[DEBUG] update graph, sending JSON: %s", string(jsonCfg))
 	}
 
 	result, err := a.Put(graphCID, jsonCfg)
@@ -254,7 +253,7 @@ func (a *API) CreateGraph(cfg *Graph) (*Graph, error) {
 	}
 
 	if a.Debug {
-		a.Log.Printf("[DEBUG] create graph, sending JSON API: %s", string(jsonCfg))
+		a.Log.Printf("[DEBUG] update graph, sending JSON: %s", string(jsonCfg))
 	}
 
 	result, err := a.Post(config.GraphPrefix, jsonCfg)
@@ -302,10 +301,10 @@ func (a *API) DeleteGraphByCID(cid CIDType) (bool, error) {
 	return true, nil
 }
 
-// GraphSearch returns list of graphs matching a search query and/or filter
+// SearchGraphs returns list of graphs matching a search query and/or filter
 //    - a search query (see: https://login.circonus.com/resources/api#searching)
 //    - a filter (see: https://login.circonus.com/resources/api#filtering)
-func (a *API) GraphSearch(searchCriteria *SearchQueryType, filterCriteria *SearchFilterType) (*[]Graph, error) {
+func (a *API) SearchGraphs(searchCriteria *SearchQueryType, filterCriteria *SearchFilterType) (*[]Graph, error) {
 	q := url.Values{}
 
 	if searchCriteria != nil && *searchCriteria != "" {
