@@ -63,6 +63,10 @@ func (a *API) FetchRuleset(cid CIDType) (*Ruleset, error) {
 		return nil, err
 	}
 
+	if a.Debug {
+		a.Log.Printf("[DEBUG] fetch rule set, received JSON: %s", string(result))
+	}
+
 	ruleset := &Ruleset{}
 	if err := json.Unmarshal(result, ruleset); err != nil {
 		return nil, err
@@ -107,6 +111,10 @@ func (a *API) UpdateRuleset(cfg *Ruleset) (*Ruleset, error) {
 		return nil, err
 	}
 
+	if a.Debug {
+		a.Log.Printf("[DEBUG] update rule set, sending JSON: %s", string(jsonCfg))
+	}
+
 	result, err := a.Put(rulesetCID, jsonCfg)
 	if err != nil {
 		return nil, err
@@ -129,6 +137,10 @@ func (a *API) CreateRuleset(cfg *Ruleset) (*Ruleset, error) {
 	jsonCfg, err := json.Marshal(cfg)
 	if err != nil {
 		return nil, err
+	}
+
+	if a.Debug {
+		a.Log.Printf("[DEBUG] create rule set, sending JSON: %s", string(jsonCfg))
 	}
 
 	resp, err := a.Post(config.RuleSetPrefix, jsonCfg)
