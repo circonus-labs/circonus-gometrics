@@ -61,15 +61,32 @@ func testMetricClusterServer() *httptest.Server {
 			}
 		case "/metric_cluster":
 			switch r.Method {
-			case "GET": // search
-				r := []MetricCluster{testMetricCluster}
-				ret, err := json.Marshal(r)
-				if err != nil {
-					panic(err)
+			case "GET":
+				reqURL := r.URL.String()
+				var c []MetricCluster
+				if reqURL == "/metric_cluster?search=web+servers" {
+					c = []MetricCluster{testMetricCluster}
+				} else if reqURL == "/metric_cluster?f_tags_has=dc%3Asfo1" {
+					c = []MetricCluster{testMetricCluster}
+				} else if reqURL == "/metric_cluster?f_tags_has=dc%3Asfo1&search=web+servers" {
+					c = []MetricCluster{testMetricCluster}
+				} else if reqURL == "/metric_cluster" {
+					c = []MetricCluster{testMetricCluster}
+				} else {
+					c = []MetricCluster{}
 				}
-				w.WriteHeader(200)
-				w.Header().Set("Content-Type", "application/json")
-				fmt.Fprintln(w, string(ret))
+				if len(c) > 0 {
+					ret, err := json.Marshal(c)
+					if err != nil {
+						panic(err)
+					}
+					w.WriteHeader(200)
+					w.Header().Set("Content-Type", "application/json")
+					fmt.Fprintln(w, string(ret))
+				} else {
+					w.WriteHeader(404)
+					fmt.Fprintln(w, fmt.Sprintf("not found: %s %s", r.Method, reqURL))
+				}
 			case "POST": // create
 				defer r.Body.Close()
 				b, err := ioutil.ReadAll(r.Body)
@@ -166,53 +183,6 @@ func TestFetchMetricClusterByCID(t *testing.T) {
 	}
 }
 
-func TestMetricClusterSearch(t *testing.T) {
-	server := testMetricClusterServer()
-	defer server.Close()
-
-	var apih *API
-	var err error
-
-	ac := &Config{
-		TokenKey: "abc123",
-		TokenApp: "test",
-		URL:      server.URL,
-	}
-	apih, err = NewAPI(ac)
-	if err != nil {
-		t.Errorf("Expected no error, got '%v'", err)
-	}
-
-	t.Log("Testing w/o search criteria")
-	{
-		clusters, err := apih.SearchMetricClusters(nil, nil)
-		if err != nil {
-			t.Fatalf("Expected no error, got '%v'", err)
-		}
-
-		actualType := reflect.TypeOf(clusters)
-		expectedType := "*[]api.MetricCluster"
-		if actualType.String() != expectedType {
-			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
-		}
-	}
-
-	t.Log("Testing with search criteria")
-	{
-		search := SearchQueryType("test")
-		clusters, err := apih.SearchMetricClusters(&search, nil)
-		if err != nil {
-			t.Fatalf("Expected no error, got '%v'", err)
-		}
-
-		actualType := reflect.TypeOf(clusters)
-		expectedType := "*[]api.MetricCluster"
-		if actualType.String() != expectedType {
-			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
-		}
-	}
-}
-
 func TestCreateMetricCluster(t *testing.T) {
 	server := testMetricClusterServer()
 	defer server.Close()
@@ -280,6 +250,82 @@ func TestUpdateMetricCluster(t *testing.T) {
 		}
 		if err.Error() != expectedError.Error() {
 			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+}
+
+func TestSearchMetricClusters(t *testing.T) {
+	server := testMetricClusterServer()
+	defer server.Close()
+
+	var apih *API
+
+	ac := &Config{
+		TokenKey: "abc123",
+		TokenApp: "test",
+		URL:      server.URL,
+	}
+	apih, err := NewAPI(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	search := SearchQueryType("web servers")
+	filter := SearchFilterType(map[string][]string{"f_tags_has": []string{"dc:sfo1"}})
+
+	t.Log("no search, no filter")
+	{
+		clusters, err := apih.SearchMetricClusters(nil, nil)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(clusters)
+		expectedType := "*[]api.MetricCluster"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
+	}
+
+	t.Log("search, no filter")
+	{
+		clusters, err := apih.SearchMetricClusters(&search, nil)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(clusters)
+		expectedType := "*[]api.MetricCluster"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
+	}
+
+	t.Log("no search, filter")
+	{
+		clusters, err := apih.SearchMetricClusters(nil, &filter)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(clusters)
+		expectedType := "*[]api.MetricCluster"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
+	}
+
+	t.Log("search, filter")
+	{
+		clusters, err := apih.SearchMetricClusters(&search, &filter)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(clusters)
+		expectedType := "*[]api.MetricCluster"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 		}
 	}
 }
