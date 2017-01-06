@@ -70,14 +70,31 @@ func testWorksheetServer() *httptest.Server {
 		} else if path == "/worksheet" {
 			switch r.Method {
 			case "GET":
-				c := []Worksheet{testWorksheet}
-				ret, err := json.Marshal(c)
-				if err != nil {
-					panic(err)
+				reqURL := r.URL.String()
+				var c []Worksheet
+				if reqURL == "/worksheet?search=web+servers" {
+					c = []Worksheet{testWorksheet}
+				} else if reqURL == "/worksheet?f_favorite=true" {
+					c = []Worksheet{testWorksheet}
+				} else if reqURL == "/worksheet?f_favorite=true&search=web+servers" {
+					c = []Worksheet{testWorksheet}
+				} else if reqURL == "/worksheet" {
+					c = []Worksheet{testWorksheet}
+				} else {
+					c = []Worksheet{}
 				}
-				w.WriteHeader(200)
-				w.Header().Set("Content-Type", "application/json")
-				fmt.Fprintln(w, string(ret))
+				if len(c) > 0 {
+					ret, err := json.Marshal(c)
+					if err != nil {
+						panic(err)
+					}
+					w.WriteHeader(200)
+					w.Header().Set("Content-Type", "application/json")
+					fmt.Fprintln(w, string(ret))
+				} else {
+					w.WriteHeader(404)
+					fmt.Fprintln(w, fmt.Sprintf("not found: %s %s", r.Method, reqURL))
+				}
 			case "POST":
 				defer r.Body.Close()
 				_, err := ioutil.ReadAll(r.Body)
@@ -297,6 +314,82 @@ func TestDeleteWorksheet(t *testing.T) {
 		}
 		if err.Error() != expectedError.Error() {
 			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+}
+
+func TestSearchWorksheets(t *testing.T) {
+	server := testWorksheetServer()
+	defer server.Close()
+
+	var apih *API
+
+	ac := &Config{
+		TokenKey: "abc123",
+		TokenApp: "test",
+		URL:      server.URL,
+	}
+	apih, err := NewAPI(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	search := SearchQueryType("web servers")
+	filter := SearchFilterType(map[string][]string{"f_favorite": []string{"true"}})
+
+	t.Log("no search, no filter")
+	{
+		worksheets, err := apih.SearchWorksheets(nil, nil)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(worksheets)
+		expectedType := "*[]api.Worksheet"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
+	}
+
+	t.Log("search, no filter")
+	{
+		worksheets, err := apih.SearchWorksheets(&search, nil)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(worksheets)
+		expectedType := "*[]api.Worksheet"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
+	}
+
+	t.Log("no search, filter")
+	{
+		worksheets, err := apih.SearchWorksheets(nil, &filter)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(worksheets)
+		expectedType := "*[]api.Worksheet"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
+	}
+
+	t.Log("search, filter")
+	{
+		worksheets, err := apih.SearchWorksheets(&search, &filter)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(worksheets)
+		expectedType := "*[]api.Worksheet"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 		}
 	}
 }
