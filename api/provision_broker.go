@@ -42,6 +42,11 @@ type ProvisionBroker struct {
 	Tags                    []string         `json:"tags,omitempty"`
 }
 
+// NewProvisionBroker returns a new ProvisionBroker (with defaults, if applicable)
+func NewProvisionBroker() *ProvisionBroker {
+	return &ProvisionBroker{}
+}
+
 // FetchProvisionBroker retrieves a broker definition
 func (a *API) FetchProvisionBroker(cid CIDType) (*ProvisionBroker, error) {
 	if cid == nil || *cid == "" {

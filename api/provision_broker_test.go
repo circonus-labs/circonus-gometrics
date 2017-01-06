@@ -89,6 +89,15 @@ func testProvisionBrokerServer() *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(f))
 }
 
+func TestNewProvisionBroker(t *testing.T) {
+	bundle := NewProvisionBroker()
+	actualType := reflect.TypeOf(bundle)
+	expectedType := "*api.ProvisionBroker"
+	if actualType.String() != expectedType {
+		t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+	}
+}
+
 func TestFetchProvisionBroker(t *testing.T) {
 	server := testProvisionBrokerServer()
 	defer server.Close()
