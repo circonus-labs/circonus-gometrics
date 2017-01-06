@@ -87,14 +87,31 @@ func testRulesetGroupServer() *httptest.Server {
 		} else if path == "/rule_set_group" {
 			switch r.Method {
 			case "GET":
-				c := []RulesetGroup{testRulesetGroup}
-				ret, err := json.Marshal(c)
-				if err != nil {
-					panic(err)
+				reqURL := r.URL.String()
+				var c []RulesetGroup
+				if reqURL == "/rule_set_group?search=web+requests" {
+					c = []RulesetGroup{testRulesetGroup}
+				} else if reqURL == "/rule_set_group?f_tags_has=location%3Aconus" {
+					c = []RulesetGroup{testRulesetGroup}
+				} else if reqURL == "/rule_set_group?f_tags_has=location%3Aconus&search=web+requests" {
+					c = []RulesetGroup{testRulesetGroup}
+				} else if reqURL == "/rule_set_group" {
+					c = []RulesetGroup{testRulesetGroup}
+				} else {
+					c = []RulesetGroup{}
 				}
-				w.WriteHeader(200)
-				w.Header().Set("Content-Type", "application/json")
-				fmt.Fprintln(w, string(ret))
+				if len(c) > 0 {
+					ret, err := json.Marshal(c)
+					if err != nil {
+						panic(err)
+					}
+					w.WriteHeader(200)
+					w.Header().Set("Content-Type", "application/json")
+					fmt.Fprintln(w, string(ret))
+				} else {
+					w.WriteHeader(404)
+					fmt.Fprintln(w, fmt.Sprintf("not found: %s %s", r.Method, reqURL))
+				}
 			case "POST":
 				defer r.Body.Close()
 				_, err := ioutil.ReadAll(r.Body)
@@ -314,6 +331,82 @@ func TestDeleteRulesetGroup(t *testing.T) {
 		}
 		if err.Error() != expectedError.Error() {
 			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+}
+
+func TestSearchRulesetGroups(t *testing.T) {
+	server := testRulesetGroupServer()
+	defer server.Close()
+
+	var apih *API
+
+	ac := &Config{
+		TokenKey: "abc123",
+		TokenApp: "test",
+		URL:      server.URL,
+	}
+	apih, err := NewAPI(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	search := SearchQueryType("web requests")
+	filter := SearchFilterType(map[string][]string{"f_tags_has": []string{"location:conus"}})
+
+	t.Log("no search, no filter")
+	{
+		groups, err := apih.SearchRulesetGroups(nil, nil)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(groups)
+		expectedType := "*[]api.RulesetGroup"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
+	}
+
+	t.Log("search, no filter")
+	{
+		groups, err := apih.SearchRulesetGroups(&search, nil)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(groups)
+		expectedType := "*[]api.RulesetGroup"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
+	}
+
+	t.Log("no search, filter")
+	{
+		groups, err := apih.SearchRulesetGroups(nil, &filter)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(groups)
+		expectedType := "*[]api.RulesetGroup"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
+	}
+
+	t.Log("search, filter")
+	{
+		groups, err := apih.SearchRulesetGroups(&search, &filter)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(groups)
+		expectedType := "*[]api.RulesetGroup"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 		}
 	}
 }
