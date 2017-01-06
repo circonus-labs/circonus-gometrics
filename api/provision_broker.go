@@ -63,6 +63,10 @@ func (a *API) FetchProvisionBroker(cid CIDType) (*ProvisionBroker, error) {
 		return nil, err
 	}
 
+	if a.Debug {
+		a.Log.Printf("[DEBUG] fetch broker provision request, received JSON: %s", string(result))
+	}
+
 	broker := &ProvisionBroker{}
 	if err := json.Unmarshal(result, broker); err != nil {
 		return nil, err
@@ -96,6 +100,10 @@ func (a *API) UpdateProvisionBroker(cid CIDType, cfg *ProvisionBroker) (*Provisi
 		return nil, err
 	}
 
+	if a.Debug {
+		a.Log.Printf("[DEBUG] update broker provision request, sending JSON: %s", string(jsonCfg))
+	}
+
 	result, err := a.Put(brokerCID, jsonCfg)
 	if err != nil {
 		return nil, err
@@ -118,6 +126,10 @@ func (a *API) CreateProvisionBroker(cfg *ProvisionBroker) (*ProvisionBroker, err
 	jsonCfg, err := json.Marshal(cfg)
 	if err != nil {
 		return nil, err
+	}
+
+	if a.Debug {
+		a.Log.Printf("[DEBUG] create broker provision request, sending JSON: %s", string(jsonCfg))
 	}
 
 	result, err := a.Post(config.ProvisionBrokerPrefix, jsonCfg)
