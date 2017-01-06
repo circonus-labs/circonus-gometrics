@@ -121,6 +121,15 @@ func testWorksheetServer() *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(f))
 }
 
+func TestNewWorksheet(t *testing.T) {
+	bundle := NewWorksheet()
+	actualType := reflect.TypeOf(bundle)
+	expectedType := "*api.Worksheet"
+	if actualType.String() != expectedType {
+		t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+	}
+}
+
 func TestFetchWorksheet(t *testing.T) {
 	server := testWorksheetServer()
 	defer server.Close()

@@ -40,6 +40,11 @@ type Worksheet struct {
 	Title        string                `json:"title"`
 }
 
+// NewWorksheet returns a new Worksheet (with defaults, if applicable)
+func NewWorksheet() *Worksheet {
+	return &Worksheet{}
+}
+
 // FetchWorksheet retrieves a worksheet definition
 func (a *API) FetchWorksheet(cid CIDType) (*Worksheet, error) {
 	if cid == nil || *cid == "" {
