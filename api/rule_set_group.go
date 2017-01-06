@@ -70,6 +70,10 @@ func (a *API) FetchRulesetGroup(cid CIDType) (*RulesetGroup, error) {
 		return nil, err
 	}
 
+	if a.Debug {
+		a.Log.Printf("[DEBUG] fetch rule set group, received JSON: %s", string(result))
+	}
+
 	rulesetGroup := &RulesetGroup{}
 	if err := json.Unmarshal(result, rulesetGroup); err != nil {
 		return nil, err
@@ -114,6 +118,10 @@ func (a *API) UpdateRulesetGroup(cfg *RulesetGroup) (*RulesetGroup, error) {
 		return nil, err
 	}
 
+	if a.Debug {
+		a.Log.Printf("[DEBUG] update rule set group, sending JSON: %s", string(jsonCfg))
+	}
+
 	result, err := a.Put(groupCID, jsonCfg)
 	if err != nil {
 		return nil, err
@@ -136,6 +144,10 @@ func (a *API) CreateRulesetGroup(cfg *RulesetGroup) (*RulesetGroup, error) {
 	jsonCfg, err := json.Marshal(cfg)
 	if err != nil {
 		return nil, err
+	}
+
+	if a.Debug {
+		a.Log.Printf("[DEBUG] create rule set group, sending JSON: %s", string(jsonCfg))
 	}
 
 	result, err := a.Post(config.RuleSetGroupPrefix, jsonCfg)
