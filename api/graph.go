@@ -156,6 +156,11 @@ type Graph struct {
 	Title          string                      `json:"title,omitempty"`
 }
 
+// NewGraph returns a Graph (with defaults, if applicable)
+func NewGraph() *Graph {
+	return &Graph{}
+}
+
 // FetchGraph retrieves a graph definition
 func (a *API) FetchGraph(cid CIDType) (*Graph, error) {
 	if cid == nil || *cid == "" {
