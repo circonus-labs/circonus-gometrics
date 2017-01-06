@@ -111,6 +111,15 @@ func testAcknowledgementServer() *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(f))
 }
 
+func TestNewAcknowledgement(t *testing.T) {
+	bundle := NewAcknowledgement()
+	actualType := reflect.TypeOf(bundle)
+	expectedType := "*api.Acknowledgement"
+	if actualType.String() != expectedType {
+		t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+	}
+}
+
 func TestFetchAcknowledgement(t *testing.T) {
 	server := testAcknowledgementServer()
 	defer server.Close()

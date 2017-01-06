@@ -30,6 +30,11 @@ type Acknowledgement struct {
 	Notes             string      `json:"notes,omitempty"`
 }
 
+// NewAcknowledgement returns new Acknowledgement (with defaults, if applicable)
+func NewAcknowledgement() *Acknowledgement {
+	return &Acknowledgement{}
+}
+
 // FetchAcknowledgement retrieves a acknowledgement definition
 func (a *API) FetchAcknowledgement(cid CIDType) (*Acknowledgement, error) {
 	if cid == nil || *cid == "" {
