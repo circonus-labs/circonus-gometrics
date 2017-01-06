@@ -61,6 +61,10 @@ func (a *API) FetchWorksheet(cid CIDType) (*Worksheet, error) {
 		return nil, err
 	}
 
+	if a.Debug {
+		a.Log.Printf("[DEBUG] fetch worksheet, received JSON: %s", string(result))
+	}
+
 	worksheet := new(Worksheet)
 	if err := json.Unmarshal(result, worksheet); err != nil {
 		return nil, err
@@ -105,6 +109,10 @@ func (a *API) UpdateWorksheet(cfg *Worksheet) (*Worksheet, error) {
 		return nil, err
 	}
 
+	if a.Debug {
+		a.Log.Printf("[DEBUG] update worksheet, sending JSON: %s", string(jsonCfg))
+	}
+
 	result, err := a.Put(worksheetCID, jsonCfg)
 	if err != nil {
 		return nil, err
@@ -127,6 +135,10 @@ func (a *API) CreateWorksheet(cfg *Worksheet) (*Worksheet, error) {
 	jsonCfg, err := json.Marshal(cfg)
 	if err != nil {
 		return nil, err
+	}
+
+	if a.Debug {
+		a.Log.Printf("[DEBUG] create annotation, sending JSON: %s", string(jsonCfg))
 	}
 
 	result, err := a.Post(config.WorksheetPrefix, jsonCfg)
