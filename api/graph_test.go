@@ -96,14 +96,31 @@ func testGraphServer() *httptest.Server {
 		} else if path == "/graph" {
 			switch r.Method {
 			case "GET":
-				c := []Graph{testGraph}
-				ret, err := json.Marshal(c)
-				if err != nil {
-					panic(err)
+				reqURL := r.URL.String()
+				var c []Graph
+				if reqURL == "/graph?search=CPU+Utilization" {
+					c = []Graph{testGraph}
+				} else if reqURL == "/graph?f__tags_has=os%3Arhel7" {
+					c = []Graph{testGraph}
+				} else if reqURL == "/graph?f__tags_has=os%3Arhel7&search=CPU+Utilization" {
+					c = []Graph{testGraph}
+				} else if reqURL == "/graph" {
+					c = []Graph{testGraph}
+				} else {
+					c = []Graph{}
 				}
-				w.WriteHeader(200)
-				w.Header().Set("Content-Type", "application/json")
-				fmt.Fprintln(w, string(ret))
+				if len(c) > 0 {
+					ret, err := json.Marshal(c)
+					if err != nil {
+						panic(err)
+					}
+					w.WriteHeader(200)
+					w.Header().Set("Content-Type", "application/json")
+					fmt.Fprintln(w, string(ret))
+				} else {
+					w.WriteHeader(404)
+					fmt.Fprintln(w, fmt.Sprintf("not found: %s %s", r.Method, reqURL))
+				}
 			case "POST":
 				defer r.Body.Close()
 				_, err := ioutil.ReadAll(r.Body)
@@ -322,6 +339,82 @@ func TestDeleteGraph(t *testing.T) {
 		}
 		if err.Error() != expectedError.Error() {
 			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+}
+
+func TestSearchGraphs(t *testing.T) {
+	server := testGraphServer()
+	defer server.Close()
+
+	var apih *API
+
+	ac := &Config{
+		TokenKey: "abc123",
+		TokenApp: "test",
+		URL:      server.URL,
+	}
+	apih, err := NewAPI(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	search := SearchQueryType("CPU Utilization")
+	filter := SearchFilterType(map[string][]string{"f__tags_has": []string{"os:rhel7"}})
+
+	t.Log("no search, no filter")
+	{
+		graphs, err := apih.SearchGraphs(nil, nil)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(graphs)
+		expectedType := "*[]api.Graph"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
+	}
+
+	t.Log("search, no filter")
+	{
+		graphs, err := apih.SearchGraphs(&search, nil)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(graphs)
+		expectedType := "*[]api.Graph"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
+	}
+
+	t.Log("no search, filter")
+	{
+		graphs, err := apih.SearchGraphs(nil, &filter)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(graphs)
+		expectedType := "*[]api.Graph"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
+	}
+
+	t.Log("search, filter")
+	{
+		graphs, err := apih.SearchGraphs(&search, &filter)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(graphs)
+		expectedType := "*[]api.Graph"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 		}
 	}
 }
