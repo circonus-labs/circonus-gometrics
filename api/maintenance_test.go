@@ -60,14 +60,31 @@ func testMaintenanceServer() *httptest.Server {
 		} else if path == "/maintenance" {
 			switch r.Method {
 			case "GET":
-				c := []Maintenance{testMaintenance}
-				ret, err := json.Marshal(c)
-				if err != nil {
-					panic(err)
+				reqURL := r.URL.String()
+				var c []Maintenance
+				if reqURL == "/maintenance?search=%2Fcheck_bundle%2F1234" {
+					c = []Maintenance{testMaintenance}
+				} else if reqURL == "/maintenance?f_start_gt=1483639916" {
+					c = []Maintenance{testMaintenance}
+				} else if reqURL == "/maintenance?f_start_gt=1483639916&search=%2Fcheck_bundle%2F1234" {
+					c = []Maintenance{testMaintenance}
+				} else if reqURL == "/maintenance" {
+					c = []Maintenance{testMaintenance}
+				} else {
+					c = []Maintenance{}
 				}
-				w.WriteHeader(200)
-				w.Header().Set("Content-Type", "application/json")
-				fmt.Fprintln(w, string(ret))
+				if len(c) > 0 {
+					ret, err := json.Marshal(c)
+					if err != nil {
+						panic(err)
+					}
+					w.WriteHeader(200)
+					w.Header().Set("Content-Type", "application/json")
+					fmt.Fprintln(w, string(ret))
+				} else {
+					w.WriteHeader(404)
+					fmt.Fprintln(w, fmt.Sprintf("not found: %s %s", r.Method, reqURL))
+				}
 			case "POST":
 				defer r.Body.Close()
 				_, err := ioutil.ReadAll(r.Body)
@@ -287,6 +304,82 @@ func TestDeleteMaintenanceWindow(t *testing.T) {
 		}
 		if err.Error() != expectedError.Error() {
 			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+}
+
+func TestSearchMaintenances(t *testing.T) {
+	server := testMaintenanceServer()
+	defer server.Close()
+
+	var apih *API
+
+	ac := &Config{
+		TokenKey: "abc123",
+		TokenApp: "test",
+		URL:      server.URL,
+	}
+	apih, err := NewAPI(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	search := SearchQueryType("/check_bundle/1234")
+	filter := SearchFilterType(map[string][]string{"f_start_gt": []string{"1483639916"}})
+
+	t.Log("no search, no filter")
+	{
+		windows, err := apih.SearchMaintenanceWindows(nil, nil)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(windows)
+		expectedType := "*[]api.Maintenance"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
+	}
+
+	t.Log("search, no filter")
+	{
+		windows, err := apih.SearchMaintenanceWindows(&search, nil)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(windows)
+		expectedType := "*[]api.Maintenance"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
+	}
+
+	t.Log("no search, filter")
+	{
+		windows, err := apih.SearchMaintenanceWindows(nil, &filter)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(windows)
+		expectedType := "*[]api.Maintenance"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
+	}
+
+	t.Log("search, filter")
+	{
+		windows, err := apih.SearchMaintenanceWindows(&search, &filter)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(windows)
+		expectedType := "*[]api.Maintenance"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 		}
 	}
 }
