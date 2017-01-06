@@ -61,14 +61,31 @@ func testMetricServer() *httptest.Server {
 		} else if path == "/metric" {
 			switch r.Method {
 			case "GET":
-				c := []Metric{testMetric}
-				ret, err := json.Marshal(c)
-				if err != nil {
-					panic(err)
+				reqURL := r.URL.String()
+				var c []Metric
+				if reqURL == "/metric?search=vm%60memory%60used" {
+					c = []Metric{testMetric}
+				} else if reqURL == "/metric?f_tags_has=service%3Acache" {
+					c = []Metric{testMetric}
+				} else if reqURL == "/metric?f_tags_has=service%3Acache&search=vm%60memory%60used" {
+					c = []Metric{testMetric}
+				} else if reqURL == "/metric" {
+					c = []Metric{testMetric}
+				} else {
+					c = []Metric{}
 				}
-				w.WriteHeader(200)
-				w.Header().Set("Content-Type", "application/json")
-				fmt.Fprintln(w, string(ret))
+				if len(c) > 0 {
+					ret, err := json.Marshal(c)
+					if err != nil {
+						panic(err)
+					}
+					w.WriteHeader(200)
+					w.Header().Set("Content-Type", "application/json")
+					fmt.Fprintln(w, string(ret))
+				} else {
+					w.WriteHeader(404)
+					fmt.Fprintln(w, fmt.Sprintf("not found: %s %s", r.Method, reqURL))
+				}
 			default:
 				w.WriteHeader(404)
 				fmt.Fprintln(w, fmt.Sprintf("not found: %s %s", r.Method, path))
@@ -209,6 +226,82 @@ func TestUpdateMetric(t *testing.T) {
 		}
 		if err.Error() != expectedError.Error() {
 			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+}
+
+func TestSearchMetrics(t *testing.T) {
+	server := testMetricServer()
+	defer server.Close()
+
+	var apih *API
+
+	ac := &Config{
+		TokenKey: "abc123",
+		TokenApp: "test",
+		URL:      server.URL,
+	}
+	apih, err := NewAPI(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	search := SearchQueryType("vm`memory`used")
+	filter := SearchFilterType(map[string][]string{"f_tags_has": []string{"service:cache"}})
+
+	t.Log("no search, no filter")
+	{
+		metrics, err := apih.SearchMetrics(nil, nil)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(metrics)
+		expectedType := "*[]api.Metric"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
+	}
+
+	t.Log("search, no filter")
+	{
+		metrics, err := apih.SearchMetrics(&search, nil)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(metrics)
+		expectedType := "*[]api.Metric"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
+	}
+
+	t.Log("no search, filter")
+	{
+		metrics, err := apih.SearchMetrics(nil, &filter)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(metrics)
+		expectedType := "*[]api.Metric"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
+	}
+
+	t.Log("search, filter")
+	{
+		metrics, err := apih.SearchMetrics(&search, &filter)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(metrics)
+		expectedType := "*[]api.Metric"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 		}
 	}
 }
