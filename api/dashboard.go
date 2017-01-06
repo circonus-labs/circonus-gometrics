@@ -230,6 +230,10 @@ func (a *API) FetchDashboard(cid CIDType) (*Dashboard, error) {
 		return nil, err
 	}
 
+	if a.Debug {
+		a.Log.Printf("[DEBUG] fetch dashboard, received JSON: %s", string(result))
+	}
+
 	dashboard := new(Dashboard)
 	if err := json.Unmarshal(result, dashboard); err != nil {
 		return nil, err
@@ -274,6 +278,10 @@ func (a *API) UpdateDashboard(cfg *Dashboard) (*Dashboard, error) {
 		return nil, err
 	}
 
+	if a.Debug {
+		a.Log.Printf("[DEBUG] update dashboard, sending JSON: %s", string(jsonCfg))
+	}
+
 	result, err := a.Put(dashboardCID, jsonCfg)
 	if err != nil {
 		return nil, err
@@ -296,6 +304,10 @@ func (a *API) CreateDashboard(cfg *Dashboard) (*Dashboard, error) {
 	jsonCfg, err := json.Marshal(cfg)
 	if err != nil {
 		return nil, err
+	}
+
+	if a.Debug {
+		a.Log.Printf("[DEBUG] create dashboard, sending JSON: %s", string(jsonCfg))
 	}
 
 	result, err := a.Post(config.DashboardPrefix, jsonCfg)
