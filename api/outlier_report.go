@@ -50,6 +50,10 @@ func (a *API) FetchOutlierReport(cid CIDType) (*OutlierReport, error) {
 		return nil, err
 	}
 
+	if a.Debug {
+		a.Log.Printf("[DEBUG] fetch outlier report, received JSON: %s", string(result))
+	}
+
 	report := &OutlierReport{}
 	if err := json.Unmarshal(result, report); err != nil {
 		return nil, err
@@ -94,6 +98,10 @@ func (a *API) UpdateOutlierReport(cfg *OutlierReport) (*OutlierReport, error) {
 		return nil, err
 	}
 
+	if a.Debug {
+		a.Log.Printf("[DEBUG] update outlier report, sending JSON: %s", string(jsonCfg))
+	}
+
 	result, err := a.Put(reportCID, jsonCfg)
 	if err != nil {
 		return nil, err
@@ -116,6 +124,10 @@ func (a *API) CreateOutlierReport(cfg *OutlierReport) (*OutlierReport, error) {
 	jsonCfg, err := json.Marshal(cfg)
 	if err != nil {
 		return nil, err
+	}
+
+	if a.Debug {
+		a.Log.Printf("[DEBUG] create outlier report, sending JSON: %s", string(jsonCfg))
 	}
 
 	result, err := a.Post(config.OutlierReportPrefix, jsonCfg)
