@@ -25,7 +25,7 @@ type UserContactInfo struct {
 	XMPP string `json:"xmpp,omitempty"`
 }
 
-// User definition
+// User defines a user. See https://login.circonus.com/resources/api/calls/user for more information.
 type User struct {
 	CID         string          `json:"_cid,omitempty"`
 	ContactInfo UserContactInfo `json:"contact_info,omitempty"`
@@ -34,7 +34,7 @@ type User struct {
 	Lastname    string          `json:"lastname"`
 }
 
-// FetchUser retrieve a specific user. Pass a valid cid or nil for '/user/current'.
+// FetchUser retrieves a specific user. Pass a valid cid or nil for '/user/current'.
 func (a *API) FetchUser(cid CIDType) (*User, error) {
 	var userCID string
 
@@ -69,7 +69,7 @@ func (a *API) FetchUser(cid CIDType) (*User, error) {
 	return user, nil
 }
 
-// FetchUsers retrieves users for current account
+// FetchUsers retrieves all users available to API Token.
 func (a *API) FetchUsers() (*[]User, error) {
 	result, err := a.Get(config.UserPrefix)
 	if err != nil {
@@ -84,7 +84,7 @@ func (a *API) FetchUsers() (*[]User, error) {
 	return &users, nil
 }
 
-// UpdateUser update user information
+// UpdateUser updates passed user.
 func (a *API) UpdateUser(cfg *User) (*User, error) {
 	if cfg == nil {
 		return nil, fmt.Errorf("Invalid user config [nil]")
@@ -122,9 +122,9 @@ func (a *API) UpdateUser(cfg *User) (*User, error) {
 	return user, nil
 }
 
-// SearchUsers returns list of users matching a filter (search queries
+// SearchUsers returns users matching a filter (search queries
 // are not suppoted by the user endpoint). Pass nil as filter for all
-// users the API Token can access.
+// users available to the API Token.
 func (a *API) SearchUsers(filterCriteria *SearchFilterType) (*[]User, error) {
 	q := url.Values{}
 
