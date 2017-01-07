@@ -39,7 +39,7 @@ type RuleSetGroupCondition struct {
 	RuleSetCID         string   `json:"rule_set"`
 }
 
-// RuleSetGroup defines a ruleset group
+// RuleSetGroup defines a ruleset group. See https://login.circonus.com/resources/api/calls/rule_set_group for more information.
 type RuleSetGroup struct {
 	CID               string                  `json:"_cid,omitempty"`
 	ContactGroups     map[uint8][]string      `json:"contact_groups"`
@@ -87,7 +87,7 @@ func (a *API) FetchRuleSetGroup(cid CIDType) (*RuleSetGroup, error) {
 	return rulesetGroup, nil
 }
 
-// FetchRuleSetGroups retrieves all rulesetGroups
+// FetchRuleSetGroups retrieves all rule set groups available to API Token.
 func (a *API) FetchRuleSetGroups() (*[]RuleSetGroup, error) {
 	result, err := a.Get(config.RuleSetGroupPrefix)
 	if err != nil {
@@ -102,7 +102,7 @@ func (a *API) FetchRuleSetGroups() (*[]RuleSetGroup, error) {
 	return &rulesetGroups, nil
 }
 
-// UpdateRuleSetGroup update rulesetGroup definition
+// UpdateRuleSetGroup updates passed rule set group.
 func (a *API) UpdateRuleSetGroup(cfg *RuleSetGroup) (*RuleSetGroup, error) {
 	if cfg == nil {
 		return nil, fmt.Errorf("Invalid rule set group config [nil]")
@@ -140,7 +140,7 @@ func (a *API) UpdateRuleSetGroup(cfg *RuleSetGroup) (*RuleSetGroup, error) {
 	return groups, nil
 }
 
-// CreateRuleSetGroup create a new rulesetGroup
+// CreateRuleSetGroup creates a new rule set group.
 func (a *API) CreateRuleSetGroup(cfg *RuleSetGroup) (*RuleSetGroup, error) {
 	if cfg == nil {
 		return nil, fmt.Errorf("Invalid rule set group config [nil]")
@@ -168,7 +168,7 @@ func (a *API) CreateRuleSetGroup(cfg *RuleSetGroup) (*RuleSetGroup, error) {
 	return group, nil
 }
 
-// DeleteRuleSetGroup delete a rulesetGroup
+// DeleteRuleSetGroup deletes passed rule set group.
 func (a *API) DeleteRuleSetGroup(cfg *RuleSetGroup) (bool, error) {
 	if cfg == nil {
 		return false, fmt.Errorf("Invalid rule set group config [nil]")
@@ -176,7 +176,7 @@ func (a *API) DeleteRuleSetGroup(cfg *RuleSetGroup) (bool, error) {
 	return a.DeleteRuleSetGroupByCID(CIDType(&cfg.CID))
 }
 
-// DeleteRuleSetGroupByCID delete a rulesetGroup by cid
+// DeleteRuleSetGroupByCID deletes rule set group wiht passed cid.
 func (a *API) DeleteRuleSetGroupByCID(cid CIDType) (bool, error) {
 	if cid == nil || *cid == "" {
 		return false, fmt.Errorf("Invalid rule set group CID [none]")
@@ -189,7 +189,7 @@ func (a *API) DeleteRuleSetGroupByCID(cid CIDType) (bool, error) {
 		return false, err
 	}
 	if !matched {
-		return false, fmt.Errorf("Invalid rule set group CID %v", groupCID)
+		return false, fmt.Errorf("Invalid rule set group CID [%s]", groupCID)
 	}
 
 	_, err = a.Delete(groupCID)
@@ -200,9 +200,9 @@ func (a *API) DeleteRuleSetGroupByCID(cid CIDType) (bool, error) {
 	return true, nil
 }
 
-// SearchRuleSetGroups returns list of annotations matching a search query and/or filter
-//    - a search query (see: https://login.circonus.com/resources/api#searching)
-//    - a filter (see: https://login.circonus.com/resources/api#filtering)
+// SearchRuleSetGroups returns rule set groups matching the
+// specified search query and/or filter. If nil is passed for
+// both parameters all rule set groups will be returned.
 func (a *API) SearchRuleSetGroups(searchCriteria *SearchQueryType, filterCriteria *SearchFilterType) (*[]RuleSetGroup, error) {
 	q := url.Values{}
 
