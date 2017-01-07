@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	testRuleset = Ruleset{
+	testRuleSet = RuleSet{
 		CID:      "/rule_set/1234_tt_firstbyte",
 		CheckCID: "/check/1234",
 		ContactGroups: map[uint8][]string{
@@ -32,8 +32,8 @@ var (
 		MetricType: "numeric",
 		Notes:      "Determine if the HTTP request is taking too long to start (or is down.)  Don't fire if ping is already alerting",
 		Parent:     "1233_ping",
-		Rules: []RulesetRule{
-			RulesetRule{
+		Rules: []RuleSetRule{
+			RuleSetRule{
 				Criteria:          "on absence",
 				Severity:          1,
 				Value:             "300",
@@ -41,7 +41,7 @@ var (
 				WindowingDuration: 300,
 				WindowingFunction: "",
 			},
-			RulesetRule{
+			RuleSetRule{
 				Criteria: "max value",
 				Severity: 2,
 				Value:    "1000",
@@ -51,13 +51,13 @@ var (
 	}
 )
 
-func testRulesetServer() *httptest.Server {
+func testRuleSetServer() *httptest.Server {
 	f := func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
 		if path == "/rule_set/1234_tt_firstbyte" {
 			switch r.Method {
 			case "GET":
-				ret, err := json.Marshal(testRuleset)
+				ret, err := json.Marshal(testRuleSet)
 				if err != nil {
 					panic(err)
 				}
@@ -84,17 +84,17 @@ func testRulesetServer() *httptest.Server {
 			switch r.Method {
 			case "GET":
 				reqURL := r.URL.String()
-				var c []Ruleset
+				var c []RuleSet
 				if reqURL == "/rule_set?search=request%60latency_ms" {
-					c = []Ruleset{testRuleset}
+					c = []RuleSet{testRuleSet}
 				} else if reqURL == "/rule_set?f_tags_has=service%3Aweb" {
-					c = []Ruleset{testRuleset}
+					c = []RuleSet{testRuleSet}
 				} else if reqURL == "/rule_set?f_tags_has=service%3Aweb&search=request%60latency_ms" {
-					c = []Ruleset{testRuleset}
+					c = []RuleSet{testRuleSet}
 				} else if reqURL == "/rule_set" {
-					c = []Ruleset{testRuleset}
+					c = []RuleSet{testRuleSet}
 				} else {
-					c = []Ruleset{}
+					c = []RuleSet{}
 				}
 				if len(c) > 0 {
 					ret, err := json.Marshal(c)
@@ -114,7 +114,7 @@ func testRulesetServer() *httptest.Server {
 				if err != nil {
 					panic(err)
 				}
-				ret, err := json.Marshal(testRuleset)
+				ret, err := json.Marshal(testRuleSet)
 				if err != nil {
 					panic(err)
 				}
@@ -134,17 +134,17 @@ func testRulesetServer() *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(f))
 }
 
-func TestNewRuleset(t *testing.T) {
-	bundle := NewRuleset()
+func TestNewRuleSet(t *testing.T) {
+	bundle := NewRuleSet()
 	actualType := reflect.TypeOf(bundle)
-	expectedType := "*api.Ruleset"
+	expectedType := "*api.RuleSet"
 	if actualType.String() != expectedType {
 		t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 	}
 }
 
-func TestFetchRuleset(t *testing.T) {
-	server := testRulesetServer()
+func TestFetchRuleSet(t *testing.T) {
+	server := testRuleSetServer()
 	defer server.Close()
 
 	ac := &Config{
@@ -161,7 +161,7 @@ func TestFetchRuleset(t *testing.T) {
 	{
 		cid := ""
 		expectedError := errors.New("Invalid rule set CID [none]")
-		_, err := apih.FetchRuleset(CIDType(&cid))
+		_, err := apih.FetchRuleSet(CIDType(&cid))
 		if err == nil {
 			t.Fatalf("Expected error")
 		}
@@ -173,19 +173,19 @@ func TestFetchRuleset(t *testing.T) {
 	t.Log("with valid CID")
 	{
 		cid := "/rule_set/1234_tt_firstbyte"
-		ruleset, err := apih.FetchRuleset(CIDType(&cid))
+		ruleset, err := apih.FetchRuleSet(CIDType(&cid))
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
 
 		actualType := reflect.TypeOf(ruleset)
-		expectedType := "*api.Ruleset"
+		expectedType := "*api.RuleSet"
 		if actualType.String() != expectedType {
 			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 		}
 
-		if ruleset.CID != testRuleset.CID {
-			t.Fatalf("CIDs do not match: %+v != %+v\n", ruleset, testRuleset)
+		if ruleset.CID != testRuleSet.CID {
+			t.Fatalf("CIDs do not match: %+v != %+v\n", ruleset, testRuleSet)
 		}
 	}
 
@@ -193,7 +193,7 @@ func TestFetchRuleset(t *testing.T) {
 	{
 		cid := "/invalid"
 		expectedError := errors.New("Invalid rule set CID [/invalid]")
-		_, err := apih.FetchRuleset(CIDType(&cid))
+		_, err := apih.FetchRuleSet(CIDType(&cid))
 		if err == nil {
 			t.Fatalf("Expected error")
 		}
@@ -203,8 +203,8 @@ func TestFetchRuleset(t *testing.T) {
 	}
 }
 
-func TestFetchRulesets(t *testing.T) {
-	server := testRulesetServer()
+func TestFetchRuleSets(t *testing.T) {
+	server := testRuleSetServer()
 	defer server.Close()
 
 	ac := &Config{
@@ -217,21 +217,21 @@ func TestFetchRulesets(t *testing.T) {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
-	rulesets, err := apih.FetchRulesets()
+	rulesets, err := apih.FetchRuleSets()
 	if err != nil {
 		t.Fatalf("Expected no error, got '%v'", err)
 	}
 
 	actualType := reflect.TypeOf(rulesets)
-	expectedType := "*[]api.Ruleset"
+	expectedType := "*[]api.RuleSet"
 	if actualType.String() != expectedType {
 		t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 	}
 
 }
 
-func TestCreateRuleset(t *testing.T) {
-	server := testRulesetServer()
+func TestCreateRuleSet(t *testing.T) {
+	server := testRuleSetServer()
 	defer server.Close()
 
 	var apih *API
@@ -246,20 +246,20 @@ func TestCreateRuleset(t *testing.T) {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
-	ruleset, err := apih.CreateRuleset(&testRuleset)
+	ruleset, err := apih.CreateRuleSet(&testRuleSet)
 	if err != nil {
 		t.Fatalf("Expected no error, got '%v'", err)
 	}
 
 	actualType := reflect.TypeOf(ruleset)
-	expectedType := "*api.Ruleset"
+	expectedType := "*api.RuleSet"
 	if actualType.String() != expectedType {
 		t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 	}
 }
 
-func TestUpdateRuleset(t *testing.T) {
-	server := testRulesetServer()
+func TestUpdateRuleSet(t *testing.T) {
+	server := testRuleSetServer()
 	defer server.Close()
 
 	var apih *API
@@ -274,15 +274,15 @@ func TestUpdateRuleset(t *testing.T) {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
-	t.Log("valid Ruleset")
+	t.Log("valid RuleSet")
 	{
-		ruleset, err := apih.UpdateRuleset(&testRuleset)
+		ruleset, err := apih.UpdateRuleSet(&testRuleSet)
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
 
 		actualType := reflect.TypeOf(ruleset)
-		expectedType := "*api.Ruleset"
+		expectedType := "*api.RuleSet"
 		if actualType.String() != expectedType {
 			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 		}
@@ -291,8 +291,8 @@ func TestUpdateRuleset(t *testing.T) {
 	t.Log("Test with invalid CID")
 	{
 		expectedError := errors.New("Invalid rule set CID [/invalid]")
-		x := &Ruleset{CID: "/invalid"}
-		_, err := apih.UpdateRuleset(x)
+		x := &RuleSet{CID: "/invalid"}
+		_, err := apih.UpdateRuleSet(x)
 		if err == nil {
 			t.Fatal("Expected an error")
 		}
@@ -302,8 +302,8 @@ func TestUpdateRuleset(t *testing.T) {
 	}
 }
 
-func TestDeleteRuleset(t *testing.T) {
-	server := testRulesetServer()
+func TestDeleteRuleSet(t *testing.T) {
+	server := testRuleSetServer()
 	defer server.Close()
 
 	var apih *API
@@ -318,9 +318,9 @@ func TestDeleteRuleset(t *testing.T) {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
-	t.Log("valid Ruleset")
+	t.Log("valid RuleSet")
 	{
-		_, err := apih.DeleteRuleset(&testRuleset)
+		_, err := apih.DeleteRuleSet(&testRuleSet)
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
@@ -329,8 +329,8 @@ func TestDeleteRuleset(t *testing.T) {
 	t.Log("Test with invalid CID")
 	{
 		expectedError := errors.New("Invalid rule set CID [/invalid]")
-		x := &Ruleset{CID: "/invalid"}
-		_, err := apih.UpdateRuleset(x)
+		x := &RuleSet{CID: "/invalid"}
+		_, err := apih.UpdateRuleSet(x)
 		if err == nil {
 			t.Fatal("Expected an error")
 		}
@@ -340,8 +340,8 @@ func TestDeleteRuleset(t *testing.T) {
 	}
 }
 
-func TestSearchRulesets(t *testing.T) {
-	server := testRulesetServer()
+func TestSearchRuleSets(t *testing.T) {
+	server := testRuleSetServer()
 	defer server.Close()
 
 	var apih *API
@@ -361,13 +361,13 @@ func TestSearchRulesets(t *testing.T) {
 
 	t.Log("no search, no filter")
 	{
-		rulesets, err := apih.SearchRulesets(nil, nil)
+		rulesets, err := apih.SearchRuleSets(nil, nil)
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
 
 		actualType := reflect.TypeOf(rulesets)
-		expectedType := "*[]api.Ruleset"
+		expectedType := "*[]api.RuleSet"
 		if actualType.String() != expectedType {
 			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 		}
@@ -375,13 +375,13 @@ func TestSearchRulesets(t *testing.T) {
 
 	t.Log("search, no filter")
 	{
-		rulesets, err := apih.SearchRulesets(&search, nil)
+		rulesets, err := apih.SearchRuleSets(&search, nil)
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
 
 		actualType := reflect.TypeOf(rulesets)
-		expectedType := "*[]api.Ruleset"
+		expectedType := "*[]api.RuleSet"
 		if actualType.String() != expectedType {
 			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 		}
@@ -389,13 +389,13 @@ func TestSearchRulesets(t *testing.T) {
 
 	t.Log("no search, filter")
 	{
-		rulesets, err := apih.SearchRulesets(nil, &filter)
+		rulesets, err := apih.SearchRuleSets(nil, &filter)
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
 
 		actualType := reflect.TypeOf(rulesets)
-		expectedType := "*[]api.Ruleset"
+		expectedType := "*[]api.RuleSet"
 		if actualType.String() != expectedType {
 			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 		}
@@ -403,13 +403,13 @@ func TestSearchRulesets(t *testing.T) {
 
 	t.Log("search, filter")
 	{
-		rulesets, err := apih.SearchRulesets(&search, &filter)
+		rulesets, err := apih.SearchRuleSets(&search, &filter)
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
 
 		actualType := reflect.TypeOf(rulesets)
-		expectedType := "*[]api.Ruleset"
+		expectedType := "*[]api.RuleSet"
 		if actualType.String() != expectedType {
 			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 		}

@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	testRulesetGroup = RulesetGroup{
+	testRuleSetGroup = RuleSetGroup{
 		CID: "/rule_set_group/1234",
 		ContactGroups: map[uint8][]string{
 			1: []string{"/contact_group/1234", "/contact_group/5678"},
@@ -25,43 +25,43 @@ var (
 			4: []string{},
 			5: []string{},
 		},
-		Formulas: []RulesetGroupFormula{
-			RulesetGroupFormula{
+		Formulas: []RuleSetGroupFormula{
+			RuleSetGroupFormula{
 				Expression:    "(A and B) and not C",
 				RaiseSeverity: 2,
 				Wait:          0,
 			},
-			RulesetGroupFormula{
+			RuleSetGroupFormula{
 				Expression:    "3",
 				RaiseSeverity: 1,
 				Wait:          5,
 			},
 		},
 		Name: "Multiple webservers gone bad",
-		RulesetConditions: []RulesetGroupCondition{
-			RulesetGroupCondition{
+		RuleSetConditions: []RuleSetGroupCondition{
+			RuleSetGroupCondition{
 				MatchingSeverities: []string{"1", "2"},
-				RulesetCID:         "/rule_set/1234_tt_firstbyte",
+				RuleSetCID:         "/rule_set/1234_tt_firstbyte",
 			},
-			RulesetGroupCondition{
+			RuleSetGroupCondition{
 				MatchingSeverities: []string{"1", "2"},
-				RulesetCID:         "/rule_set/5678_tt_firstbyte",
+				RuleSetCID:         "/rule_set/5678_tt_firstbyte",
 			},
-			RulesetGroupCondition{
+			RuleSetGroupCondition{
 				MatchingSeverities: []string{"1", "2"},
-				RulesetCID:         "/rule_set/9012_tt_firstbyte",
+				RuleSetCID:         "/rule_set/9012_tt_firstbyte",
 			},
 		},
 	}
 )
 
-func testRulesetGroupServer() *httptest.Server {
+func testRuleSetGroupServer() *httptest.Server {
 	f := func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
 		if path == "/rule_set_group/1234" {
 			switch r.Method {
 			case "GET":
-				ret, err := json.Marshal(testRulesetGroup)
+				ret, err := json.Marshal(testRuleSetGroup)
 				if err != nil {
 					panic(err)
 				}
@@ -88,17 +88,17 @@ func testRulesetGroupServer() *httptest.Server {
 			switch r.Method {
 			case "GET":
 				reqURL := r.URL.String()
-				var c []RulesetGroup
+				var c []RuleSetGroup
 				if reqURL == "/rule_set_group?search=web+requests" {
-					c = []RulesetGroup{testRulesetGroup}
+					c = []RuleSetGroup{testRuleSetGroup}
 				} else if reqURL == "/rule_set_group?f_tags_has=location%3Aconus" {
-					c = []RulesetGroup{testRulesetGroup}
+					c = []RuleSetGroup{testRuleSetGroup}
 				} else if reqURL == "/rule_set_group?f_tags_has=location%3Aconus&search=web+requests" {
-					c = []RulesetGroup{testRulesetGroup}
+					c = []RuleSetGroup{testRuleSetGroup}
 				} else if reqURL == "/rule_set_group" {
-					c = []RulesetGroup{testRulesetGroup}
+					c = []RuleSetGroup{testRuleSetGroup}
 				} else {
-					c = []RulesetGroup{}
+					c = []RuleSetGroup{}
 				}
 				if len(c) > 0 {
 					ret, err := json.Marshal(c)
@@ -118,7 +118,7 @@ func testRulesetGroupServer() *httptest.Server {
 				if err != nil {
 					panic(err)
 				}
-				ret, err := json.Marshal(testRulesetGroup)
+				ret, err := json.Marshal(testRuleSetGroup)
 				if err != nil {
 					panic(err)
 				}
@@ -138,17 +138,17 @@ func testRulesetGroupServer() *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(f))
 }
 
-func TestNewRulesetGroup(t *testing.T) {
-	bundle := NewRulesetGroup()
+func TestNewRuleSetGroup(t *testing.T) {
+	bundle := NewRuleSetGroup()
 	actualType := reflect.TypeOf(bundle)
-	expectedType := "*api.RulesetGroup"
+	expectedType := "*api.RuleSetGroup"
 	if actualType.String() != expectedType {
 		t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 	}
 }
 
-func TestFetchRulesetGroup(t *testing.T) {
-	server := testRulesetGroupServer()
+func TestFetchRuleSetGroup(t *testing.T) {
+	server := testRuleSetGroupServer()
 	defer server.Close()
 
 	ac := &Config{
@@ -165,7 +165,7 @@ func TestFetchRulesetGroup(t *testing.T) {
 	{
 		cid := ""
 		expectedError := errors.New("Invalid rule set group CID [none]")
-		_, err := apih.FetchRulesetGroup(CIDType(&cid))
+		_, err := apih.FetchRuleSetGroup(CIDType(&cid))
 		if err == nil {
 			t.Fatalf("Expected error")
 		}
@@ -177,19 +177,19 @@ func TestFetchRulesetGroup(t *testing.T) {
 	t.Log("with valid CID")
 	{
 		cid := "/rule_set_group/1234"
-		ruleset, err := apih.FetchRulesetGroup(CIDType(&cid))
+		ruleset, err := apih.FetchRuleSetGroup(CIDType(&cid))
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
 
 		actualType := reflect.TypeOf(ruleset)
-		expectedType := "*api.RulesetGroup"
+		expectedType := "*api.RuleSetGroup"
 		if actualType.String() != expectedType {
 			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 		}
 
-		if ruleset.CID != testRulesetGroup.CID {
-			t.Fatalf("CIDs do not match: %+v != %+v\n", ruleset, testRulesetGroup)
+		if ruleset.CID != testRuleSetGroup.CID {
+			t.Fatalf("CIDs do not match: %+v != %+v\n", ruleset, testRuleSetGroup)
 		}
 	}
 
@@ -197,7 +197,7 @@ func TestFetchRulesetGroup(t *testing.T) {
 	{
 		cid := "/invalid"
 		expectedError := errors.New("Invalid rule set group CID [/invalid]")
-		_, err := apih.FetchRulesetGroup(CIDType(&cid))
+		_, err := apih.FetchRuleSetGroup(CIDType(&cid))
 		if err == nil {
 			t.Fatalf("Expected error")
 		}
@@ -207,8 +207,8 @@ func TestFetchRulesetGroup(t *testing.T) {
 	}
 }
 
-func TestFetchRulesetGroups(t *testing.T) {
-	server := testRulesetGroupServer()
+func TestFetchRuleSetGroups(t *testing.T) {
+	server := testRuleSetGroupServer()
 	defer server.Close()
 
 	ac := &Config{
@@ -221,21 +221,21 @@ func TestFetchRulesetGroups(t *testing.T) {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
-	rulesets, err := apih.FetchRulesetGroups()
+	rulesets, err := apih.FetchRuleSetGroups()
 	if err != nil {
 		t.Fatalf("Expected no error, got '%v'", err)
 	}
 
 	actualType := reflect.TypeOf(rulesets)
-	expectedType := "*[]api.RulesetGroup"
+	expectedType := "*[]api.RuleSetGroup"
 	if actualType.String() != expectedType {
 		t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 	}
 
 }
 
-func TestCreateRulesetGroup(t *testing.T) {
-	server := testRulesetGroupServer()
+func TestCreateRuleSetGroup(t *testing.T) {
+	server := testRuleSetGroupServer()
 	defer server.Close()
 
 	var apih *API
@@ -250,20 +250,20 @@ func TestCreateRulesetGroup(t *testing.T) {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
-	ruleset, err := apih.CreateRulesetGroup(&testRulesetGroup)
+	ruleset, err := apih.CreateRuleSetGroup(&testRuleSetGroup)
 	if err != nil {
 		t.Fatalf("Expected no error, got '%v'", err)
 	}
 
 	actualType := reflect.TypeOf(ruleset)
-	expectedType := "*api.RulesetGroup"
+	expectedType := "*api.RuleSetGroup"
 	if actualType.String() != expectedType {
 		t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 	}
 }
 
-func TestUpdateRulesetGroup(t *testing.T) {
-	server := testRulesetGroupServer()
+func TestUpdateRuleSetGroup(t *testing.T) {
+	server := testRuleSetGroupServer()
 	defer server.Close()
 
 	var apih *API
@@ -278,15 +278,15 @@ func TestUpdateRulesetGroup(t *testing.T) {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
-	t.Log("valid RulesetGroup")
+	t.Log("valid RuleSetGroup")
 	{
-		ruleset, err := apih.UpdateRulesetGroup(&testRulesetGroup)
+		ruleset, err := apih.UpdateRuleSetGroup(&testRuleSetGroup)
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
 
 		actualType := reflect.TypeOf(ruleset)
-		expectedType := "*api.RulesetGroup"
+		expectedType := "*api.RuleSetGroup"
 		if actualType.String() != expectedType {
 			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 		}
@@ -295,8 +295,8 @@ func TestUpdateRulesetGroup(t *testing.T) {
 	t.Log("Test with invalid CID")
 	{
 		expectedError := errors.New("Invalid rule set group CID [/invalid]")
-		x := &RulesetGroup{CID: "/invalid"}
-		_, err := apih.UpdateRulesetGroup(x)
+		x := &RuleSetGroup{CID: "/invalid"}
+		_, err := apih.UpdateRuleSetGroup(x)
 		if err == nil {
 			t.Fatal("Expected an error")
 		}
@@ -306,8 +306,8 @@ func TestUpdateRulesetGroup(t *testing.T) {
 	}
 }
 
-func TestDeleteRulesetGroup(t *testing.T) {
-	server := testRulesetGroupServer()
+func TestDeleteRuleSetGroup(t *testing.T) {
+	server := testRuleSetGroupServer()
 	defer server.Close()
 
 	var apih *API
@@ -322,9 +322,9 @@ func TestDeleteRulesetGroup(t *testing.T) {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
-	t.Log("valid RulesetGroup")
+	t.Log("valid RuleSetGroup")
 	{
-		_, err := apih.DeleteRulesetGroup(&testRulesetGroup)
+		_, err := apih.DeleteRuleSetGroup(&testRuleSetGroup)
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
@@ -333,8 +333,8 @@ func TestDeleteRulesetGroup(t *testing.T) {
 	t.Log("Test with invalid CID")
 	{
 		expectedError := errors.New("Invalid rule set group CID [/invalid]")
-		x := &RulesetGroup{CID: "/invalid"}
-		_, err := apih.UpdateRulesetGroup(x)
+		x := &RuleSetGroup{CID: "/invalid"}
+		_, err := apih.UpdateRuleSetGroup(x)
 		if err == nil {
 			t.Fatal("Expected an error")
 		}
@@ -344,8 +344,8 @@ func TestDeleteRulesetGroup(t *testing.T) {
 	}
 }
 
-func TestSearchRulesetGroups(t *testing.T) {
-	server := testRulesetGroupServer()
+func TestSearchRuleSetGroups(t *testing.T) {
+	server := testRuleSetGroupServer()
 	defer server.Close()
 
 	var apih *API
@@ -365,13 +365,13 @@ func TestSearchRulesetGroups(t *testing.T) {
 
 	t.Log("no search, no filter")
 	{
-		groups, err := apih.SearchRulesetGroups(nil, nil)
+		groups, err := apih.SearchRuleSetGroups(nil, nil)
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
 
 		actualType := reflect.TypeOf(groups)
-		expectedType := "*[]api.RulesetGroup"
+		expectedType := "*[]api.RuleSetGroup"
 		if actualType.String() != expectedType {
 			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 		}
@@ -379,13 +379,13 @@ func TestSearchRulesetGroups(t *testing.T) {
 
 	t.Log("search, no filter")
 	{
-		groups, err := apih.SearchRulesetGroups(&search, nil)
+		groups, err := apih.SearchRuleSetGroups(&search, nil)
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
 
 		actualType := reflect.TypeOf(groups)
-		expectedType := "*[]api.RulesetGroup"
+		expectedType := "*[]api.RuleSetGroup"
 		if actualType.String() != expectedType {
 			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 		}
@@ -393,13 +393,13 @@ func TestSearchRulesetGroups(t *testing.T) {
 
 	t.Log("no search, filter")
 	{
-		groups, err := apih.SearchRulesetGroups(nil, &filter)
+		groups, err := apih.SearchRuleSetGroups(nil, &filter)
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
 
 		actualType := reflect.TypeOf(groups)
-		expectedType := "*[]api.RulesetGroup"
+		expectedType := "*[]api.RuleSetGroup"
 		if actualType.String() != expectedType {
 			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 		}
@@ -407,13 +407,13 @@ func TestSearchRulesetGroups(t *testing.T) {
 
 	t.Log("search, filter")
 	{
-		groups, err := apih.SearchRulesetGroups(&search, &filter)
+		groups, err := apih.SearchRuleSetGroups(&search, &filter)
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
 
 		actualType := reflect.TypeOf(groups)
-		expectedType := "*[]api.RulesetGroup"
+		expectedType := "*[]api.RuleSetGroup"
 		if actualType.String() != expectedType {
 			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 		}
