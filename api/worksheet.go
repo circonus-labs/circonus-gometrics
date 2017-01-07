@@ -28,7 +28,7 @@ type WorksheetSmartQuery struct {
 	Order []string `json:"order"`
 }
 
-// Worksheet defines a worksheet
+// Worksheet defines a worksheet. See https://login.circonus.com/resources/api/calls/worksheet for more information.
 type Worksheet struct {
 	CID          string                `json:"_cid,omitempty"`
 	Description  string                `json:"description"`
@@ -78,7 +78,7 @@ func (a *API) FetchWorksheet(cid CIDType) (*Worksheet, error) {
 	return worksheet, nil
 }
 
-// FetchWorksheets retrieves all worksheets
+// FetchWorksheets retrieves all worksheets available to API Token.
 func (a *API) FetchWorksheets() (*[]Worksheet, error) {
 	result, err := a.Get(config.WorksheetPrefix)
 	if err != nil {
@@ -93,7 +93,7 @@ func (a *API) FetchWorksheets() (*[]Worksheet, error) {
 	return &worksheets, nil
 }
 
-// UpdateWorksheet update worksheet definition
+// UpdateWorksheet updates passed worksheet.
 func (a *API) UpdateWorksheet(cfg *Worksheet) (*Worksheet, error) {
 	if cfg == nil {
 		return nil, fmt.Errorf("Invalid worksheet config [nil]")
@@ -131,7 +131,7 @@ func (a *API) UpdateWorksheet(cfg *Worksheet) (*Worksheet, error) {
 	return worksheet, nil
 }
 
-// CreateWorksheet create a new worksheet
+// CreateWorksheet creates a new worksheet.
 func (a *API) CreateWorksheet(cfg *Worksheet) (*Worksheet, error) {
 	if cfg == nil {
 		return nil, fmt.Errorf("Invalid worksheet config [nil]")
@@ -159,15 +159,15 @@ func (a *API) CreateWorksheet(cfg *Worksheet) (*Worksheet, error) {
 	return worksheet, nil
 }
 
-// DeleteWorksheet delete a worksheet
+// DeleteWorksheet deletes passed worksheet.
 func (a *API) DeleteWorksheet(cfg *Worksheet) (bool, error) {
 	if cfg == nil {
-		return false, fmt.Errorf("Invalid worksheet config [none]")
+		return false, fmt.Errorf("Invalid worksheet config [nil]")
 	}
 	return a.DeleteWorksheetByCID(CIDType(&cfg.CID))
 }
 
-// DeleteWorksheetByCID delete a worksheet by cid
+// DeleteWorksheetByCID deletes worksheet with passed cid.
 func (a *API) DeleteWorksheetByCID(cid CIDType) (bool, error) {
 	if cid == nil || *cid == "" {
 		return false, fmt.Errorf("Invalid worksheet CID [none]")
@@ -191,9 +191,9 @@ func (a *API) DeleteWorksheetByCID(cid CIDType) (bool, error) {
 	return true, nil
 }
 
-// SearchWorksheets returns list of worksheets matching a search query and/or filter
-//    - a search query (see: https://login.circonus.com/resources/api#searching)
-//    - a filter (see: https://login.circonus.com/resources/api#filtering)
+// SearchWorksheets returns worksheets matching the specified search
+// query and/or filter. If nil is passed for both parameters all
+// worksheets will be returned.
 func (a *API) SearchWorksheets(searchCriteria *SearchQueryType, filterCriteria *SearchFilterType) (*[]Worksheet, error) {
 	q := url.Values{}
 
