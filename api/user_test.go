@@ -105,7 +105,21 @@ func TestFetchUser(t *testing.T) {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
-	t.Log("without CID")
+	t.Log("invalid CID [nil]")
+	{
+		user, err := apih.FetchUser(nil)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(user)
+		expectedType := "*api.User"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
+	}
+
+	t.Log("invalid CID [\"\"]")
 	{
 		cid := ""
 		user, err := apih.FetchUser(CIDType(&cid))
@@ -120,7 +134,20 @@ func TestFetchUser(t *testing.T) {
 		}
 	}
 
-	t.Log("with valid CID")
+	t.Log("invalid CID [/invalid]")
+	{
+		cid := "/invalid"
+		expectedError := errors.New("Invalid user CID [/invalid]")
+		_, err := apih.FetchUser(CIDType(&cid))
+		if err == nil {
+			t.Fatalf("Expected error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("valid CID")
 	{
 		cid := "/user/1234"
 		user, err := apih.FetchUser(CIDType(&cid))
@@ -136,19 +163,6 @@ func TestFetchUser(t *testing.T) {
 
 		if user.CID != testUser.CID {
 			t.Fatalf("CIDs do not match: %+v != %+v\n", user, testUser)
-		}
-	}
-
-	t.Log("with invalid CID")
-	{
-		cid := "/invalid"
-		expectedError := errors.New("Invalid user CID [/invalid]")
-		_, err := apih.FetchUser(CIDType(&cid))
-		if err == nil {
-			t.Fatalf("Expected error")
-		}
-		if err.Error() != expectedError.Error() {
-			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
 		}
 	}
 }
@@ -196,7 +210,32 @@ func TestUpdateUser(t *testing.T) {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
-	t.Log("valid User")
+	t.Log("invalid config [nil]")
+	{
+		expectedError := errors.New("Invalid user config [nil]")
+		_, err := apih.UpdateUser(nil)
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("invalid config [CID /invalid]")
+	{
+		expectedError := errors.New("Invalid user CID [/invalid]")
+		x := &User{CID: "/invalid"}
+		_, err := apih.UpdateUser(x)
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("valid config")
 	{
 		User, err := apih.UpdateUser(&testUser)
 		if err != nil {
@@ -207,19 +246,6 @@ func TestUpdateUser(t *testing.T) {
 		expectedType := "*api.User"
 		if actualType.String() != expectedType {
 			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
-		}
-	}
-
-	t.Log("Test with invalid CID")
-	{
-		expectedError := errors.New("Invalid user CID [/invalid]")
-		x := &User{CID: "/invalid"}
-		_, err := apih.UpdateUser(x)
-		if err == nil {
-			t.Fatal("Expected an error")
-		}
-		if err.Error() != expectedError.Error() {
-			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
 		}
 	}
 }
