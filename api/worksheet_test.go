@@ -144,7 +144,19 @@ func TestFetchWorksheet(t *testing.T) {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
-	t.Log("without CID")
+	t.Log("invalid CID [nil]")
+	{
+		expectedError := errors.New("Invalid worksheet CID [none]")
+		_, err := apih.FetchWorksheet(nil)
+		if err == nil {
+			t.Fatalf("Expected error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("invalid CID [\"\"]")
 	{
 		cid := ""
 		expectedError := errors.New("Invalid worksheet CID [none]")
@@ -157,7 +169,20 @@ func TestFetchWorksheet(t *testing.T) {
 		}
 	}
 
-	t.Log("with valid CID")
+	t.Log("invalid CID [/invalid]")
+	{
+		cid := "/invalid"
+		expectedError := errors.New("Invalid worksheet CID [/invalid]")
+		_, err := apih.FetchWorksheet(CIDType(&cid))
+		if err == nil {
+			t.Fatalf("Expected error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("valid CID")
 	{
 		cid := "/worksheet/01234567-89ab-cdef-0123-456789abcdef"
 		worksheet, err := apih.FetchWorksheet(CIDType(&cid))
@@ -173,19 +198,6 @@ func TestFetchWorksheet(t *testing.T) {
 
 		if worksheet.CID != testWorksheet.CID {
 			t.Fatalf("CIDs do not match: %+v != %+v\n", worksheet, testWorksheet)
-		}
-	}
-
-	t.Log("with invalid CID")
-	{
-		cid := "/invalid"
-		expectedError := errors.New("Invalid worksheet CID [/invalid]")
-		_, err := apih.FetchWorksheet(CIDType(&cid))
-		if err == nil {
-			t.Fatalf("Expected error")
-		}
-		if err.Error() != expectedError.Error() {
-			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
 		}
 	}
 }
@@ -217,34 +229,6 @@ func TestFetchWorksheets(t *testing.T) {
 
 }
 
-func TestCreateWorksheet(t *testing.T) {
-	server := testWorksheetServer()
-	defer server.Close()
-
-	var apih *API
-
-	ac := &Config{
-		TokenKey: "abc123",
-		TokenApp: "test",
-		URL:      server.URL,
-	}
-	apih, err := NewAPI(ac)
-	if err != nil {
-		t.Errorf("Expected no error, got '%v'", err)
-	}
-
-	worksheet, err := apih.CreateWorksheet(&testWorksheet)
-	if err != nil {
-		t.Fatalf("Expected no error, got '%v'", err)
-	}
-
-	actualType := reflect.TypeOf(worksheet)
-	expectedType := "*api.Worksheet"
-	if actualType.String() != expectedType {
-		t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
-	}
-}
-
 func TestUpdateWorksheet(t *testing.T) {
 	server := testWorksheetServer()
 	defer server.Close()
@@ -261,7 +245,32 @@ func TestUpdateWorksheet(t *testing.T) {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
-	t.Log("valid Worksheet")
+	t.Log("invalid config [nil]")
+	{
+		expectedError := errors.New("Invalid worksheet config [nil]")
+		_, err := apih.UpdateWorksheet(nil)
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("invalid config [CID /invalid]")
+	{
+		expectedError := errors.New("Invalid worksheet CID [/invalid]")
+		x := &Worksheet{CID: "/invalid"}
+		_, err := apih.UpdateWorksheet(x)
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("valid config")
 	{
 		worksheet, err := apih.UpdateWorksheet(&testWorksheet)
 		if err != nil {
@@ -275,16 +284,47 @@ func TestUpdateWorksheet(t *testing.T) {
 		}
 	}
 
-	t.Log("Test with invalid CID")
+}
+
+func TestCreateWorksheet(t *testing.T) {
+	server := testWorksheetServer()
+	defer server.Close()
+
+	var apih *API
+
+	ac := &Config{
+		TokenKey: "abc123",
+		TokenApp: "test",
+		URL:      server.URL,
+	}
+	apih, err := NewAPI(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	t.Log("invalid config [nil]")
 	{
-		expectedError := errors.New("Invalid worksheet CID [/invalid]")
-		x := &Worksheet{CID: "/invalid"}
-		_, err := apih.UpdateWorksheet(x)
+		expectedError := errors.New("Invalid worksheet config [nil]")
+		_, err := apih.CreateWorksheet(nil)
 		if err == nil {
 			t.Fatal("Expected an error")
 		}
 		if err.Error() != expectedError.Error() {
 			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("valid config")
+	{
+		worksheet, err := apih.CreateWorksheet(&testWorksheet)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(worksheet)
+		expectedType := "*api.Worksheet"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 		}
 	}
 }
@@ -305,7 +345,32 @@ func TestDeleteWorksheet(t *testing.T) {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
-	t.Log("valid Worksheet")
+	t.Log("invalid config [nil]")
+	{
+		expectedError := errors.New("Invalid worksheet config [nil]")
+		_, err := apih.DeleteWorksheet(nil)
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("invalid config [CID /invalid]")
+	{
+		expectedError := errors.New("Invalid worksheet CID [/invalid]")
+		x := &Worksheet{CID: "/invalid"}
+		_, err := apih.DeleteWorksheet(x)
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("valid config")
 	{
 		_, err := apih.DeleteWorksheet(&testWorksheet)
 		if err != nil {
@@ -313,16 +378,55 @@ func TestDeleteWorksheet(t *testing.T) {
 		}
 	}
 
-	t.Log("Test with invalid CID")
+}
+
+func TestDeleteWorksheetByCID(t *testing.T) {
+	server := testWorksheetServer()
+	defer server.Close()
+
+	var apih *API
+
+	ac := &Config{
+		TokenKey: "abc123",
+		TokenApp: "test",
+		URL:      server.URL,
+	}
+	apih, err := NewAPI(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	t.Log("invalid CID [nil]")
 	{
-		expectedError := errors.New("Invalid worksheet CID [/invalid]")
-		x := &Worksheet{CID: "/invalid"}
-		_, err := apih.UpdateWorksheet(x)
+		expectedError := errors.New("Invalid worksheet CID [none]")
+		_, err := apih.DeleteWorksheetByCID(nil)
 		if err == nil {
 			t.Fatal("Expected an error")
 		}
 		if err.Error() != expectedError.Error() {
 			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("invalid CID [/invalid]")
+	{
+		cid := "/invalid"
+		expectedError := errors.New("Invalid worksheet CID [/invalid]")
+		_, err := apih.DeleteWorksheetByCID(CIDType(&cid))
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("valid config")
+	{
+		cid := "/worksheet/01234567-89ab-cdef-0123-456789abcdef"
+		_, err := apih.DeleteWorksheetByCID(CIDType(&cid))
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
 		}
 	}
 }
