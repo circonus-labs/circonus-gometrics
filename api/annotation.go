@@ -152,7 +152,7 @@ func (a *API) CreateAnnotation(cfg *Annotation) (*Annotation, error) {
 // DeleteAnnotation deletes passed annotation.
 func (a *API) DeleteAnnotation(cfg *Annotation) (bool, error) {
 	if cfg == nil {
-		return false, fmt.Errorf("Invalid annotation config [none]")
+		return false, fmt.Errorf("Invalid annotation config [nil]")
 	}
 
 	return a.DeleteAnnotationByCID(CIDType(&cfg.CID))

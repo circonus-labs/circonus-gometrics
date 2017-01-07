@@ -22,7 +22,7 @@ type MetricQuery struct {
 	Type  string `json:"type"`
 }
 
-// MetricCluster object
+// MetricCluster defines a metric cluster. See https://login.circonus.com/resources/api/calls/metric_cluster for more information.
 type MetricCluster struct {
 	CID                 string              `json:"_cid,omitempty"`
 	MatchingMetrics     []string            `json:"_matching_metrics,omitempty"`
@@ -89,9 +89,8 @@ func (a *API) FetchMetricCluster(cid CIDType, extras string) (*MetricCluster, er
 	return cluster, nil
 }
 
-// FetchMetricClusters fetch metric cluster configurations
+// FetchMetricClusters retrieves all metric clusters available to API Token.
 func (a *API) FetchMetricClusters(extras string) (*[]MetricCluster, error) {
-
 	reqURL := url.URL{
 		Path: config.MetricClusterPrefix,
 	}
@@ -123,7 +122,7 @@ func (a *API) FetchMetricClusters(extras string) (*[]MetricCluster, error) {
 	return &clusters, nil
 }
 
-// UpdateMetricCluster updates a metric cluster
+// UpdateMetricCluster updates passed metric cluster.
 func (a *API) UpdateMetricCluster(cfg *MetricCluster) (*MetricCluster, error) {
 	if cfg == nil {
 		return nil, fmt.Errorf("Invalid metric cluster config [nil]")
@@ -161,7 +160,7 @@ func (a *API) UpdateMetricCluster(cfg *MetricCluster) (*MetricCluster, error) {
 	return cluster, nil
 }
 
-// CreateMetricCluster create a new metric cluster
+// CreateMetricCluster creates a new metric cluster.
 func (a *API) CreateMetricCluster(cfg *MetricCluster) (*MetricCluster, error) {
 	if cfg == nil {
 		return nil, fmt.Errorf("Invalid metric cluster config [nil]")
@@ -189,7 +188,7 @@ func (a *API) CreateMetricCluster(cfg *MetricCluster) (*MetricCluster, error) {
 	return cluster, nil
 }
 
-// DeleteMetricCluster delete a metric cluster
+// DeleteMetricCluster deletes passed metric cluster.
 func (a *API) DeleteMetricCluster(cfg *MetricCluster) (bool, error) {
 	if cfg == nil {
 		return false, fmt.Errorf("Invalid metric cluster config [none]")
@@ -197,7 +196,7 @@ func (a *API) DeleteMetricCluster(cfg *MetricCluster) (bool, error) {
 	return a.DeleteMetricClusterByCID(CIDType(&cfg.CID))
 }
 
-// DeleteMetricClusterByCID delete a metric cluster by cid
+// DeleteMetricClusterByCID deletes metric cluster with passed cid.
 func (a *API) DeleteMetricClusterByCID(cid CIDType) (bool, error) {
 	if cid == nil || *cid == "" {
 		return false, fmt.Errorf("Invalid metric cluster CID [none]")
@@ -221,9 +220,9 @@ func (a *API) DeleteMetricClusterByCID(cid CIDType) (bool, error) {
 	return true, nil
 }
 
-// SearchMetricClusters returns list of metric clusters matching a search query and/or filter
-//    - a search query (see: https://login.circonus.com/resources/api#searching)
-//    - a filter (see: https://login.circonus.com/resources/api#filtering)
+// SearchMetricClusters returns metric clusters matching the specified
+// search query and/or filter. If nil is passed for both parameters
+// all metric clusters will be returned.
 func (a *API) SearchMetricClusters(searchCriteria *SearchQueryType, filterCriteria *SearchFilterType) (*[]MetricCluster, error) {
 	q := url.Values{}
 

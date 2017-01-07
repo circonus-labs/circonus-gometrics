@@ -121,13 +121,6 @@ func testCheckBundleServer() *httptest.Server {
 }
 
 func TestNewCheckBundle(t *testing.T) {
-	// ac := &Config{TokenKey: "abc123", TokenApp: "test"}
-	// apih, err := New(ac)
-	// if err != nil {
-	//     t.Errorf("Expected no error, got '%v'", err)
-	// }
-	// bundle := apih.NewCheckBundle()
-
 	bundle := NewCheckBundle()
 	actualType := reflect.TypeOf(bundle)
 	expectedType := "*api.CheckBundle"
@@ -253,6 +246,46 @@ func TestUpdateCheckBundle(t *testing.T) {
 	}
 }
 
+func TestDeleteCheckBundle(t *testing.T) {
+	server := testCheckBundleServer()
+	defer server.Close()
+
+	ac := &Config{
+		TokenKey: "abc123",
+		TokenApp: "test",
+		URL:      server.URL,
+	}
+	apih, err := NewAPI(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	t.Log("Testing invalid CID")
+	{
+		cb := &CheckBundle{CID: "/invalid"}
+		expectedError := errors.New("Invalid check bundle CID [/invalid]")
+		_, err := apih.DeleteCheckBundle(cb)
+		if err == nil {
+			t.Fatalf("Expected error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("Testing valid CID")
+	{
+		success, err := apih.DeleteCheckBundle(&testCheckBundle)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		if !success {
+			t.Fatalf("Expected success to be true")
+		}
+	}
+}
+
 func TestDeleteCheckBundleByCID(t *testing.T) {
 	server := testCheckBundleServer()
 	defer server.Close()
@@ -291,33 +324,6 @@ func TestDeleteCheckBundleByCID(t *testing.T) {
 		if !success {
 			t.Fatalf("Expected success to be true")
 		}
-	}
-}
-
-func TestDeleteCheckBundle(t *testing.T) {
-	server := testCheckBundleServer()
-	defer server.Close()
-
-	var apih *API
-	var err error
-
-	ac := &Config{
-		TokenKey: "abc123",
-		TokenApp: "test",
-		URL:      server.URL,
-	}
-	apih, err = NewAPI(ac)
-	if err != nil {
-		t.Errorf("Expected no error, got '%v'", err)
-	}
-
-	success, err := apih.DeleteCheckBundle(&testCheckBundle)
-	if err != nil {
-		t.Fatalf("Expected no error, got '%v'", err)
-	}
-
-	if !success {
-		t.Fatalf("Expected success to be true")
 	}
 }
 

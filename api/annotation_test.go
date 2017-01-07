@@ -134,7 +134,19 @@ func TestFetchAnnotation(t *testing.T) {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
-	t.Log("without CID")
+	t.Log("ivnalid CID [nil]")
+	{
+		expectedError := errors.New("Invalid annotation CID [none]")
+		_, err := apih.FetchAnnotation(nil)
+		if err == nil {
+			t.Fatalf("Expected error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("invalid CID [\"\"]")
 	{
 		cid := ""
 		expectedError := errors.New("Invalid annotation CID [none]")
@@ -147,7 +159,20 @@ func TestFetchAnnotation(t *testing.T) {
 		}
 	}
 
-	t.Log("with valid CID")
+	t.Log("invalid CID [/invalid]")
+	{
+		cid := "/invalid"
+		expectedError := errors.New("Invalid annotation CID [/invalid]")
+		_, err := apih.FetchAnnotation(CIDType(&cid))
+		if err == nil {
+			t.Fatalf("Expected error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("valid CID")
 	{
 		cid := "/annotation/1234"
 		annotation, err := apih.FetchAnnotation(CIDType(&cid))
@@ -163,19 +188,6 @@ func TestFetchAnnotation(t *testing.T) {
 
 		if annotation.CID != testAnnotation.CID {
 			t.Fatalf("CIDs do not match: %+v != %+v\n", annotation, testAnnotation)
-		}
-	}
-
-	t.Log("with invalid CID")
-	{
-		cid := "/invalid"
-		expectedError := errors.New("Invalid annotation CID [/invalid]")
-		_, err := apih.FetchAnnotation(CIDType(&cid))
-		if err == nil {
-			t.Fatalf("Expected error")
-		}
-		if err.Error() != expectedError.Error() {
-			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
 		}
 	}
 }
@@ -207,34 +219,6 @@ func TestFetchAnnotations(t *testing.T) {
 
 }
 
-func TestCreateAnnotation(t *testing.T) {
-	server := testAnnotationServer()
-	defer server.Close()
-
-	var apih *API
-
-	ac := &Config{
-		TokenKey: "abc123",
-		TokenApp: "test",
-		URL:      server.URL,
-	}
-	apih, err := NewAPI(ac)
-	if err != nil {
-		t.Errorf("Expected no error, got '%v'", err)
-	}
-
-	annotation, err := apih.CreateAnnotation(&testAnnotation)
-	if err != nil {
-		t.Fatalf("Expected no error, got '%v'", err)
-	}
-
-	actualType := reflect.TypeOf(annotation)
-	expectedType := "*api.Annotation"
-	if actualType.String() != expectedType {
-		t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
-	}
-}
-
 func TestUpdateAnnotation(t *testing.T) {
 	server := testAnnotationServer()
 	defer server.Close()
@@ -251,7 +235,32 @@ func TestUpdateAnnotation(t *testing.T) {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
-	t.Log("valid Annotation")
+	t.Log("invalid config [nil]")
+	{
+		expectedError := errors.New("Invalid annotation config [nil]")
+		_, err := apih.UpdateAnnotation(nil)
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("invalid config [CID /invalid]")
+	{
+		expectedError := errors.New("Invalid annotation CID [/invalid]")
+		x := &Annotation{CID: "/invalid"}
+		_, err := apih.UpdateAnnotation(x)
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("valid config")
 	{
 		annotation, err := apih.UpdateAnnotation(&testAnnotation)
 		if err != nil {
@@ -264,17 +273,45 @@ func TestUpdateAnnotation(t *testing.T) {
 			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 		}
 	}
+}
 
-	t.Log("Test with invalid CID")
+func TestCreateAnnotation(t *testing.T) {
+	server := testAnnotationServer()
+	defer server.Close()
+
+	ac := &Config{
+		TokenKey: "abc123",
+		TokenApp: "test",
+		URL:      server.URL,
+	}
+	apih, err := NewAPI(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	t.Log("invalid config [nil]")
 	{
-		expectedError := errors.New("Invalid annotation CID [/invalid]")
-		x := &Annotation{CID: "/invalid"}
-		_, err := apih.UpdateAnnotation(x)
+		expectedError := errors.New("Invalid annotation config [nil]")
+		_, err := apih.CreateAnnotation(nil)
 		if err == nil {
 			t.Fatal("Expected an error")
 		}
 		if err.Error() != expectedError.Error() {
 			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("valid config")
+	{
+		annotation, err := apih.CreateAnnotation(&testAnnotation)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(annotation)
+		expectedType := "*api.Annotation"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 		}
 	}
 }
@@ -295,7 +332,32 @@ func TestDeleteAnnotation(t *testing.T) {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
-	t.Log("valid Annotation")
+	t.Log("invalid config [nil]")
+	{
+		expectedError := errors.New("Invalid annotation config [nil]")
+		_, err := apih.DeleteAnnotation(nil)
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("invalid config [CID /invalid]")
+	{
+		expectedError := errors.New("Invalid annotation CID [/invalid]")
+		x := &Annotation{CID: "/invalid"}
+		_, err := apih.DeleteAnnotation(x)
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("valid config")
 	{
 		_, err := apih.DeleteAnnotation(&testAnnotation)
 		if err != nil {
@@ -303,16 +365,68 @@ func TestDeleteAnnotation(t *testing.T) {
 		}
 	}
 
-	t.Log("Test with invalid CID")
+}
+
+func TestDeleteAnnotationByCID(t *testing.T) {
+	server := testAnnotationServer()
+	defer server.Close()
+
+	var apih *API
+
+	ac := &Config{
+		TokenKey: "abc123",
+		TokenApp: "test",
+		URL:      server.URL,
+	}
+	apih, err := NewAPI(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	t.Log("invalid CID [nil]")
 	{
-		expectedError := errors.New("Invalid annotation CID [/invalid]")
-		x := &Annotation{CID: "/invalid"}
-		_, err := apih.UpdateAnnotation(x)
+		expectedError := errors.New("Invalid annotation CID [none]")
+		_, err := apih.DeleteAnnotationByCID(nil)
 		if err == nil {
 			t.Fatal("Expected an error")
 		}
 		if err.Error() != expectedError.Error() {
 			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("invalid CID [\"\"]")
+	{
+		cid := ""
+		expectedError := errors.New("Invalid annotation CID [none]")
+		_, err := apih.DeleteAnnotationByCID(CIDType(&cid))
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("invalid CID [/invalid]")
+	{
+		cid := "/invalid"
+		expectedError := errors.New("Invalid annotation CID [/invalid]")
+		_, err := apih.DeleteAnnotationByCID(CIDType(&cid))
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("valid CID")
+	{
+		cid := "/annotation/1234"
+		_, err := apih.DeleteAnnotationByCID(CIDType(&cid))
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
 		}
 	}
 }

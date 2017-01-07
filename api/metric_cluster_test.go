@@ -72,6 +72,10 @@ func testMetricClusterServer() *httptest.Server {
 					c = []MetricCluster{testMetricCluster}
 				} else if reqURL == "/metric_cluster" {
 					c = []MetricCluster{testMetricCluster}
+				} else if reqURL == "/metric_cluster?extra=_matching_metrics" {
+					c = []MetricCluster{testMetricCluster}
+				} else if reqURL == "/metric_cluster?extra=_matching_uuid_metrics" {
+					c = []MetricCluster{testMetricCluster}
 				} else {
 					c = []MetricCluster{}
 				}
@@ -118,7 +122,7 @@ func TestNewMetricCluster(t *testing.T) {
 	}
 }
 
-func TestFetchMetricClusterByCID(t *testing.T) {
+func TestFetchMetricCluster(t *testing.T) {
 	server := testMetricClusterServer()
 	defer server.Close()
 
@@ -136,7 +140,19 @@ func TestFetchMetricClusterByCID(t *testing.T) {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
-	t.Log("Testing invalid CID")
+	t.Log("invalid CID [nil]")
+	{
+		expectedError := errors.New("Invalid metric cluster CID [none]")
+		_, err = apih.FetchMetricCluster(nil, "")
+		if err == nil {
+			t.Fatalf("Expected error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("invalid CID [/invalid]")
 	{
 		cid := "/invalid"
 		expectedError := errors.New("Invalid metric cluster CID [/invalid]")
@@ -149,7 +165,7 @@ func TestFetchMetricClusterByCID(t *testing.T) {
 		}
 	}
 
-	t.Log("Testing valid CID")
+	t.Log("valid CID, extras ''")
 	{
 		cluster, err = apih.FetchMetricCluster(CIDType(&testMetricCluster.CID), "")
 		if err != nil {
@@ -167,7 +183,7 @@ func TestFetchMetricClusterByCID(t *testing.T) {
 		}
 	}
 
-	t.Log("Testing valid CID w/extras 'metrics'")
+	t.Log("valid CID, extras 'metrics'")
 	{
 		cluster, err = apih.FetchMetricCluster(CIDType(&testMetricCluster.CID), "metrics")
 		if err != nil {
@@ -179,7 +195,7 @@ func TestFetchMetricClusterByCID(t *testing.T) {
 		}
 	}
 
-	t.Log("Testing valid CID w/extras 'uuids'")
+	t.Log("valid CID, extras 'uuids'")
 	{
 		cluster, err = apih.FetchMetricCluster(CIDType(&testMetricCluster.CID), "uuids")
 		if err != nil {
@@ -188,6 +204,105 @@ func TestFetchMetricClusterByCID(t *testing.T) {
 
 		if cluster.CID != testMetricCluster.CID {
 			t.Fatalf("CIDs do not match: %+v != %+v\n", cluster, testMetricCluster)
+		}
+	}
+}
+
+func TestFetchMetricClusters(t *testing.T) {
+	server := testMetricClusterServer()
+	defer server.Close()
+
+	ac := &Config{
+		TokenKey: "abc123",
+		TokenApp: "test",
+		URL:      server.URL,
+	}
+	apih, err := NewAPI(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	t.Log("no extras")
+	{
+		clusters, err := apih.FetchMetricClusters("")
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(clusters)
+		expectedType := "*[]api.MetricCluster"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
+	}
+
+	t.Log("extras 'metrics'")
+	{
+		clusters, err := apih.FetchMetricClusters("metrics")
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(clusters)
+		expectedType := "*[]api.MetricCluster"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
+	}
+
+	t.Log("extras 'uuids'")
+	{
+		clusters, err := apih.FetchMetricClusters("uuids")
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(clusters)
+		expectedType := "*[]api.MetricCluster"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
+	}
+}
+
+func TestUpdateMetricCluster(t *testing.T) {
+	server := testMetricClusterServer()
+	defer server.Close()
+
+	ac := &Config{
+		TokenKey: "abc123",
+		TokenApp: "test",
+		URL:      server.URL,
+	}
+	apih, err := NewAPI(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	t.Log("valid CID")
+	{
+		cluster, err := apih.UpdateMetricCluster(&testMetricCluster)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(cluster)
+		expectedType := "*api.MetricCluster"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
+	}
+
+	t.Log("invalid CID [/invalid]")
+	{
+		expectedError := errors.New("Invalid metric cluster CID [/invalid]")
+		x := &MetricCluster{CID: "/invalid"}
+		_, err := apih.UpdateMetricCluster(x)
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
 		}
 	}
 }
@@ -221,9 +336,11 @@ func TestCreateMetricCluster(t *testing.T) {
 	}
 }
 
-func TestUpdateMetricCluster(t *testing.T) {
+func TestDeleteMetricCluster(t *testing.T) {
 	server := testMetricClusterServer()
 	defer server.Close()
+
+	var apih *API
 
 	ac := &Config{
 		TokenKey: "abc123",
@@ -235,25 +352,58 @@ func TestUpdateMetricCluster(t *testing.T) {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
-	t.Log("valid config")
+	t.Log("valid CID")
 	{
-		cluster, err := apih.UpdateMetricCluster(&testMetricCluster)
+		_, err := apih.DeleteMetricCluster(&testMetricCluster)
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
-
-		actualType := reflect.TypeOf(cluster)
-		expectedType := "*api.MetricCluster"
-		if actualType.String() != expectedType {
-			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
-		}
 	}
 
-	t.Log("invalid CID in config")
+	t.Log("invalid CID [/invalid]")
 	{
 		expectedError := errors.New("Invalid metric cluster CID [/invalid]")
 		x := &MetricCluster{CID: "/invalid"}
-		_, err := apih.UpdateMetricCluster(x)
+		_, err := apih.DeleteMetricCluster(x)
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+}
+
+func TestDeleteMetricClusterByCID(t *testing.T) {
+	server := testMetricClusterServer()
+	defer server.Close()
+
+	var apih *API
+
+	ac := &Config{
+		TokenKey: "abc123",
+		TokenApp: "test",
+		URL:      server.URL,
+	}
+	apih, err := NewAPI(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	t.Log("valid CID")
+	{
+		cid := "/metric_cluster/1234"
+		_, err := apih.DeleteMetricClusterByCID(CIDType(&cid))
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+	}
+
+	t.Log("invalid CID [/invalid]")
+	{
+		cid := "/invalid"
+		expectedError := errors.New("Invalid metric cluster CID [/invalid]")
+		_, err := apih.DeleteMetricClusterByCID(CIDType(&cid))
 		if err == nil {
 			t.Fatal("Expected an error")
 		}

@@ -135,7 +135,7 @@ func TestFetchAccount(t *testing.T) {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
-	t.Log("without CID (nil)")
+	t.Log("invalid CID [nil]")
 	{
 		account, err := apih.FetchAccount(nil)
 		if err != nil {
@@ -149,7 +149,7 @@ func TestFetchAccount(t *testing.T) {
 		}
 	}
 
-	t.Log("without CID (\"\")")
+	t.Log("invalid CID [\"\"]")
 	{
 		cid := ""
 		account, err := apih.FetchAccount(CIDType(&cid))
@@ -164,7 +164,20 @@ func TestFetchAccount(t *testing.T) {
 		}
 	}
 
-	t.Log("with valid CID")
+	t.Log("invalid CID [/invalid]")
+	{
+		cid := "/invalid"
+		expectedError := errors.New("Invalid account CID [/invalid]")
+		_, err := apih.FetchAccount(CIDType(&cid))
+		if err == nil {
+			t.Fatalf("Expected error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("valid CID")
 	{
 		cid := "/account/1234"
 		account, err := apih.FetchAccount(CIDType(&cid))
@@ -180,19 +193,6 @@ func TestFetchAccount(t *testing.T) {
 
 		if account.CID != testAccount.CID {
 			t.Fatalf("CIDs do not match: %+v != %+v\n", account, testAccount)
-		}
-	}
-
-	t.Log("with invalid CID")
-	{
-		cid := "/invalid"
-		expectedError := errors.New("Invalid account CID [/invalid]")
-		_, err := apih.FetchAccount(CIDType(&cid))
-		if err == nil {
-			t.Fatalf("Expected error")
-		}
-		if err.Error() != expectedError.Error() {
-			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
 		}
 	}
 }
@@ -240,7 +240,7 @@ func TestUpdateAccount(t *testing.T) {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
-	t.Log("nil config")
+	t.Log("invalid config [nil]")
 	{
 		expectedError := errors.New("Invalid account config [nil]")
 		_, err := apih.UpdateAccount(nil)
@@ -252,7 +252,7 @@ func TestUpdateAccount(t *testing.T) {
 		}
 	}
 
-	t.Log("invalid CID")
+	t.Log("invalid config [CID /invalid]")
 	{
 		expectedError := errors.New("Invalid account CID [/invalid]")
 		x := &Account{CID: "/invalid"}

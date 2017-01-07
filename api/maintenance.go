@@ -168,7 +168,7 @@ func (a *API) DeleteMaintenanceWindowByCID(cid CIDType) (bool, error) {
 		return false, err
 	}
 	if !matched {
-		return false, fmt.Errorf("Invalid maintenance CID [%s]", maintenanceCID)
+		return false, fmt.Errorf("Invalid maintenance window CID [%s]", maintenanceCID)
 	}
 
 	_, err = a.Delete(maintenanceCID)

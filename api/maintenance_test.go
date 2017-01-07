@@ -134,7 +134,7 @@ func TestFetchMaintenanceWindow(t *testing.T) {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
-	t.Log("without CID")
+	t.Log("invalid CID [nil]")
 	{
 		cid := ""
 		expectedError := errors.New("Invalid maintenance window CID [none]")
@@ -147,7 +147,7 @@ func TestFetchMaintenanceWindow(t *testing.T) {
 		}
 	}
 
-	t.Log("with valid CID")
+	t.Log("valid CID")
 	{
 		cid := "/maintenance/1234"
 		maintenance, err := apih.FetchMaintenanceWindow(CIDType(&cid))
@@ -166,7 +166,7 @@ func TestFetchMaintenanceWindow(t *testing.T) {
 		}
 	}
 
-	t.Log("with invalid CID")
+	t.Log("invalid CID [/invalid]")
 	{
 		cid := "/invalid"
 		expectedError := errors.New("Invalid maintenance window CID [/invalid]")
@@ -207,6 +207,50 @@ func TestFetchMaintenanceWindows(t *testing.T) {
 
 }
 
+func TestUpdateMaintenanceWindow(t *testing.T) {
+	server := testMaintenanceServer()
+	defer server.Close()
+
+	var apih *API
+
+	ac := &Config{
+		TokenKey: "abc123",
+		TokenApp: "test",
+		URL:      server.URL,
+	}
+	apih, err := NewAPI(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	t.Log("valid CID")
+	{
+		maintenance, err := apih.UpdateMaintenanceWindow(&testMaintenance)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(maintenance)
+		expectedType := "*api.Maintenance"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
+	}
+
+	t.Log("invalid CID [/invalid]")
+	{
+		expectedError := errors.New("Invalid maintenance window CID [/invalid]")
+		x := &Maintenance{CID: "/invalid"}
+		_, err := apih.UpdateMaintenanceWindow(x)
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+}
+
 func TestCreateMaintenanceWindow(t *testing.T) {
 	server := testMaintenanceServer()
 	defer server.Close()
@@ -235,50 +279,6 @@ func TestCreateMaintenanceWindow(t *testing.T) {
 	}
 }
 
-func TestUpdateMaintenanceWindow(t *testing.T) {
-	server := testMaintenanceServer()
-	defer server.Close()
-
-	var apih *API
-
-	ac := &Config{
-		TokenKey: "abc123",
-		TokenApp: "test",
-		URL:      server.URL,
-	}
-	apih, err := NewAPI(ac)
-	if err != nil {
-		t.Errorf("Expected no error, got '%v'", err)
-	}
-
-	t.Log("valid Maintenance")
-	{
-		maintenance, err := apih.UpdateMaintenanceWindow(&testMaintenance)
-		if err != nil {
-			t.Fatalf("Expected no error, got '%v'", err)
-		}
-
-		actualType := reflect.TypeOf(maintenance)
-		expectedType := "*api.Maintenance"
-		if actualType.String() != expectedType {
-			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
-		}
-	}
-
-	t.Log("Test with invalid CID")
-	{
-		expectedError := errors.New("Invalid maintenance window CID [/invalid]")
-		x := &Maintenance{CID: "/invalid"}
-		_, err := apih.UpdateMaintenanceWindow(x)
-		if err == nil {
-			t.Fatal("Expected an error")
-		}
-		if err.Error() != expectedError.Error() {
-			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
-		}
-	}
-}
-
 func TestDeleteMaintenanceWindow(t *testing.T) {
 	server := testMaintenanceServer()
 	defer server.Close()
@@ -295,7 +295,7 @@ func TestDeleteMaintenanceWindow(t *testing.T) {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
-	t.Log("valid Maintenance")
+	t.Log("valid CID")
 	{
 		_, err := apih.DeleteMaintenanceWindow(&testMaintenance)
 		if err != nil {
@@ -303,11 +303,50 @@ func TestDeleteMaintenanceWindow(t *testing.T) {
 		}
 	}
 
-	t.Log("Test with invalid CID")
+	t.Log("invalid CID [/invalid]")
 	{
 		expectedError := errors.New("Invalid maintenance window CID [/invalid]")
 		x := &Maintenance{CID: "/invalid"}
-		_, err := apih.UpdateMaintenanceWindow(x)
+		_, err := apih.DeleteMaintenanceWindow(x)
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+}
+
+func TestDeleteMaintenanceWindowByCID(t *testing.T) {
+	server := testMaintenanceServer()
+	defer server.Close()
+
+	var apih *API
+
+	ac := &Config{
+		TokenKey: "abc123",
+		TokenApp: "test",
+		URL:      server.URL,
+	}
+	apih, err := NewAPI(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	t.Log("valid CID")
+	{
+		cid := "/maintenance/1234"
+		_, err := apih.DeleteMaintenanceWindowByCID(CIDType(&cid))
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+	}
+
+	t.Log("invalid CID [/invalid]")
+	{
+		cid := "/invalid"
+		expectedError := errors.New("Invalid maintenance window CID [/invalid]")
+		_, err := apih.DeleteMaintenanceWindowByCID(CIDType(&cid))
 		if err == nil {
 			t.Fatal("Expected an error")
 		}

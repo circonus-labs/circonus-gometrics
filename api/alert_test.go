@@ -117,7 +117,19 @@ func TestFetchAlert(t *testing.T) {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
-	t.Log("without CID")
+	t.Log("invalid CID [nil]")
+	{
+		expectedError := errors.New("Invalid alert CID [none]")
+		_, err := apih.FetchAlert(nil)
+		if err == nil {
+			t.Fatalf("Expected error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("invalid CID [\"\"]")
 	{
 		cid := ""
 		expectedError := errors.New("Invalid alert CID [none]")
@@ -130,7 +142,20 @@ func TestFetchAlert(t *testing.T) {
 		}
 	}
 
-	t.Log("with valid CID")
+	t.Log("invalid CID [/invalid]")
+	{
+		cid := "/invalid"
+		expectedError := errors.New("Invalid alert CID [/invalid]")
+		_, err := apih.FetchAlert(CIDType(&cid))
+		if err == nil {
+			t.Fatalf("Expected error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("valid CID")
 	{
 		cid := "/alert/1234"
 		alert, err := apih.FetchAlert(CIDType(&cid))
@@ -146,19 +171,6 @@ func TestFetchAlert(t *testing.T) {
 
 		if alert.CID != testAlert.CID {
 			t.Fatalf("CIDs do not match: %+v != %+v\n", alert, testAlert)
-		}
-	}
-
-	t.Log("with invalid CID")
-	{
-		cid := "/invalid"
-		expectedError := errors.New("Invalid alert CID [/invalid]")
-		_, err := apih.FetchAlert(CIDType(&cid))
-		if err == nil {
-			t.Fatalf("Expected error")
-		}
-		if err.Error() != expectedError.Error() {
-			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
 		}
 	}
 }

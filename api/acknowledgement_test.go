@@ -50,9 +50,6 @@ func testAcknowledgementServer() *httptest.Server {
 				w.WriteHeader(200)
 				w.Header().Set("Content-Type", "application/json")
 				fmt.Fprintln(w, string(b))
-			case "DELETE":
-				w.WriteHeader(200)
-				w.Header().Set("Content-Type", "application/json")
 			default:
 				w.WriteHeader(404)
 				fmt.Fprintln(w, fmt.Sprintf("not found: %s %s", r.Method, path))
@@ -134,7 +131,19 @@ func TestFetchAcknowledgement(t *testing.T) {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
-	t.Log("without CID")
+	t.Log("invalid CID [nil]")
+	{
+		expectedError := errors.New("Invalid acknowledgement CID [none]")
+		_, err := apih.FetchAcknowledgement(nil)
+		if err == nil {
+			t.Fatalf("Expected error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("invalid CID [\"\"]")
 	{
 		cid := ""
 		expectedError := errors.New("Invalid acknowledgement CID [none]")
@@ -147,7 +156,20 @@ func TestFetchAcknowledgement(t *testing.T) {
 		}
 	}
 
-	t.Log("with valid CID")
+	t.Log("invalid CID [/invalid]")
+	{
+		cid := "/invalid"
+		expectedError := errors.New("Invalid acknowledgement CID [/invalid]")
+		_, err := apih.FetchAcknowledgement(CIDType(&cid))
+		if err == nil {
+			t.Fatalf("Expected error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("valid CID")
 	{
 		cid := "/acknowledgement/1234"
 		acknowledgement, err := apih.FetchAcknowledgement(CIDType(&cid))
@@ -163,19 +185,6 @@ func TestFetchAcknowledgement(t *testing.T) {
 
 		if acknowledgement.CID != testAcknowledgement.CID {
 			t.Fatalf("CIDs do not match: %+v != %+v\n", acknowledgement, testAcknowledgement)
-		}
-	}
-
-	t.Log("with invalid CID")
-	{
-		cid := "/invalid"
-		expectedError := errors.New("Invalid acknowledgement CID [/invalid]")
-		_, err := apih.FetchAcknowledgement(CIDType(&cid))
-		if err == nil {
-			t.Fatalf("Expected error")
-		}
-		if err.Error() != expectedError.Error() {
-			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
 		}
 	}
 }
@@ -223,7 +232,32 @@ func TestUpdateAcknowledgement(t *testing.T) {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
-	t.Log("valid Acknowledgement")
+	t.Log("invalid config [nil]")
+	{
+		expectedError := errors.New("Invalid acknowledgement config [nil]")
+		_, err := apih.UpdateAcknowledgement(nil)
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("invalid config [CID /invalid]")
+	{
+		expectedError := errors.New("Invalid acknowledgement CID [/invalid]")
+		x := &Acknowledgement{CID: "/invalid"}
+		_, err := apih.UpdateAcknowledgement(x)
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("valid config")
 	{
 		acknowledgement, err := apih.UpdateAcknowledgement(&testAcknowledgement)
 		if err != nil {
@@ -236,26 +270,11 @@ func TestUpdateAcknowledgement(t *testing.T) {
 			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 		}
 	}
-
-	t.Log("Test with invalid CID")
-	{
-		expectedError := errors.New("Invalid acknowledgement CID [/invalid]")
-		x := &Acknowledgement{CID: "/invalid"}
-		_, err := apih.UpdateAcknowledgement(x)
-		if err == nil {
-			t.Fatal("Expected an error")
-		}
-		if err.Error() != expectedError.Error() {
-			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
-		}
-	}
 }
 
 func TestCreateAcknowledgement(t *testing.T) {
 	server := testAcknowledgementServer()
 	defer server.Close()
-
-	var apih *API
 
 	ac := &Config{
 		TokenKey: "abc123",
@@ -267,15 +286,30 @@ func TestCreateAcknowledgement(t *testing.T) {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
-	acknowledgement, err := apih.CreateAcknowledgement(&testAcknowledgement)
-	if err != nil {
-		t.Fatalf("Expected no error, got '%v'", err)
+	t.Log("invalid config [nil]")
+	{
+		expectedError := errors.New("Invalid acknowledgement config [nil]")
+		_, err := apih.CreateAcknowledgement(nil)
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
 	}
 
-	actualType := reflect.TypeOf(acknowledgement)
-	expectedType := "*api.Acknowledgement"
-	if actualType.String() != expectedType {
-		t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+	t.Log("valid config")
+	{
+		acknowledgement, err := apih.CreateAcknowledgement(&testAcknowledgement)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(acknowledgement)
+		expectedType := "*api.Acknowledgement"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
 	}
 }
 

@@ -212,34 +212,6 @@ func TestFetchDashboards(t *testing.T) {
 
 }
 
-func TestCreateDashboard(t *testing.T) {
-	server := testDashboardServer()
-	defer server.Close()
-
-	var apih *API
-
-	ac := &Config{
-		TokenKey: "abc123",
-		TokenApp: "test",
-		URL:      server.URL,
-	}
-	apih, err := NewAPI(ac)
-	if err != nil {
-		t.Errorf("Expected no error, got '%v'", err)
-	}
-
-	dashboard, err := apih.CreateDashboard(&testDashboard)
-	if err != nil {
-		t.Fatalf("Expected no error, got '%v'", err)
-	}
-
-	actualType := reflect.TypeOf(dashboard)
-	expectedType := "*api.Dashboard"
-	if actualType.String() != expectedType {
-		t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
-	}
-}
-
 func TestUpdateDashboard(t *testing.T) {
 	server := testDashboardServer()
 	defer server.Close()
@@ -284,6 +256,34 @@ func TestUpdateDashboard(t *testing.T) {
 	}
 }
 
+func TestCreateDashboard(t *testing.T) {
+	server := testDashboardServer()
+	defer server.Close()
+
+	var apih *API
+
+	ac := &Config{
+		TokenKey: "abc123",
+		TokenApp: "test",
+		URL:      server.URL,
+	}
+	apih, err := NewAPI(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	dashboard, err := apih.CreateDashboard(&testDashboard)
+	if err != nil {
+		t.Fatalf("Expected no error, got '%v'", err)
+	}
+
+	actualType := reflect.TypeOf(dashboard)
+	expectedType := "*api.Dashboard"
+	if actualType.String() != expectedType {
+		t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+	}
+}
+
 func TestDeleteDashboard(t *testing.T) {
 	server := testDashboardServer()
 	defer server.Close()
@@ -312,7 +312,46 @@ func TestDeleteDashboard(t *testing.T) {
 	{
 		expectedError := errors.New("Invalid dashboard CID [/invalid]")
 		x := &Dashboard{CID: "/invalid"}
-		_, err := apih.UpdateDashboard(x)
+		_, err := apih.DeleteDashboard(x)
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+}
+
+func TestDeleteDashboardByCID(t *testing.T) {
+	server := testDashboardServer()
+	defer server.Close()
+
+	var apih *API
+
+	ac := &Config{
+		TokenKey: "abc123",
+		TokenApp: "test",
+		URL:      server.URL,
+	}
+	apih, err := NewAPI(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	t.Log("valid Dashboard")
+	{
+		cid := "/dashboard/1234"
+		_, err := apih.DeleteDashboardByCID(CIDType(&cid))
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+	}
+
+	t.Log("Test with invalid CID")
+	{
+		cid := "/invalid"
+		expectedError := errors.New("Invalid dashboard CID [/invalid]")
+		_, err := apih.DeleteDashboardByCID(CIDType(&cid))
 		if err == nil {
 			t.Fatal("Expected an error")
 		}
