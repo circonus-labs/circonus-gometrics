@@ -16,7 +16,7 @@ import (
 	"github.com/circonus-labs/circonus-gometrics/api/config"
 )
 
-// BrokerDetail instance attributes
+// BrokerDetail defines instance attributes
 type BrokerDetail struct {
 	CN           string   `json:"cn"`
 	ExternalHost string   `json:"external_host"`
@@ -30,7 +30,7 @@ type BrokerDetail struct {
 	Version      uint     `json:"version"`
 }
 
-// Broker definition
+// Broker defines a broker. See https://login.circonus.com/resources/api/calls/broker for more information.
 type Broker struct {
 	CID       string         `json:"_cid"`
 	Details   []BrokerDetail `json:"_details"`
@@ -75,7 +75,7 @@ func (a *API) FetchBroker(cid CIDType) (*Broker, error) {
 
 }
 
-// FetchBrokers return list of all brokers available to the api token/app
+// FetchBrokers returns all brokers available to the API Token.
 func (a *API) FetchBrokers() (*[]Broker, error) {
 	result, err := a.Get(config.BrokerPrefix)
 	if err != nil {
@@ -90,9 +90,9 @@ func (a *API) FetchBrokers() (*[]Broker, error) {
 	return &response, nil
 }
 
-// SearchBrokers returns list of annotations matching a search query and/or filter
-//    - a search query (see: https://login.circonus.com/resources/api#searching)
-//    - a filter (see: https://login.circonus.com/resources/api#filtering)
+// SearchBrokers returns brokers matching the specified search
+// query and/or filter. If nil is passed for both parameters
+// all brokers will be returned.
 func (a *API) SearchBrokers(searchCriteria *SearchQueryType, filterCriteria *SearchFilterType) (*[]Broker, error) {
 	q := url.Values{}
 

@@ -193,7 +193,7 @@ type DashboardWidget struct {
 	Width    uint                    `json:"width"`
 }
 
-// Dashboard defines a dashboard
+// Dashboard defines a dashboard. See https://login.circonus.com/resources/api/calls/dashboard for more information.
 type Dashboard struct {
 	CID            string              `json:"_cid,omitempty"`
 	Active         bool                `json:"_active,omitempty"`
@@ -247,7 +247,7 @@ func (a *API) FetchDashboard(cid CIDType) (*Dashboard, error) {
 	return dashboard, nil
 }
 
-// FetchDashboards retrieves all dashboards
+// FetchDashboards retrieves all dashboards available to the API Token.
 func (a *API) FetchDashboards() (*[]Dashboard, error) {
 	result, err := a.Get(config.DashboardPrefix)
 	if err != nil {
@@ -262,7 +262,7 @@ func (a *API) FetchDashboards() (*[]Dashboard, error) {
 	return &dashboards, nil
 }
 
-// UpdateDashboard update dashboard definition
+// UpdateDashboard updates passed dashboard.
 func (a *API) UpdateDashboard(cfg *Dashboard) (*Dashboard, error) {
 	if cfg == nil {
 		return nil, fmt.Errorf("Invalid dashboard config [nil]")
@@ -300,7 +300,7 @@ func (a *API) UpdateDashboard(cfg *Dashboard) (*Dashboard, error) {
 	return dashboard, nil
 }
 
-// CreateDashboard create a new dashboard
+// CreateDashboard creates a new dashboard.
 func (a *API) CreateDashboard(cfg *Dashboard) (*Dashboard, error) {
 	if cfg == nil {
 		return nil, fmt.Errorf("Invalid dashboard config [nil]")
@@ -328,7 +328,7 @@ func (a *API) CreateDashboard(cfg *Dashboard) (*Dashboard, error) {
 	return dashboard, nil
 }
 
-// DeleteDashboard delete a dashboard
+// DeleteDashboard deletes passed dashboard.
 func (a *API) DeleteDashboard(cfg *Dashboard) (bool, error) {
 	if cfg == nil {
 		return false, fmt.Errorf("Invalid dashboard config [none]")
@@ -336,7 +336,7 @@ func (a *API) DeleteDashboard(cfg *Dashboard) (bool, error) {
 	return a.DeleteDashboardByCID(CIDType(&cfg.CID))
 }
 
-// DeleteDashboardByCID delete a dashboard by cid
+// DeleteDashboardByCID deletes dashboard with passed cid.
 func (a *API) DeleteDashboardByCID(cid CIDType) (bool, error) {
 	if cid == nil || *cid == "" {
 		return false, fmt.Errorf("Invalid dashboard CID [none]")
@@ -360,9 +360,9 @@ func (a *API) DeleteDashboardByCID(cid CIDType) (bool, error) {
 	return true, nil
 }
 
-// SearchDashboards returns list of dashboards matching a search query and/or filter
-//    - a search query (see: https://login.circonus.com/resources/api#searching)
-//    - a filter (see: https://login.circonus.com/resources/api#filtering)
+// SearchDashboards returns dashboards matching the specified
+// search query and/or filter. If nil is passed for both parameters
+// all dashboards will be returned.
 func (a *API) SearchDashboards(searchCriteria *SearchQueryType, filterCriteria *SearchFilterType) (*[]Dashboard, error) {
 	q := url.Values{}
 

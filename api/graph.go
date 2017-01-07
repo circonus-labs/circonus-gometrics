@@ -133,7 +133,7 @@ type GraphOverlaySet struct {
 	Title    string             `json:"title,omitempty"`
 }
 
-// Graph definition
+// Graph defines a graph. See https://login.circonus.com/resources/api/calls/graph for more information.
 type Graph struct {
 	CID            string                      `json:"_cid,omitempty"`
 	AccessKeys     []GraphAccessKey            `json:"access_keys,omitempty"`
@@ -193,7 +193,7 @@ func (a *API) FetchGraph(cid CIDType) (*Graph, error) {
 	return graph, nil
 }
 
-// FetchGraphs retrieves all graphs
+// FetchGraphs retrieves all graphs available to the API Token.
 func (a *API) FetchGraphs() (*[]Graph, error) {
 	result, err := a.Get(config.GraphPrefix)
 	if err != nil {
@@ -208,7 +208,7 @@ func (a *API) FetchGraphs() (*[]Graph, error) {
 	return &graphs, nil
 }
 
-// UpdateGraph update graph definition
+// UpdateGraph updates passed graph.
 func (a *API) UpdateGraph(cfg *Graph) (*Graph, error) {
 	if cfg == nil {
 		return nil, fmt.Errorf("Invalid graph config [nil]")
@@ -246,7 +246,7 @@ func (a *API) UpdateGraph(cfg *Graph) (*Graph, error) {
 	return graph, nil
 }
 
-// CreateGraph create a new graph
+// CreateGraph creates a new graph.
 func (a *API) CreateGraph(cfg *Graph) (*Graph, error) {
 	if cfg == nil {
 		return nil, fmt.Errorf("Invalid graph config [nil]")
@@ -274,7 +274,7 @@ func (a *API) CreateGraph(cfg *Graph) (*Graph, error) {
 	return graph, nil
 }
 
-// DeleteGraph delete a graph
+// DeleteGraph deletes passed graph.
 func (a *API) DeleteGraph(cfg *Graph) (bool, error) {
 	if cfg == nil {
 		return false, fmt.Errorf("Invalid graph config [nil]")
@@ -282,7 +282,7 @@ func (a *API) DeleteGraph(cfg *Graph) (bool, error) {
 	return a.DeleteGraphByCID(CIDType(&cfg.CID))
 }
 
-// DeleteGraphByCID delete a graph by cid
+// DeleteGraphByCID deletes graph with passed cid.
 func (a *API) DeleteGraphByCID(cid CIDType) (bool, error) {
 	if cid == nil || *cid == "" {
 		return false, fmt.Errorf("Invalid graph CID [none]")
@@ -306,9 +306,9 @@ func (a *API) DeleteGraphByCID(cid CIDType) (bool, error) {
 	return true, nil
 }
 
-// SearchGraphs returns list of graphs matching a search query and/or filter
-//    - a search query (see: https://login.circonus.com/resources/api#searching)
-//    - a filter (see: https://login.circonus.com/resources/api#filtering)
+// SearchGraphs returns graphs matching the specified search query
+// and/or filter. If nil is passed for both parameters all graphs
+// will be returned.
 func (a *API) SearchGraphs(searchCriteria *SearchQueryType, filterCriteria *SearchFilterType) (*[]Graph, error) {
 	q := url.Values{}
 

@@ -3,7 +3,7 @@
 // license that can be found in the LICENSE file.
 
 // CheckBundleMetrics API support - Fetch, Create*, Update, and Delete**
-// See: https://login.circonus.com/resources/api/calls/metrics
+// See: https://login.circonus.com/resources/api/calls/check_bundle_metrics
 // *  : create metrics by adding to array with a status of 'active'
 // ** : delete (distable collection of) metrics by changing status from 'active' to 'available'
 
@@ -17,7 +17,7 @@ import (
 	"github.com/circonus-labs/circonus-gometrics/api/config"
 )
 
-// CheckBundleMetrics defines metrics
+// CheckBundleMetrics defines metrics for a specific check bundle. See https://login.circonus.com/resources/api/calls/check_bundle_metrics for more information.
 type CheckBundleMetrics struct {
 	CID     string              `json:"_cid,omitempty"`
 	Metrics []CheckBundleMetric `json:"metrics"` // See check_bundle.go for CheckBundleMetric definition
@@ -56,7 +56,7 @@ func (a *API) FetchCheckBundleMetrics(cid CIDType) (*CheckBundleMetrics, error) 
 	return metrics, nil
 }
 
-// UpdateCheckBundleMetrics update metrics definition
+// UpdateCheckBundleMetrics updates passed metrics.
 func (a *API) UpdateCheckBundleMetrics(cfg *CheckBundleMetrics) (*CheckBundleMetrics, error) {
 	if cfg == nil {
 		return nil, fmt.Errorf("Invalid check bundle metrics config [nil]")

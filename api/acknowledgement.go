@@ -17,7 +17,7 @@ import (
 	"github.com/circonus-labs/circonus-gometrics/api/config"
 )
 
-// Acknowledgement defines a acknowledgement
+// Acknowledgement defines a acknowledgement. See https://login.circonus.com/resources/api/calls/acknowledgement for more information.
 type Acknowledgement struct {
 	CID               string      `json:"_cid,omitempty"`
 	AcknowledgedBy    string      `json:"_acknowledged_by,omitempty"`
@@ -68,7 +68,7 @@ func (a *API) FetchAcknowledgement(cid CIDType) (*Acknowledgement, error) {
 	return acknowledgement, nil
 }
 
-// FetchAcknowledgements retrieves all acknowledgements.
+// FetchAcknowledgements retrieves all acknowledgements available to the API Token.
 func (a *API) FetchAcknowledgements() (*[]Acknowledgement, error) {
 	result, err := a.Get(config.AcknowledgementPrefix)
 	if err != nil {
@@ -83,7 +83,7 @@ func (a *API) FetchAcknowledgements() (*[]Acknowledgement, error) {
 	return &acknowledgements, nil
 }
 
-// UpdateAcknowledgement update passed acknowledgement.
+// UpdateAcknowledgement updates passed acknowledgement.
 func (a *API) UpdateAcknowledgement(cfg *Acknowledgement) (*Acknowledgement, error) {
 	if cfg == nil {
 		return nil, fmt.Errorf("Invalid acknowledgement config [nil]")
@@ -149,7 +149,9 @@ func (a *API) CreateAcknowledgement(cfg *Acknowledgement) (*Acknowledgement, err
 	return acknowledgement, nil
 }
 
-// SearchAcknowledgements returns list of acknowledgements matching the specified search query and/or filter, if nil is passed for both parameters all acknowledgements will be returned.
+// SearchAcknowledgements returns acknowledgements matching
+// the specified search query and/or filter. If nil is passed for
+// both parameters all acknowledgements will be returned.
 func (a *API) SearchAcknowledgements(searchCriteria *SearchQueryType, filterCriteria *SearchFilterType) (*[]Acknowledgement, error) {
 	q := url.Values{}
 

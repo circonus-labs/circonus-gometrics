@@ -36,7 +36,7 @@ type AccountUser struct {
 	UserCID string `json:"user"` // string
 }
 
-// Account definition
+// Account defines an account. See https://login.circonus.com/resources/api/calls/account for more information.
 type Account struct {
 	CID           string          `json:"_cid,omitempty"`            // string
 	Name          string          `json:"name,omitempty"`            // string
@@ -56,7 +56,7 @@ type Account struct {
 	Usage         []AccountLimit  `json:"_usage,omitempty"`          // [] len >= 0
 }
 
-// FetchAccount retrieve a specific account. Pass a valid cid or nil for '/account/current'.
+// FetchAccount retrieves a specific account. Pass a valid cid or nil for '/account/current'.
 func (a *API) FetchAccount(cid CIDType) (*Account, error) {
 	var accountCID string
 
@@ -91,7 +91,7 @@ func (a *API) FetchAccount(cid CIDType) (*Account, error) {
 	return account, nil
 }
 
-// FetchAccounts retrieves all account definitions available to the API Token.
+// FetchAccounts retrieves all accounts available to the API Token.
 func (a *API) FetchAccounts() (*[]Account, error) {
 	result, err := a.Get(config.AccountPrefix)
 	if err != nil {
@@ -106,7 +106,7 @@ func (a *API) FetchAccounts() (*[]Account, error) {
 	return &accounts, nil
 }
 
-// UpdateAccount update passed account.
+// UpdateAccount updates passed account.
 func (a *API) UpdateAccount(cfg *Account) (*Account, error) {
 	if cfg == nil {
 		return nil, fmt.Errorf("Invalid account config [nil]")
@@ -144,7 +144,7 @@ func (a *API) UpdateAccount(cfg *Account) (*Account, error) {
 	return account, nil
 }
 
-// SearchAccounts returns list of accounts matching a filter (search queries are not
+// SearchAccounts returns accounts matching a filter (search queries are not
 // suppoted by the account endpoint). Pass nil as filter for all accounts the
 // API Token can access.
 func (a *API) SearchAccounts(filterCriteria *SearchFilterType) (*[]Account, error) {

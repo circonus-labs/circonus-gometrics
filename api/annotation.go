@@ -16,7 +16,7 @@ import (
 	"github.com/circonus-labs/circonus-gometrics/api/config"
 )
 
-// Annotation defines a annotation
+// Annotation defines a annotation. See https://login.circonus.com/resources/api/calls/annotation for more information.
 type Annotation struct {
 	CID            string   `json:"_cid,omitempty"`
 	Created        uint     `json:"_created,omitempty"`
@@ -68,7 +68,7 @@ func (a *API) FetchAnnotation(cid CIDType) (*Annotation, error) {
 	return annotation, nil
 }
 
-// FetchAnnotations retrieves all annotations.
+// FetchAnnotations retrieves all annotations available to the API Token.
 func (a *API) FetchAnnotations() (*[]Annotation, error) {
 	result, err := a.Get(config.AnnotationPrefix)
 	if err != nil {
@@ -83,7 +83,7 @@ func (a *API) FetchAnnotations() (*[]Annotation, error) {
 	return &annotations, nil
 }
 
-// UpdateAnnotation update passed annotation.
+// UpdateAnnotation updates passed annotation.
 func (a *API) UpdateAnnotation(cfg *Annotation) (*Annotation, error) {
 	if cfg == nil {
 		return nil, fmt.Errorf("Invalid annotation config [nil]")
@@ -149,7 +149,7 @@ func (a *API) CreateAnnotation(cfg *Annotation) (*Annotation, error) {
 	return annotation, nil
 }
 
-// DeleteAnnotation delete passed annotation.
+// DeleteAnnotation deletes passed annotation.
 func (a *API) DeleteAnnotation(cfg *Annotation) (bool, error) {
 	if cfg == nil {
 		return false, fmt.Errorf("Invalid annotation config [none]")
@@ -158,7 +158,7 @@ func (a *API) DeleteAnnotation(cfg *Annotation) (bool, error) {
 	return a.DeleteAnnotationByCID(CIDType(&cfg.CID))
 }
 
-// DeleteAnnotationByCID delete annotation with passed cid.
+// DeleteAnnotationByCID deletes annotation with passed cid.
 func (a *API) DeleteAnnotationByCID(cid CIDType) (bool, error) {
 	if cid == nil || *cid == "" {
 		return false, fmt.Errorf("Invalid annotation CID [none]")
@@ -182,7 +182,9 @@ func (a *API) DeleteAnnotationByCID(cid CIDType) (bool, error) {
 	return true, nil
 }
 
-// SearchAnnotations returns list of annotations matching a search query and/or filter.
+// SearchAnnotations returns annotations matching the specified
+// search query and/or filter. If nil is passed for both parameters
+// all annotations will be returned.
 func (a *API) SearchAnnotations(searchCriteria *SearchQueryType, filterCriteria *SearchFilterType) (*[]Annotation, error) {
 	q := url.Values{}
 
