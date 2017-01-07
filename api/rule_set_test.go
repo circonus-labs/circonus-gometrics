@@ -157,7 +157,19 @@ func TestFetchRuleSet(t *testing.T) {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
-	t.Log("without CID")
+	t.Log("invalid CID [nil]")
+	{
+		expectedError := errors.New("Invalid rule set CID [none]")
+		_, err := apih.FetchRuleSet(nil)
+		if err == nil {
+			t.Fatalf("Expected error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("invalid CID [\"\"]")
 	{
 		cid := ""
 		expectedError := errors.New("Invalid rule set CID [none]")
@@ -170,7 +182,20 @@ func TestFetchRuleSet(t *testing.T) {
 		}
 	}
 
-	t.Log("with valid CID")
+	t.Log("invalid CID [/invalid]")
+	{
+		cid := "/invalid"
+		expectedError := errors.New("Invalid rule set CID [/invalid]")
+		_, err := apih.FetchRuleSet(CIDType(&cid))
+		if err == nil {
+			t.Fatalf("Expected error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("valid CID")
 	{
 		cid := "/rule_set/1234_tt_firstbyte"
 		ruleset, err := apih.FetchRuleSet(CIDType(&cid))
@@ -186,19 +211,6 @@ func TestFetchRuleSet(t *testing.T) {
 
 		if ruleset.CID != testRuleSet.CID {
 			t.Fatalf("CIDs do not match: %+v != %+v\n", ruleset, testRuleSet)
-		}
-	}
-
-	t.Log("with invalid CID")
-	{
-		cid := "/invalid"
-		expectedError := errors.New("Invalid rule set CID [/invalid]")
-		_, err := apih.FetchRuleSet(CIDType(&cid))
-		if err == nil {
-			t.Fatalf("Expected error")
-		}
-		if err.Error() != expectedError.Error() {
-			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
 		}
 	}
 }
@@ -227,35 +239,6 @@ func TestFetchRuleSets(t *testing.T) {
 	if actualType.String() != expectedType {
 		t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 	}
-
-}
-
-func TestCreateRuleSet(t *testing.T) {
-	server := testRuleSetServer()
-	defer server.Close()
-
-	var apih *API
-
-	ac := &Config{
-		TokenKey: "abc123",
-		TokenApp: "test",
-		URL:      server.URL,
-	}
-	apih, err := NewAPI(ac)
-	if err != nil {
-		t.Errorf("Expected no error, got '%v'", err)
-	}
-
-	ruleset, err := apih.CreateRuleSet(&testRuleSet)
-	if err != nil {
-		t.Fatalf("Expected no error, got '%v'", err)
-	}
-
-	actualType := reflect.TypeOf(ruleset)
-	expectedType := "*api.RuleSet"
-	if actualType.String() != expectedType {
-		t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
-	}
 }
 
 func TestUpdateRuleSet(t *testing.T) {
@@ -274,7 +257,32 @@ func TestUpdateRuleSet(t *testing.T) {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
-	t.Log("valid RuleSet")
+	t.Log("invalid config [nil]")
+	{
+		expectedError := errors.New("Invalid rule set config [nil]")
+		_, err := apih.UpdateRuleSet(nil)
+		if err == nil {
+			t.Fatalf("Expected error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("invalid config [CID /invalid]")
+	{
+		expectedError := errors.New("Invalid rule set CID [/invalid]")
+		x := &RuleSet{CID: "/invalid"}
+		_, err := apih.UpdateRuleSet(x)
+		if err == nil {
+			t.Fatalf("Expected error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("valid config")
 	{
 		ruleset, err := apih.UpdateRuleSet(&testRuleSet)
 		if err != nil {
@@ -287,17 +295,47 @@ func TestUpdateRuleSet(t *testing.T) {
 			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 		}
 	}
+}
 
-	t.Log("Test with invalid CID")
+func TestCreateRuleSet(t *testing.T) {
+	server := testRuleSetServer()
+	defer server.Close()
+
+	var apih *API
+
+	ac := &Config{
+		TokenKey: "abc123",
+		TokenApp: "test",
+		URL:      server.URL,
+	}
+	apih, err := NewAPI(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	t.Log("invalid config [nil]")
 	{
-		expectedError := errors.New("Invalid rule set CID [/invalid]")
-		x := &RuleSet{CID: "/invalid"}
-		_, err := apih.UpdateRuleSet(x)
+		expectedError := errors.New("Invalid rule set config [nil]")
+		_, err := apih.CreateRuleSet(nil)
 		if err == nil {
-			t.Fatal("Expected an error")
+			t.Fatalf("Expected error")
 		}
 		if err.Error() != expectedError.Error() {
 			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("valid config")
+	{
+		ruleset, err := apih.CreateRuleSet(&testRuleSet)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(ruleset)
+		expectedType := "*api.RuleSet"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 		}
 	}
 }
@@ -318,24 +356,87 @@ func TestDeleteRuleSet(t *testing.T) {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
-	t.Log("valid RuleSet")
+	t.Log("invalid config [nil]")
+	{
+		expectedError := errors.New("Invalid rule set config [nil]")
+		_, err := apih.DeleteRuleSet(nil)
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("invalid config [CID /invalid]")
+	{
+		expectedError := errors.New("Invalid rule set CID [/invalid]")
+		x := &RuleSet{CID: "/invalid"}
+		_, err := apih.DeleteRuleSet(x)
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("valid config")
 	{
 		_, err := apih.DeleteRuleSet(&testRuleSet)
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
 	}
+}
 
-	t.Log("Test with invalid CID")
+func TestDeleteRuleSetByCID(t *testing.T) {
+	server := testRuleSetServer()
+	defer server.Close()
+
+	var apih *API
+
+	ac := &Config{
+		TokenKey: "abc123",
+		TokenApp: "test",
+		URL:      server.URL,
+	}
+	apih, err := NewAPI(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	t.Log("invalid config [nil]")
 	{
-		expectedError := errors.New("Invalid rule set CID [/invalid]")
-		x := &RuleSet{CID: "/invalid"}
-		_, err := apih.UpdateRuleSet(x)
+		expectedError := errors.New("Invalid rule set CID [none]")
+		_, err := apih.DeleteRuleSetByCID(nil)
 		if err == nil {
 			t.Fatal("Expected an error")
 		}
 		if err.Error() != expectedError.Error() {
 			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("invalid CID [/invalid]")
+	{
+		expectedError := errors.New("Invalid rule set CID [/invalid]")
+		cid := "/invalid"
+		_, err := apih.DeleteRuleSetByCID(CIDType(&cid))
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("valid CID")
+	{
+		cid := "/rule_set/1234_tt_firstbyte"
+		_, err := apih.DeleteRuleSetByCID(CIDType(&cid))
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
 		}
 	}
 }
