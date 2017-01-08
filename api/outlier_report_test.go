@@ -135,7 +135,19 @@ func TestFetchOutlierReport(t *testing.T) {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
-	t.Log("without CID")
+	t.Log("invalid CID [nil]")
+	{
+		expectedError := errors.New("Invalid outlier report CID [none]")
+		_, err := apih.FetchOutlierReport(nil)
+		if err == nil {
+			t.Fatalf("Expected error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("invalid CID [\"\"]")
 	{
 		cid := ""
 		expectedError := errors.New("Invalid outlier report CID [none]")
@@ -148,7 +160,20 @@ func TestFetchOutlierReport(t *testing.T) {
 		}
 	}
 
-	t.Log("with valid CID")
+	t.Log("invalid CID [/invalid]")
+	{
+		cid := "/invalid"
+		expectedError := errors.New("Invalid outlier report CID [/invalid]")
+		_, err := apih.FetchOutlierReport(CIDType(&cid))
+		if err == nil {
+			t.Fatalf("Expected error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("valid CID")
 	{
 		cid := "/outlier_report/1234"
 		report, err := apih.FetchOutlierReport(CIDType(&cid))
@@ -164,19 +189,6 @@ func TestFetchOutlierReport(t *testing.T) {
 
 		if report.CID != testOutlierReport.CID {
 			t.Fatalf("CIDs do not match: %+v != %+v\n", report, testOutlierReport)
-		}
-	}
-
-	t.Log("with invalid CID")
-	{
-		cid := "/invalid"
-		expectedError := errors.New("Invalid outlier report CID [/invalid]")
-		_, err := apih.FetchOutlierReport(CIDType(&cid))
-		if err == nil {
-			t.Fatalf("Expected error")
-		}
-		if err.Error() != expectedError.Error() {
-			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
 		}
 	}
 }
@@ -208,34 +220,6 @@ func TestFetchOutlierReports(t *testing.T) {
 
 }
 
-func TestCreateOutlierReport(t *testing.T) {
-	server := testOutlierReportServer()
-	defer server.Close()
-
-	var apih *API
-
-	ac := &Config{
-		TokenKey: "abc123",
-		TokenApp: "test",
-		URL:      server.URL,
-	}
-	apih, err := NewAPI(ac)
-	if err != nil {
-		t.Errorf("Expected no error, got '%v'", err)
-	}
-
-	report, err := apih.CreateOutlierReport(&testOutlierReport)
-	if err != nil {
-		t.Fatalf("Expected no error, got '%v'", err)
-	}
-
-	actualType := reflect.TypeOf(report)
-	expectedType := "*api.OutlierReport"
-	if actualType.String() != expectedType {
-		t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
-	}
-}
-
 func TestUpdateOutlierReport(t *testing.T) {
 	server := testOutlierReportServer()
 	defer server.Close()
@@ -252,7 +236,32 @@ func TestUpdateOutlierReport(t *testing.T) {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
-	t.Log("valid OutlierReport")
+	t.Log("invalid config [nil]")
+	{
+		expectedError := errors.New("Invalid outlier report config [nil]")
+		_, err := apih.UpdateOutlierReport(nil)
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("invalid config [CID /invalid]")
+	{
+		expectedError := errors.New("Invalid outlier report CID [/invalid]")
+		x := &OutlierReport{CID: "/invalid"}
+		_, err := apih.UpdateOutlierReport(x)
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("valid config")
 	{
 		report, err := apih.UpdateOutlierReport(&testOutlierReport)
 		if err != nil {
@@ -265,17 +274,47 @@ func TestUpdateOutlierReport(t *testing.T) {
 			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 		}
 	}
+}
 
-	t.Log("Test with invalid CID")
+func TestCreateOutlierReport(t *testing.T) {
+	server := testOutlierReportServer()
+	defer server.Close()
+
+	var apih *API
+
+	ac := &Config{
+		TokenKey: "abc123",
+		TokenApp: "test",
+		URL:      server.URL,
+	}
+	apih, err := NewAPI(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	t.Log("invalid config [nil]")
 	{
-		expectedError := errors.New("Invalid outlier report CID [/invalid]")
-		x := &OutlierReport{CID: "/invalid"}
-		_, err := apih.UpdateOutlierReport(x)
+		expectedError := errors.New("Invalid outlier report config [nil]")
+		_, err := apih.CreateOutlierReport(nil)
 		if err == nil {
 			t.Fatal("Expected an error")
 		}
 		if err.Error() != expectedError.Error() {
 			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("valid config")
+	{
+		report, err := apih.CreateOutlierReport(&testOutlierReport)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(report)
+		expectedType := "*api.OutlierReport"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 		}
 	}
 }
@@ -296,24 +335,100 @@ func TestDeleteOutlierReport(t *testing.T) {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
-	t.Log("valid OutlierReport")
+	t.Log("invalid config [nil]")
+	{
+		expectedError := errors.New("Invalid outlier report config [nil]")
+		_, err := apih.DeleteOutlierReport(nil)
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("invalid config [CID /invalid]")
+	{
+		expectedError := errors.New("Invalid outlier report CID [/invalid]")
+		x := &OutlierReport{CID: "/invalid"}
+		_, err := apih.DeleteOutlierReport(x)
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("valid config")
 	{
 		_, err := apih.DeleteOutlierReport(&testOutlierReport)
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
 	}
+}
 
-	t.Log("Test with invalid CID")
+func TestDeleteOutlierReportByCID(t *testing.T) {
+	server := testOutlierReportServer()
+	defer server.Close()
+
+	var apih *API
+
+	ac := &Config{
+		TokenKey: "abc123",
+		TokenApp: "test",
+		URL:      server.URL,
+	}
+	apih, err := NewAPI(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	t.Log("invalid CID [nil]")
 	{
-		expectedError := errors.New("Invalid outlier report CID [/invalid]")
-		x := &OutlierReport{CID: "/invalid"}
-		_, err := apih.UpdateOutlierReport(x)
+		expectedError := errors.New("Invalid outlier report CID [none]")
+		_, err := apih.DeleteOutlierReportByCID(nil)
 		if err == nil {
 			t.Fatal("Expected an error")
 		}
 		if err.Error() != expectedError.Error() {
 			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("invalid CID [\"\"]")
+	{
+		cid := ""
+		expectedError := errors.New("Invalid outlier report CID [none]")
+		_, err := apih.DeleteOutlierReportByCID(CIDType(&cid))
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("invalid CID [/invalid]")
+	{
+		cid := "/invalid"
+		expectedError := errors.New("Invalid outlier report CID [/invalid]")
+		_, err := apih.DeleteOutlierReportByCID(CIDType(&cid))
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("valid CID`")
+	{
+		cid := "/outlier_report/1234"
+		_, err := apih.DeleteOutlierReportByCID(CIDType(&cid))
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
 		}
 	}
 }
