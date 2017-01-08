@@ -56,7 +56,7 @@ type Account struct {
 	Usage         []AccountLimit  `json:"_usage,omitempty"`          // [] len >= 0
 }
 
-// FetchAccount retrieves a specific account. Pass a valid cid or nil for '/account/current'.
+// FetchAccount retrieves account with passed cid. Pass nil for '/account/current'.
 func (a *API) FetchAccount(cid CIDType) (*Account, error) {
 	var accountCID string
 
