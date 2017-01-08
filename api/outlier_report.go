@@ -16,7 +16,7 @@ import (
 	"github.com/circonus-labs/circonus-gometrics/api/config"
 )
 
-// OutlierReport defines a outlier report
+// OutlierReport defines a outlier report. See https://login.circonus.com/resources/api/calls/report for more information.
 type OutlierReport struct {
 	CID              string   `json:"_cid,omitempty"`
 	Created          uint     `json:"_created,omitempty"`
@@ -67,7 +67,7 @@ func (a *API) FetchOutlierReport(cid CIDType) (*OutlierReport, error) {
 	return report, nil
 }
 
-// FetchOutlierReports retrieves all outlier reports
+// FetchOutlierReports retrieves all outlier reports available to API Token.
 func (a *API) FetchOutlierReports() (*[]OutlierReport, error) {
 	result, err := a.Get(config.OutlierReportPrefix)
 	if err != nil {
@@ -82,7 +82,7 @@ func (a *API) FetchOutlierReports() (*[]OutlierReport, error) {
 	return &reports, nil
 }
 
-// UpdateOutlierReport update outlier report definition
+// UpdateOutlierReport updates passed outlier report.
 func (a *API) UpdateOutlierReport(cfg *OutlierReport) (*OutlierReport, error) {
 	if cfg == nil {
 		return nil, fmt.Errorf("Invalid outlier report config [nil]")
@@ -120,7 +120,7 @@ func (a *API) UpdateOutlierReport(cfg *OutlierReport) (*OutlierReport, error) {
 	return report, nil
 }
 
-// CreateOutlierReport create a new outlier report
+// CreateOutlierReport creates a new outlier report.
 func (a *API) CreateOutlierReport(cfg *OutlierReport) (*OutlierReport, error) {
 	if cfg == nil {
 		return nil, fmt.Errorf("Invalid outlier report config [nil]")
@@ -148,15 +148,15 @@ func (a *API) CreateOutlierReport(cfg *OutlierReport) (*OutlierReport, error) {
 	return report, nil
 }
 
-// DeleteOutlierReport delete a report
+// DeleteOutlierReport deletes passed outlier report.
 func (a *API) DeleteOutlierReport(cfg *OutlierReport) (bool, error) {
 	if cfg == nil {
-		return false, fmt.Errorf("Invalid report config [none]")
+		return false, fmt.Errorf("Invalid outlier report config [nil]")
 	}
 	return a.DeleteOutlierReportByCID(CIDType(&cfg.CID))
 }
 
-// DeleteOutlierReportByCID delete a outlier report by cid
+// DeleteOutlierReportByCID deletes outlier report with passed cid.
 func (a *API) DeleteOutlierReportByCID(cid CIDType) (bool, error) {
 	if cid == nil || *cid == "" {
 		return false, fmt.Errorf("Invalid outlier report CID [none]")
@@ -180,9 +180,9 @@ func (a *API) DeleteOutlierReportByCID(cid CIDType) (bool, error) {
 	return true, nil
 }
 
-// SearchOutlierReports returns list of outlier reports matching a search query and/or filter
-//    - a search query (see: https://login.circonus.com/resources/api#searching)
-//    - a filter (see: https://login.circonus.com/resources/api#filtering)
+// SearchOutlierReports returns outlier report matching the
+// specified search query and/or filter. If nil is passed for
+// both parameters all outlier report will be returned.
 func (a *API) SearchOutlierReports(searchCriteria *SearchQueryType, filterCriteria *SearchFilterType) (*[]OutlierReport, error) {
 	q := url.Values{}
 
