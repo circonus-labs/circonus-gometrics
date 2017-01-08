@@ -24,7 +24,7 @@ type BrokerStratcon struct {
 	Port string `json:"port,omitempty"`
 }
 
-// ProvisionBroker defines a broker
+// ProvisionBroker defines a provision broker [request]. See https://login.circonus.com/resources/api/calls/provision_broker for more details.
 type ProvisionBroker struct {
 	CID                     string           `json:"_cid,omitempty"`
 	Cert                    string           `json:"_cert,omitempty"`
@@ -50,7 +50,7 @@ func NewProvisionBroker() *ProvisionBroker {
 // FetchProvisionBroker retrieves provision broker [request] with passed cid.
 func (a *API) FetchProvisionBroker(cid CIDType) (*ProvisionBroker, error) {
 	if cid == nil || *cid == "" {
-		return nil, fmt.Errorf("Invalid broker CID [none]")
+		return nil, fmt.Errorf("Invalid provision broker request CID [none]")
 	}
 
 	brokerCID := string(*cid)
@@ -60,7 +60,7 @@ func (a *API) FetchProvisionBroker(cid CIDType) (*ProvisionBroker, error) {
 		return nil, err
 	}
 	if !matched {
-		return nil, fmt.Errorf("Invalid broker CID [%s]", brokerCID)
+		return nil, fmt.Errorf("Invalid provision broker request CID [%s]", brokerCID)
 	}
 
 	result, err := a.Get(brokerCID)
@@ -80,14 +80,14 @@ func (a *API) FetchProvisionBroker(cid CIDType) (*ProvisionBroker, error) {
 	return broker, nil
 }
 
-// UpdateProvisionBroker update broker definition
+// UpdateProvisionBroker updates a broker definition [request].
 func (a *API) UpdateProvisionBroker(cid CIDType, cfg *ProvisionBroker) (*ProvisionBroker, error) {
 	if cfg == nil {
-		return nil, fmt.Errorf("Invalid broker config [nil]")
+		return nil, fmt.Errorf("Invalid provision broker request config [nil]")
 	}
 
 	if cid == nil || *cid == "" {
-		return nil, fmt.Errorf("Invalid broker CID [none]")
+		return nil, fmt.Errorf("Invalid provision broker request CID [none]")
 	}
 
 	brokerCID := string(*cid)
@@ -97,7 +97,7 @@ func (a *API) UpdateProvisionBroker(cid CIDType, cfg *ProvisionBroker) (*Provisi
 		return nil, err
 	}
 	if !matched {
-		return nil, fmt.Errorf("Invalid broker CID [%s]", brokerCID)
+		return nil, fmt.Errorf("Invalid provision broker request CID [%s]", brokerCID)
 	}
 
 	jsonCfg, err := json.Marshal(cfg)
@@ -122,10 +122,10 @@ func (a *API) UpdateProvisionBroker(cid CIDType, cfg *ProvisionBroker) (*Provisi
 	return broker, nil
 }
 
-// CreateProvisionBroker create a new broker
+// CreateProvisionBroker creates a new provison broker [request].
 func (a *API) CreateProvisionBroker(cfg *ProvisionBroker) (*ProvisionBroker, error) {
 	if cfg == nil {
-		return nil, fmt.Errorf("Invalid broker config [nil]")
+		return nil, fmt.Errorf("Invalid provision broker request config [nil]")
 	}
 
 	jsonCfg, err := json.Marshal(cfg)
