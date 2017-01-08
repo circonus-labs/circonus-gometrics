@@ -34,7 +34,7 @@ type User struct {
 	Lastname    string          `json:"lastname"`
 }
 
-// FetchUser retrieves a specific user. Pass a valid cid or nil for '/user/current'.
+// FetchUser retrieves user with passed cid. Pass nil for '/user/current'.
 func (a *API) FetchUser(cid CIDType) (*User, error) {
 	var userCID string
 
