@@ -57,7 +57,7 @@ var (
 		Description: "Time to first byte verses time to whole thing",
 		LineStyle:   "interpolated",
 		LogLeftY:    10,
-		Notes:       "This graph shows just the main webserver",
+		Notes:       &[]string{"This graph shows just the main webserver"}[0],
 		Style:       "line",
 		Tags:        []string{"datacenter:primary"},
 		Title:       "Slow Webserver",
