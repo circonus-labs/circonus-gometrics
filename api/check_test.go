@@ -12,6 +12,8 @@ import (
 	"net/http/httptest"
 	"reflect"
 	"testing"
+
+	"github.com/circonus-labs/circonus-gometrics/api/config"
 )
 
 var (
@@ -21,7 +23,7 @@ var (
 		BrokerCID:      "/broker/1234",
 		CheckBundleCID: "/check_bundle/1234",
 		CheckUUID:      "abc123-a1b2-c3d4-e5f6-123abc",
-		Details:        CheckDetails{SubmissionURL: "http://example.com/"},
+		Details:        map[config.Key]string{config.SubmissionURL: "http://example.com/"},
 	}
 )
 

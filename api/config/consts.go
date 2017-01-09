@@ -1,6 +1,6 @@
 package config
 
-// Key for CheckBundleConfig options
+// Key for CheckBundleConfig options and CheckDetails info
 type Key string
 
 // Constants per type as defined in

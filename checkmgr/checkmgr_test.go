@@ -27,9 +27,7 @@ var (
 		BrokerCID:      "/broker/1234",
 		CheckBundleCID: "/check_bundle/1234",
 		CheckUUID:      "abc123-a1b2-c3d4-e5f6-123abc",
-		Details: api.CheckDetails{
-			SubmissionURL: "https://127.0.0.1:43191/module/httptrap/abc123-a1b2-c3d4-e5f6-123abc/blah",
-		},
+		Details:        map[config.Key]string{config.SubmissionURL: "https://127.0.0.1:43191/module/httptrap/abc123-a1b2-c3d4-e5f6-123abc/blah"},
 	}
 
 	testCMCheckBundle = api.CheckBundle{
