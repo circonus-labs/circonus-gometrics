@@ -18,12 +18,12 @@ import (
 
 // CheckBundleMetric individual metric configuration
 type CheckBundleMetric struct {
-	Name   string   `json:"name"`
-	Type   string   `json:"type"`
-	Units  string   `json:"units"`
-	Status string   `json:"status"`
-	Tags   []string `json:"tags"`
-	Result string   `json:"result,omitempty"` // NOTE this is not settable - it is a return/information value only
+	Name   string   `json:"name"`             // string
+	Type   string   `json:"type"`             // string
+	Units  *string  `json:"units,omitempty"`  // string or null
+	Status string   `json:"status"`           // string
+	Tags   []string `json:"tags"`             // [] len >= 0
+	Result *string  `json:"result,omitempty"` // string or null, NOTE not settable - return/information value only
 }
 
 // CheckBundleConfig contains the check type specific configuration settings
@@ -33,25 +33,25 @@ type CheckBundleConfig map[config.Key]string
 
 // CheckBundle defines a check bundle. See https://login.circonus.com/resources/api/calls/check_bundle for more information.
 type CheckBundle struct {
-	CheckUUIDs         []string            `json:"_check_uuids,omitempty"`
-	Checks             []string            `json:"_checks,omitempty"`
-	CID                string              `json:"_cid,omitempty"`
-	Created            uint                `json:"_created,omitempty"`
-	LastModified       uint                `json:"_last_modified,omitempty"`
-	LastModifedBy      string              `json:"_last_modifed_by,omitempty"`
-	ReverseConnectURLs []string            `json:"_reverse_connection_urls,omitempty"`
-	Brokers            []string            `json:"brokers"`
-	Config             CheckBundleConfig   `json:"config,omitempty"`
-	DisplayName        string              `json:"display_name"`
-	Metrics            []CheckBundleMetric `json:"metrics"`
-	MetricLimit        int                 `json:"metric_limit,omitempty"`
-	Notes              string              `json:"notes,omitempty"`
-	Period             uint                `json:"period,omitempty"`
-	Status             string              `json:"status,omitempty"`
-	Tags               []string            `json:"tags,omitempty"`
-	Target             string              `json:"target"`
-	Timeout            float64             `json:"timeout,omitempty"`
-	Type               string              `json:"type"`
+	CheckUUIDs         []string            `json:"_check_uuids,omitempty"`             // [] len >= 0
+	Checks             []string            `json:"_checks,omitempty"`                  // [] len >= 0
+	CID                string              `json:"_cid,omitempty"`                     // string
+	Created            uint                `json:"_created,omitempty"`                 // uint
+	LastModified       uint                `json:"_last_modified,omitempty"`           // uint
+	LastModifedBy      string              `json:"_last_modifed_by,omitempty"`         // string
+	ReverseConnectURLs []string            `json:"_reverse_connection_urls,omitempty"` // [] len >= 0
+	Brokers            []string            `json:"brokers"`                            // [] len >= 0
+	Config             CheckBundleConfig   `json:"config,omitempty"`                   // NOTE contents of config are check type specific, map len >= 0
+	DisplayName        string              `json:"display_name"`                       // string
+	Metrics            []CheckBundleMetric `json:"metrics"`                            // [] >= 0
+	MetricLimit        int                 `json:"metric_limit,omitempty"`             // int
+	Notes              *string             `json:"notes,omitempty"`                    // string or null
+	Period             uint                `json:"period,omitempty"`                   // uint
+	Status             string              `json:"status,omitempty"`                   // string
+	Tags               []string            `json:"tags,omitempty"`                     // [] len >= 0
+	Target             string              `json:"target"`                             // string
+	Timeout            float32             `json:"timeout,omitempty"`                  // float32
+	Type               string              `json:"type"`                               // string
 }
 
 // NewCheckBundle returns new CheckBundle (with defaults, if applicable)

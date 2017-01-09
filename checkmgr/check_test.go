@@ -59,7 +59,7 @@ var (
 			},
 		},
 		MetricLimit: 0,
-		Notes:       "",
+		Notes:       nil,
 		Period:      60,
 		Status:      "active",
 		Target:      "127.0.0.1",

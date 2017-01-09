@@ -166,7 +166,7 @@ func (cm *CheckManager) initializeTrapURL() error {
 			// new search (check.target != instanceid, instanceid encoded in notes field)
 			searchCriteria := fmt.Sprintf(
 				"(active:1)(type:\"%s\")(tags:%s)", cm.checkType, strings.Join(cm.checkSearchTag, ","))
-			filterCriteria := map[string][]string{"f_notes": []string{cm.getNotes()}}
+			filterCriteria := map[string][]string{"f_notes": []string{*cm.getNotes()}}
 			checkBundle, err = cm.checkBundleSearch(searchCriteria, filterCriteria)
 			if err != nil {
 				return err
@@ -332,8 +332,9 @@ func (cm *CheckManager) makeSecret() (string, error) {
 	return hex.EncodeToString(hash.Sum(nil))[0:16], nil
 }
 
-func (cm *CheckManager) getNotes() string {
-	return fmt.Sprintf("cgm_instanceid|%s", cm.checkInstanceID)
+func (cm *CheckManager) getNotes() *string {
+	notes := fmt.Sprintf("cgm_instanceid|%s", cm.checkInstanceID)
+	return &notes
 }
 
 // FetchCheckBySubmissionURL fetch a check configuration by submission_url
