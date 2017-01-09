@@ -17,7 +17,7 @@ import (
 var (
 	testAlert = Alert{
 		CID:                "/alert/1234",
-		AcknowledgementCID: "/acknowledgement/1234",
+		AcknowledgementCID: &[]string{"/acknowledgement/1234"}[0],
 		AlertURL:           "https://example.circonus.com/fault-detection?alert_id=1234",
 		BrokerCID:          "/broker/1234",
 		CheckCID:           "/check/1234",
