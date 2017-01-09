@@ -23,7 +23,7 @@ var (
 			CheckBundleMetric{Name: "bar", Type: "histogram", Status: "active"},
 			CheckBundleMetric{Name: "baz", Type: "text", Status: "available"},
 			CheckBundleMetric{Name: "fum", Type: "composite", Status: "active", Tags: []string{"cat:tag"}},
-			CheckBundleMetric{Name: "zot", Type: "caql", Status: "active", Units: "milliseconds"},
+			CheckBundleMetric{Name: "zot", Type: "caql", Status: "active", Units: &[]string{"milliseconds"}[0]},
 		},
 	}
 )

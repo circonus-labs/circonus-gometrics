@@ -19,8 +19,8 @@ import (
 
 // CheckBundleMetrics defines metrics for a specific check bundle. See https://login.circonus.com/resources/api/calls/check_bundle_metrics for more information.
 type CheckBundleMetrics struct {
-	CID     string              `json:"_cid,omitempty"`
-	Metrics []CheckBundleMetric `json:"metrics"` // See check_bundle.go for CheckBundleMetric definition
+	CID     string              `json:"_cid,omitempty"` // string
+	Metrics []CheckBundleMetric `json:"metrics"`        // See check_bundle.go for CheckBundleMetric definition
 }
 
 // FetchCheckBundleMetrics retrieves metrics for the check bundle with passed cid.
