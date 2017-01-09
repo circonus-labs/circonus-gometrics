@@ -18,16 +18,16 @@ import (
 
 // Annotation defines a annotation. See https://login.circonus.com/resources/api/calls/annotation for more information.
 type Annotation struct {
-	CID            string   `json:"_cid,omitempty"`
-	Created        uint     `json:"_created,omitempty"`
-	LastModified   uint     `json:"_last_modified,omitempty"`
-	LastModifiedBy string   `json:"_last_modified_by,omitempty"`
-	Category       string   `json:"category"`
-	Description    string   `json:"description"`
-	RelatedMetrics []string `json:"rel_metrics"`
-	Start          uint     `json:"start"`
-	Stop           uint     `json:"stop"`
-	Title          string   `json:"title"`
+	CID            string   `json:"_cid,omitempty"`              // string
+	Created        uint     `json:"_created,omitempty"`          // uint
+	LastModified   uint     `json:"_last_modified,omitempty"`    // uint
+	LastModifiedBy string   `json:"_last_modified_by,omitempty"` // string
+	Category       string   `json:"category"`                    // string
+	Description    string   `json:"description"`                 // string
+	RelatedMetrics []string `json:"rel_metrics"`                 // [] len >= 0
+	Start          uint     `json:"start"`                       // uint
+	Stop           uint     `json:"stop"`                        // uint
+	Title          string   `json:"title"`                       // string
 }
 
 // NewAnnotation returns a new Annotation (with defaults, if applicable)
