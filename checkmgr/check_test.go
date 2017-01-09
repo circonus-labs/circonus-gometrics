@@ -75,11 +75,11 @@ var (
 		Details: []api.BrokerDetail{
 			api.BrokerDetail{
 				CN:           "testbroker.example.com",
-				ExternalHost: "",
+				ExternalHost: nil,
 				ExternalPort: 43191,
-				IP:           "127.0.0.1",
+				IP:           &[]string{"127.0.0.1"}[0],
 				Modules:      []string{"httptrap"},
-				Port:         43191,
+				Port:         &[]uint16{43191}[0],
 				Status:       "active",
 			},
 		},
@@ -319,7 +319,7 @@ func TestCreateNewCheck(t *testing.T) {
 		t.Fatalf("Error converting port to numeric %v", err)
 	}
 
-	testBroker.Details[0].ExternalHost = hostParts[0]
+	testBroker.Details[0].ExternalHost = &hostParts[0]
 	testBroker.Details[0].ExternalPort = uint16(hostPort)
 
 	cm := &CheckManager{
@@ -365,7 +365,7 @@ func TestInitializeTrapURL(t *testing.T) {
 		t.Fatalf("Error converting port to numeric %v", err)
 	}
 
-	testBroker.Details[0].ExternalHost = hostParts[0]
+	testBroker.Details[0].ExternalHost = &hostParts[0]
 	testBroker.Details[0].ExternalPort = uint16(hostPort)
 
 	cm := &CheckManager{

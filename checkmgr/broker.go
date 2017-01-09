@@ -61,7 +61,7 @@ func (cm *CheckManager) getBrokerCN(broker *api.Broker, submissionURL api.URLTyp
 	cn := ""
 
 	for _, detail := range broker.Details {
-		if detail.IP == host {
+		if *detail.IP == host {
 			cn = detail.CN
 			break
 		}
@@ -174,17 +174,17 @@ func (cm *CheckManager) isValidBroker(broker *api.Broker) bool {
 		if detail.ExternalPort != 0 {
 			brokerPort = strconv.Itoa(int(detail.ExternalPort))
 		} else {
-			if detail.Port != 0 {
-				brokerPort = strconv.Itoa(int(detail.Port))
+			if *detail.Port != 0 {
+				brokerPort = strconv.Itoa(int(*detail.Port))
 			} else {
 				brokerPort = "43191"
 			}
 		}
 
-		if detail.ExternalHost != "" {
-			brokerHost = detail.ExternalHost
+		if detail.ExternalHost != nil && *detail.ExternalHost != "" {
+			brokerHost = *detail.ExternalHost
 		} else {
-			brokerHost = detail.IP
+			brokerHost = *detail.IP
 		}
 
 		// broker must be reachable and respond within designated time
