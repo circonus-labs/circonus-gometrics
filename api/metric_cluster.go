@@ -191,7 +191,7 @@ func (a *API) CreateMetricCluster(cfg *MetricCluster) (*MetricCluster, error) {
 // DeleteMetricCluster deletes passed metric cluster.
 func (a *API) DeleteMetricCluster(cfg *MetricCluster) (bool, error) {
 	if cfg == nil {
-		return false, fmt.Errorf("Invalid metric cluster config [none]")
+		return false, fmt.Errorf("Invalid metric cluster config [nil]")
 	}
 	return a.DeleteMetricClusterByCID(CIDType(&cfg.CID))
 }
