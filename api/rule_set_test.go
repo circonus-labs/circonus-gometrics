@@ -418,6 +418,19 @@ func TestDeleteRuleSetByCID(t *testing.T) {
 		}
 	}
 
+	t.Log("invalid CID [\"\"]")
+	{
+		expectedError := errors.New("Invalid rule set CID [none]")
+		cid := ""
+		_, err := apih.DeleteRuleSetByCID(CIDType(&cid))
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
 	t.Log("invalid CID [/invalid]")
 	{
 		expectedError := errors.New("Invalid rule set CID [/invalid]")
