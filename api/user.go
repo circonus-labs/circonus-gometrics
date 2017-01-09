@@ -21,17 +21,17 @@ import (
 
 // UserContactInfo defines known contact details
 type UserContactInfo struct {
-	SMS  string `json:"sms,omitempty"`
-	XMPP string `json:"xmpp,omitempty"`
+	SMS  string `json:"sms,omitempty"`  // string
+	XMPP string `json:"xmpp,omitempty"` // string
 }
 
 // User defines a user. See https://login.circonus.com/resources/api/calls/user for more information.
 type User struct {
-	CID         string          `json:"_cid,omitempty"`
-	ContactInfo UserContactInfo `json:"contact_info,omitempty"`
-	Email       string          `json:"email"`
-	Firstname   string          `json:"firstname"`
-	Lastname    string          `json:"lastname"`
+	CID         string          `json:"_cid,omitempty"`         // string
+	ContactInfo UserContactInfo `json:"contact_info,omitempty"` // UserContactInfo
+	Email       string          `json:"email"`                  // string
+	Firstname   string          `json:"firstname"`              // string
+	Lastname    string          `json:"lastname"`               // string
 }
 
 // FetchUser retrieves user with passed cid. Pass nil for '/user/current'.
