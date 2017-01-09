@@ -20,7 +20,7 @@ import (
 type CheckBundleMetric struct {
 	Name   string   `json:"name"`             // string
 	Result *string  `json:"result,omitempty"` // string or null, NOTE not settable - return/information value only
-	Status string   `json:"status"`           // string
+	Status string   `json:"status,omitempty"` // string
 	Tags   []string `json:"tags"`             // [] len >= 0
 	Type   string   `json:"type"`             // string
 	Units  *string  `json:"units,omitempty"`  // string or null
