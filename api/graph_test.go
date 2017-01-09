@@ -170,7 +170,7 @@ func TestFetchGraph(t *testing.T) {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
-	t.Log("without CID")
+	t.Log("invalid CID [nil]")
 	{
 		expectedError := errors.New("Invalid graph CID [none]")
 		_, err := apih.FetchGraph(nil)
@@ -182,7 +182,33 @@ func TestFetchGraph(t *testing.T) {
 		}
 	}
 
-	t.Log("with valid CID")
+	t.Log("invalid CID [\"\"]")
+	{
+		cid := ""
+		expectedError := errors.New("Invalid graph CID [none]")
+		_, err := apih.FetchGraph(CIDType(&cid))
+		if err == nil {
+			t.Fatalf("Expected error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("invalid CID [/invalid]")
+	{
+		cid := "/invalid"
+		expectedError := errors.New("Invalid graph CID [/invalid]")
+		_, err := apih.FetchGraph(CIDType(&cid))
+		if err == nil {
+			t.Fatalf("Expected error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("valid CID")
 	{
 		cid := "/graph/01234567-89ab-cdef-0123-456789abcdef"
 		graph, err := apih.FetchGraph(CIDType(&cid))
@@ -201,18 +227,6 @@ func TestFetchGraph(t *testing.T) {
 		}
 	}
 
-	t.Log("with invalid CID")
-	{
-		cid := "/invalid"
-		expectedError := errors.New("Invalid graph CID [/invalid]")
-		_, err := apih.FetchGraph(CIDType(&cid))
-		if err == nil {
-			t.Fatalf("Expected error")
-		}
-		if err.Error() != expectedError.Error() {
-			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
-		}
-	}
 }
 
 func TestFetchGraphs(t *testing.T) {
@@ -258,6 +272,31 @@ func TestUpdateGraph(t *testing.T) {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
+	t.Log("invalid config [nil]")
+	{
+		expectedError := errors.New("Invalid graph config [nil]")
+		_, err := apih.UpdateGraph(nil)
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("invalid config [CID /invalid]")
+	{
+		expectedError := errors.New("Invalid graph CID [/invalid]")
+		x := &Graph{CID: "/invalid"}
+		_, err := apih.UpdateGraph(x)
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
 	t.Log("valid Graph")
 	{
 		graph, err := apih.UpdateGraph(&testGraph)
@@ -269,19 +308,6 @@ func TestUpdateGraph(t *testing.T) {
 		expectedType := "*api.Graph"
 		if actualType.String() != expectedType {
 			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
-		}
-	}
-
-	t.Log("Test with invalid CID")
-	{
-		expectedError := errors.New("Invalid graph CID [/invalid]")
-		x := &Graph{CID: "/invalid"}
-		_, err := apih.UpdateGraph(x)
-		if err == nil {
-			t.Fatal("Expected an error")
-		}
-		if err.Error() != expectedError.Error() {
-			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
 		}
 	}
 }
@@ -302,15 +328,30 @@ func TestCreateGraph(t *testing.T) {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
-	graph, err := apih.CreateGraph(&testGraph)
-	if err != nil {
-		t.Fatalf("Expected no error, got '%v'", err)
+	t.Log("invalid config [nil]")
+	{
+		expectedError := errors.New("Invalid graph config [nil]")
+		_, err := apih.CreateGraph(nil)
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
 	}
 
-	actualType := reflect.TypeOf(graph)
-	expectedType := "*api.Graph"
-	if actualType.String() != expectedType {
-		t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+	t.Log("valid config")
+	{
+		graph, err := apih.CreateGraph(&testGraph)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(graph)
+		expectedType := "*api.Graph"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
 	}
 }
 
@@ -330,15 +371,19 @@ func TestDeleteGraph(t *testing.T) {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
-	t.Log("valid Graph")
+	t.Log("invalid config [nil]")
 	{
-		_, err := apih.DeleteGraph(&testGraph)
-		if err != nil {
-			t.Fatalf("Expected no error, got '%v'", err)
+		expectedError := errors.New("Invalid graph config [nil]")
+		_, err := apih.DeleteGraph(nil)
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
 		}
 	}
 
-	t.Log("Test with invalid CID")
+	t.Log("invalid config [CID /invalid]")
 	{
 		expectedError := errors.New("Invalid graph CID [/invalid]")
 		x := &Graph{CID: "/invalid"}
@@ -348,6 +393,14 @@ func TestDeleteGraph(t *testing.T) {
 		}
 		if err.Error() != expectedError.Error() {
 			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("valid config")
+	{
+		_, err := apih.DeleteGraph(&testGraph)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
 		}
 	}
 }
@@ -368,16 +421,32 @@ func TestDeleteGraphByCID(t *testing.T) {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
-	t.Log("valid Graph")
+	t.Log("invalid CID [nil]")
 	{
-		cid := "/graph/01234567-89ab-cdef-0123-456789abcdef"
-		_, err := apih.DeleteGraphByCID(CIDType(&cid))
-		if err != nil {
-			t.Fatalf("Expected no error, got '%v'", err)
+		expectedError := errors.New("Invalid graph CID [none]")
+		_, err := apih.DeleteGraphByCID(nil)
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
 		}
 	}
 
-	t.Log("Test with invalid CID")
+	t.Log("invalid CID [\"\"]")
+	{
+		cid := ""
+		expectedError := errors.New("Invalid graph CID [none]")
+		_, err := apih.DeleteGraphByCID(CIDType(&cid))
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("invalid CID [/invalid]")
 	{
 		cid := "/invalid"
 		expectedError := errors.New("Invalid graph CID [/invalid]")
@@ -387,6 +456,15 @@ func TestDeleteGraphByCID(t *testing.T) {
 		}
 		if err.Error() != expectedError.Error() {
 			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("valid config")
+	{
+		cid := "/graph/01234567-89ab-cdef-0123-456789abcdef"
+		_, err := apih.DeleteGraphByCID(CIDType(&cid))
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
 		}
 	}
 }
