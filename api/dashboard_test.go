@@ -139,7 +139,19 @@ func TestFetchDashboard(t *testing.T) {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
-	t.Log("without CID")
+	t.Log("invalid CID [nil]")
+	{
+		expectedError := errors.New("Invalid dashboard CID [none]")
+		_, err := apih.FetchDashboard(nil)
+		if err == nil {
+			t.Fatalf("Expected error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("invalid CID [\"\"]")
 	{
 		cid := ""
 		expectedError := errors.New("Invalid dashboard CID [none]")
@@ -152,7 +164,20 @@ func TestFetchDashboard(t *testing.T) {
 		}
 	}
 
-	t.Log("with valid CID")
+	t.Log("invalid CID [/invalid]")
+	{
+		cid := "/invalid"
+		expectedError := errors.New("Invalid dashboard CID [/invalid]")
+		_, err := apih.FetchDashboard(CIDType(&cid))
+		if err == nil {
+			t.Fatalf("Expected error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("valid CID")
 	{
 		cid := "/dashboard/1234"
 		dashboard, err := apih.FetchDashboard(CIDType(&cid))
@@ -168,19 +193,6 @@ func TestFetchDashboard(t *testing.T) {
 
 		if dashboard.CID != testDashboard.CID {
 			t.Fatalf("CIDs do not match: %+v != %+v\n", dashboard, testDashboard)
-		}
-	}
-
-	t.Log("with invalid CID")
-	{
-		cid := "/invalid"
-		expectedError := errors.New("Invalid dashboard CID [/invalid]")
-		_, err := apih.FetchDashboard(CIDType(&cid))
-		if err == nil {
-			t.Fatalf("Expected error")
-		}
-		if err.Error() != expectedError.Error() {
-			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
 		}
 	}
 }
@@ -228,7 +240,32 @@ func TestUpdateDashboard(t *testing.T) {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
-	t.Log("valid Dashboard")
+	t.Log("invalid config [nil]")
+	{
+		expectedError := errors.New("Invalid dashboard config [nil]")
+		_, err := apih.UpdateDashboard(nil)
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("invalid config [CID /invalid]")
+	{
+		expectedError := errors.New("Invalid dashboard CID [/invalid]")
+		x := &Dashboard{CID: "/invalid"}
+		_, err := apih.UpdateDashboard(x)
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("valid config")
 	{
 		dashboard, err := apih.UpdateDashboard(&testDashboard)
 		if err != nil {
@@ -239,19 +276,6 @@ func TestUpdateDashboard(t *testing.T) {
 		expectedType := "*api.Dashboard"
 		if actualType.String() != expectedType {
 			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
-		}
-	}
-
-	t.Log("Test with invalid CID")
-	{
-		expectedError := errors.New("Invalid dashboard CID [/invalid]")
-		x := &Dashboard{CID: "/invalid"}
-		_, err := apih.UpdateDashboard(x)
-		if err == nil {
-			t.Fatal("Expected an error")
-		}
-		if err.Error() != expectedError.Error() {
-			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
 		}
 	}
 }
@@ -272,15 +296,30 @@ func TestCreateDashboard(t *testing.T) {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
-	dashboard, err := apih.CreateDashboard(&testDashboard)
-	if err != nil {
-		t.Fatalf("Expected no error, got '%v'", err)
+	t.Log("invalid config [nil]")
+	{
+		expectedError := errors.New("Invalid dashboard config [nil]")
+		_, err := apih.CreateDashboard(nil)
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
 	}
 
-	actualType := reflect.TypeOf(dashboard)
-	expectedType := "*api.Dashboard"
-	if actualType.String() != expectedType {
-		t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+	t.Log("valid config")
+	{
+		dashboard, err := apih.CreateDashboard(&testDashboard)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(dashboard)
+		expectedType := "*api.Dashboard"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
 	}
 }
 
@@ -300,15 +339,19 @@ func TestDeleteDashboard(t *testing.T) {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
-	t.Log("valid Dashboard")
+	t.Log("invalid config [nil]")
 	{
-		_, err := apih.DeleteDashboard(&testDashboard)
-		if err != nil {
-			t.Fatalf("Expected no error, got '%v'", err)
+		expectedError := errors.New("Invalid dashboard config [nil]")
+		_, err := apih.DeleteDashboard(nil)
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
 		}
 	}
 
-	t.Log("Test with invalid CID")
+	t.Log("invalid config [CID /invalid]")
 	{
 		expectedError := errors.New("Invalid dashboard CID [/invalid]")
 		x := &Dashboard{CID: "/invalid"}
@@ -318,6 +361,14 @@ func TestDeleteDashboard(t *testing.T) {
 		}
 		if err.Error() != expectedError.Error() {
 			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("valid config")
+	{
+		_, err := apih.DeleteDashboard(&testDashboard)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
 		}
 	}
 }
@@ -338,16 +389,32 @@ func TestDeleteDashboardByCID(t *testing.T) {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
-	t.Log("valid Dashboard")
+	t.Log("invalid CID [nil]")
 	{
-		cid := "/dashboard/1234"
-		_, err := apih.DeleteDashboardByCID(CIDType(&cid))
-		if err != nil {
-			t.Fatalf("Expected no error, got '%v'", err)
+		expectedError := errors.New("Invalid dashboard CID [none]")
+		_, err := apih.DeleteDashboardByCID(nil)
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
 		}
 	}
 
-	t.Log("Test with invalid CID")
+	t.Log("invalid CID [\"\"]")
+	{
+		cid := ""
+		expectedError := errors.New("Invalid dashboard CID [none]")
+		_, err := apih.DeleteDashboardByCID(CIDType(&cid))
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("invalid CID [/invalid]")
 	{
 		cid := "/invalid"
 		expectedError := errors.New("Invalid dashboard CID [/invalid]")
@@ -357,6 +424,15 @@ func TestDeleteDashboardByCID(t *testing.T) {
 		}
 		if err.Error() != expectedError.Error() {
 			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("valid CID")
+	{
+		cid := "/dashboard/1234"
+		_, err := apih.DeleteDashboardByCID(CIDType(&cid))
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
 		}
 	}
 }
