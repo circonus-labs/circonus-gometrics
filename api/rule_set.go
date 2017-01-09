@@ -21,15 +21,15 @@ type RuleSetRule struct {
 	Criteria          string  `json:"criteria"`                     // string
 	Severity          uint    `json:"severity"`                     // uint
 	Value             string  `json:"value"`                        // string
+	Wait              uint    `json:"wait,omitempty"`               // uint
 	WindowingDuration uint    `json:"windowing_duration,omitempty"` // uint
 	WindowingFunction *string `json:"windowing_function,omitempty"` // string or null
-	Wait              uint    `json:"wait,omitempty"`               // uint
 }
 
 // RuleSet defines a ruleset. See https://login.circonus.com/resources/api/calls/rule_set for more information.
 type RuleSet struct {
-	CID           string             `json:"_cid,omitempty"`   // string
 	CheckCID      string             `json:"check"`            // string
+	CID           string             `json:"_cid,omitempty"`   // string
 	ContactGroups map[uint8][]string `json:"contact_groups"`   // [] len 5
 	Derive        *string            `json:"derive,omitempty"` // string or null
 	Link          *string            `json:"link"`             // string or null
