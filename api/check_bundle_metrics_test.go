@@ -77,7 +77,19 @@ func TestFetchCheckBundleMetrics(t *testing.T) {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
-	t.Log("without CID")
+	t.Log("invalid CID [nil]")
+	{
+		expectedError := errors.New("Invalid check bundle metrics CID [none]")
+		_, err := apih.FetchCheckBundleMetrics(nil)
+		if err == nil {
+			t.Fatalf("Expected error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("invalid CID [\"\"]")
 	{
 		cid := ""
 		expectedError := errors.New("Invalid check bundle metrics CID [none]")
@@ -90,7 +102,20 @@ func TestFetchCheckBundleMetrics(t *testing.T) {
 		}
 	}
 
-	t.Log("with valid CID")
+	t.Log("invalid CID [/invalid]")
+	{
+		cid := "/invalid"
+		expectedError := errors.New("Invalid check bundle metrics CID [/invalid]")
+		_, err := apih.FetchCheckBundleMetrics(CIDType(&cid))
+		if err == nil {
+			t.Fatalf("Expected error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("valid CID")
 	{
 		cid := "/check_bundle_metrics/1234"
 		metrics, err := apih.FetchCheckBundleMetrics(CIDType(&cid))
@@ -106,19 +131,6 @@ func TestFetchCheckBundleMetrics(t *testing.T) {
 
 		if metrics.CID != testCheckBundleMetrics.CID {
 			t.Fatalf("CIDs do not match: %+v != %+v\n", metrics, testCheckBundleMetrics)
-		}
-	}
-
-	t.Log("with invalid CID")
-	{
-		cid := "/invalid"
-		expectedError := errors.New("Invalid check bundle metrics CID [/invalid]")
-		_, err := apih.FetchCheckBundleMetrics(CIDType(&cid))
-		if err == nil {
-			t.Fatalf("Expected error")
-		}
-		if err.Error() != expectedError.Error() {
-			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
 		}
 	}
 }
@@ -139,7 +151,32 @@ func TestUpdateCheckBundleMetrics(t *testing.T) {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
-	t.Log("valid CheckBundleMetrics")
+	t.Log("invalid config [nil]")
+	{
+		expectedError := errors.New("Invalid check bundle metrics config [nil]")
+		_, err := apih.UpdateCheckBundleMetrics(nil)
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("invalid config [CID /invalid]")
+	{
+		expectedError := errors.New("Invalid check bundle metrics CID [/invalid]")
+		x := &CheckBundleMetrics{CID: "/invalid"}
+		_, err := apih.UpdateCheckBundleMetrics(x)
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("valid config")
 	{
 		metrics, err := apih.UpdateCheckBundleMetrics(&testCheckBundleMetrics)
 		if err != nil {
@@ -150,19 +187,6 @@ func TestUpdateCheckBundleMetrics(t *testing.T) {
 		expectedType := "*api.CheckBundleMetrics"
 		if actualType.String() != expectedType {
 			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
-		}
-	}
-
-	t.Log("Test with invalid CID")
-	{
-		expectedError := errors.New("Invalid check bundle metrics CID [/invalid]")
-		x := &CheckBundleMetrics{CID: "/invalid"}
-		_, err := apih.UpdateCheckBundleMetrics(x)
-		if err == nil {
-			t.Fatal("Expected an error")
-		}
-		if err.Error() != expectedError.Error() {
-			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
 		}
 	}
 }
