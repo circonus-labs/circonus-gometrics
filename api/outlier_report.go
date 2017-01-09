@@ -18,15 +18,15 @@ import (
 
 // OutlierReport defines a outlier report. See https://login.circonus.com/resources/api/calls/report for more information.
 type OutlierReport struct {
-	CID              string   `json:"_cid,omitempty"`
-	Created          uint     `json:"_created,omitempty"`
-	CreatedBy        string   `json:"_created_by,omitempty"`
-	LastModified     uint     `json:"_last_modified,omitempty"`
-	LastModifiedBy   string   `json:"_last_modified_by,omitempty"`
-	Config           string   `json:"config,omitempty"`
-	MetricClusterCID string   `json:"metric_cluster,omitempty"`
-	Tags             []string `json:"tags,omitempty"`
-	Title            string   `json:"title,omitempty"`
+	CID              string   `json:"_cid,omitempty"`              // string
+	Config           string   `json:"config,omitempty"`            // string
+	Created          uint     `json:"_created,omitempty"`          // uint
+	CreatedBy        string   `json:"_created_by,omitempty"`       // string
+	LastModified     uint     `json:"_last_modified,omitempty"`    // uint
+	LastModifiedBy   string   `json:"_last_modified_by,omitempty"` // string
+	MetricClusterCID string   `json:"metric_cluster,omitempty"`    // st ring
+	Tags             []string `json:"tags,omitempty"`              // [] len >= 0
+	Title            string   `json:"title,omitempty"`             // string
 }
 
 // NewOutlierReport returns a new OutlierReport (with defaults, if applicable)
