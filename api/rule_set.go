@@ -18,28 +18,28 @@ import (
 
 // RuleSetRule defines a ruleset rule
 type RuleSetRule struct {
-	Criteria          string `json:"criteria"`
-	Severity          uint   `json:"severity"`
-	Value             string `json:"value"`
-	WindowingDuration uint   `json:"windowing_duration,omitempty"`
-	WindowingFunction string `json:"windowing_function,omitempty"`
-	Wait              uint   `json:"wait,omitempty"`
+	Criteria          string  `json:"criteria"`                     // string
+	Severity          uint    `json:"severity"`                     // uint
+	Value             string  `json:"value"`                        // string
+	WindowingDuration uint    `json:"windowing_duration,omitempty"` // uint
+	WindowingFunction *string `json:"windowing_function,omitempty"` // string or null
+	Wait              uint    `json:"wait,omitempty"`               // uint
 }
 
 // RuleSet defines a ruleset. See https://login.circonus.com/resources/api/calls/rule_set for more information.
 type RuleSet struct {
-	CID           string             `json:"_cid,omitempty"`
-	CheckCID      string             `json:"check"`
-	ContactGroups map[uint8][]string `json:"contact_groups"`
-	Derive        string             `json:"derive,omitempty"`
-	Link          string             `json:"link"`
-	MetricName    string             `json:"metric_name"`
-	MetricTags    []string           `json:"metric_tags"`
-	MetricType    string             `json:"metric_type"`
-	Notes         string             `json:"notes"`
-	Parent        string             `json:"parent,omitempty"`
-	Rules         []RuleSetRule      `json:"rules"`
-	Tags          []string           `json:"tags"`
+	CID           string             `json:"_cid,omitempty"`   // string
+	CheckCID      string             `json:"check"`            // string
+	ContactGroups map[uint8][]string `json:"contact_groups"`   // [] len 5
+	Derive        *string            `json:"derive,omitempty"` // string or null
+	Link          *string            `json:"link"`             // string or null
+	MetricName    string             `json:"metric_name"`      // string
+	MetricTags    []string           `json:"metric_tags"`      // [] len >= 0
+	MetricType    string             `json:"metric_type"`      // string
+	Notes         *string            `json:"notes"`            // string or null
+	Parent        *string            `json:"parent,omitempty"` // string or null
+	Rules         []RuleSetRule      `json:"rules"`            // [] len >= 1
+	Tags          []string           `json:"tags"`             // [] len >= 0
 }
 
 // NewRuleSet returns a new RuleSet (with defaults if applicable)

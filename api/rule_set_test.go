@@ -26,12 +26,12 @@ var (
 			4: []string{},
 			5: []string{},
 		},
-		Derive:     "",
-		Link:       "http://example.com/how2fix/webserver_down/",
+		Derive:     nil,
+		Link:       &[]string{"http://example.com/how2fix/webserver_down/"}[0],
 		MetricName: "tt_firstbyte",
 		MetricType: "numeric",
-		Notes:      "Determine if the HTTP request is taking too long to start (or is down.)  Don't fire if ping is already alerting",
-		Parent:     "1233_ping",
+		Notes:      &[]string{"Determine if the HTTP request is taking too long to start (or is down.)  Don't fire if ping is already alerting"}[0],
+		Parent:     &[]string{"1233_ping"}[0],
 		Rules: []RuleSetRule{
 			RuleSetRule{
 				Criteria:          "on absence",
@@ -39,7 +39,7 @@ var (
 				Value:             "300",
 				Wait:              5,
 				WindowingDuration: 300,
-				WindowingFunction: "",
+				WindowingFunction: nil,
 			},
 			RuleSetRule{
 				Criteria: "max value",
