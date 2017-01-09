@@ -18,26 +18,26 @@ import (
 
 // WorksheetGraph defines a worksheet cid to be include in the worksheet
 type WorksheetGraph struct {
-	GraphCID string `json:"graph"`
+	GraphCID string `json:"graph"` // string
 }
 
 // WorksheetSmartQuery defines a query to include multiple worksheets
 type WorksheetSmartQuery struct {
 	Name  string   `json:"name"`
-	Query string   `json:"query"`
 	Order []string `json:"order"`
+	Query string   `json:"query"`
 }
 
 // Worksheet defines a worksheet. See https://login.circonus.com/resources/api/calls/worksheet for more information.
 type Worksheet struct {
-	CID          string                `json:"_cid,omitempty"`
-	Description  string                `json:"description"`
-	Favorite     bool                  `json:"favorite"`
-	Graphs       []WorksheetGraph      `json:"worksheets,omitempty"`
-	Notes        string                `json:"notes"`
-	SmartQueries []WorksheetSmartQuery `json:"smart_queries,omitempty"`
-	Tags         []string              `json:"tags"`
-	Title        string                `json:"title"`
+	CID          string                `json:"_cid,omitempty"`          // string
+	Description  *string               `json:"description"`             // string or null
+	Favorite     bool                  `json:"favorite"`                // boolean
+	Graphs       []WorksheetGraph      `json:"worksheets,omitempty"`    // [] len >= 0
+	Notes        *string               `json:"notes"`                   // string or null
+	SmartQueries []WorksheetSmartQuery `json:"smart_queries,omitempty"` // [] len >= 0
+	Tags         []string              `json:"tags"`                    // [] len >= 0
+	Title        string                `json:"title"`                   // string
 }
 
 // NewWorksheet returns a new Worksheet (with defaults, if applicable)

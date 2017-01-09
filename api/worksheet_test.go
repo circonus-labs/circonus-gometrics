@@ -18,14 +18,14 @@ import (
 var (
 	testWorksheet = Worksheet{
 		CID:         "/worksheet/01234567-89ab-cdef-0123-456789abcdef",
-		Description: "One graph per active server in our primary data center",
+		Description: &[]string{"One graph per active server in our primary data center"}[0],
 		Favorite:    true,
 		Graphs: []WorksheetGraph{
 			WorksheetGraph{GraphCID: "/graph/aaaaaaaa-0000-1111-2222-0123456789ab"},
 			WorksheetGraph{GraphCID: "/graph/bbbbbbbb-3333-4444-5555-0123456789ab"},
 			WorksheetGraph{GraphCID: "/graph/cccccccc-6666-7777-8888-0123456789ab"},
 		},
-		Notes: "Currently maintained by Oscar",
+		Notes: &[]string{"Currently maintained by Oscar"}[0],
 		SmartQueries: []WorksheetSmartQuery{
 			WorksheetSmartQuery{
 				Name:  "Virtual Machines",
