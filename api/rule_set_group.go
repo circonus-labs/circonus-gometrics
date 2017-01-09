@@ -16,37 +16,27 @@ import (
 	"github.com/circonus-labs/circonus-gometrics/api/config"
 )
 
-// RuleSetGroupRule defines a rulesetGroup rule
-type RuleSetGroupRule struct {
-	Criteria          string `json:"criteria"`
-	Severity          uint   `json:"severity"`
-	Value             string `json:"value"`
-	WindowingDuration uint   `json:"windowing_duration,omitempty"`
-	WindowingFunction string `json:"windowing_function,omitempty"`
-	Wait              uint   `json:"wait,omitempty"`
-}
-
 // RuleSetGroupFormula defines a formula for raising alerts
 type RuleSetGroupFormula struct {
-	Expression    string `json:"expression"`
-	RaiseSeverity uint   `json:"raise_severity"`
-	Wait          uint   `json:"wait"`
+	Expression    interface{} `json:"expression"`     // string or uint BUG doc: string, api: string or numeric
+	RaiseSeverity uint        `json:"raise_severity"` // uint
+	Wait          uint        `json:"wait"`           // uint
 }
 
 // RuleSetGroupCondition defines conditions for raising alerts
 type RuleSetGroupCondition struct {
-	MatchingSeverities []string `json:"matching_serverities"`
-	RuleSetCID         string   `json:"rule_set"`
+	MatchingSeverities []string `json:"matching_serverities"` // [] len >= 1
+	RuleSetCID         string   `json:"rule_set"`             // string
 }
 
 // RuleSetGroup defines a ruleset group. See https://login.circonus.com/resources/api/calls/rule_set_group for more information.
 type RuleSetGroup struct {
-	CID               string                  `json:"_cid,omitempty"`
-	ContactGroups     map[uint8][]string      `json:"contact_groups"`
-	Formulas          []RuleSetGroupFormula   `json:"formulas"`
-	Name              string                  `json:"name"`
-	RuleSetConditions []RuleSetGroupCondition `json:"rule_set_conditions"`
-	Tags              []string                `json:"tags"`
+	CID               string                  `json:"_cid,omitempty"`      // string
+	ContactGroups     map[uint8][]string      `json:"contact_groups"`      // [] len == 5
+	Formulas          []RuleSetGroupFormula   `json:"formulas"`            // [] len >= 0
+	Name              string                  `json:"name"`                // string
+	RuleSetConditions []RuleSetGroupCondition `json:"rule_set_conditions"` // [] len >= 1
+	Tags              []string                `json:"tags"`                // [] len >= 0
 }
 
 // NewRuleSetGroup returns a new RuleSetGroup (with defaults, if applicable)
