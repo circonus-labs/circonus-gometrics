@@ -186,7 +186,7 @@ func TestUpdateProvisionBroker(t *testing.T) {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
-	t.Log("invalid CID [nil]")
+	t.Log("invalid CID [nil], config n/a")
 	{
 		expectedError := errors.New("Invalid provision broker request CID [none]")
 		x := &ProvisionBroker{}
@@ -199,7 +199,7 @@ func TestUpdateProvisionBroker(t *testing.T) {
 		}
 	}
 
-	t.Log("invalid CID [/invalid]")
+	t.Log("invalid CID [/invalid], config n/a")
 	{
 		cid := "/invalid"
 		expectedError := errors.New("Invalid provision broker request CID [/invalid]")
