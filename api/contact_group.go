@@ -52,13 +52,13 @@ type ContactGroupEscalation struct {
 
 // ContactGroup defines a contact group. See https://login.circonus.com/resources/api/calls/contact_group for more information.
 type ContactGroup struct {
-	CID               string                    `json:"_cid,omitempty"`               // string
-	LastModified      uint                      `json:"_last_modified,omitempty"`     // uint
-	LastModifiedBy    string                    `json:"_last_modified_by,omitempty"`  // string
 	AggregationWindow uint                      `json:"aggregation_window,omitempty"` // uint
 	AlertFormats      ContactGroupAlertFormats  `json:"alert_formats,omitempty"`      // ContactGroupAlertFormats
+	CID               string                    `json:"_cid,omitempty"`               // string
 	Contacts          ContactGroupContacts      `json:"contacts,omitempty"`           // ContactGroupContacts
 	Escalations       []*ContactGroupEscalation `json:"escalations,omitempty"`        // [] len == 5, elements: ContactGroupEscalation or null
+	LastModified      uint                      `json:"_last_modified,omitempty"`     // uint
+	LastModifiedBy    string                    `json:"_last_modified_by,omitempty"`  // string
 	Name              string                    `json:"name,omitempty"`               // string
 	Reminders         []uint                    `json:"reminders,omitempty"`          // [] len == 5
 	Tags              []string                  `json:"tags,omitempty"`               // [] len >= 0

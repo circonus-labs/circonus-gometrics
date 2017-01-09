@@ -119,25 +119,25 @@ type OverlayDataOptions struct {
 
 // OverlayUISpecs defines UI specs for overlay
 type OverlayUISpecs struct {
+	Decouple bool   `json:"decouple,omitempty"` // boolean
 	ID       string `json:"id,omitempty"`       // string
-	Z        string `json:"z,omitempty"`        // string BUG doc: numeric, api: string
 	Label    string `json:"label,omitempty"`    // string
 	Type     string `json:"type,omitempty"`     // string
-	Decouple bool   `json:"decouple,omitempty"` // boolean
+	Z        string `json:"z,omitempty"`        // string BUG doc: numeric, api: string
 }
 
 // GraphOverlaySet defines overlays for graph
 type GraphOverlaySet struct {
-	ID       string             `json:"id,omitempty"`        // string
 	DataOpts OverlayDataOptions `json:"data_opts,omitempty"` // OverlayDataOptions
-	UISpecs  OverlayUISpecs     `json:"ui_specs,omitempty"`  // OverlayUISpecs
+	ID       string             `json:"id,omitempty"`        // string
 	Title    string             `json:"title,omitempty"`     // string
+	UISpecs  OverlayUISpecs     `json:"ui_specs,omitempty"`  // OverlayUISpecs
 }
 
 // Graph defines a graph. See https://login.circonus.com/resources/api/calls/graph for more information.
 type Graph struct {
-	CID            string                      `json:"_cid,omitempty"`                 // string
 	AccessKeys     []GraphAccessKey            `json:"access_keys,omitempty"`          // [] len >= 0
+	CID            string                      `json:"_cid,omitempty"`                 // string
 	Composites     []GraphComposite            `json:"composites,omitempty"`           // [] len >= 0
 	Datapoints     []GraphDatapoint            `json:"datapoints,omitempt"`            // [] len >= 0
 	Description    string                      `json:"description,omitempty"`          // string

@@ -18,12 +18,12 @@ import (
 
 // Alert defines a alert. See https://login.circonus.com/resources/api/calls/alert for more information.
 type Alert struct {
-	CID                string   `json:"_cid,omitempty"`             // string
 	AcknowledgementCID *string  `json:"_acknowledgement,omitempty"` // string or null
 	AlertURL           string   `json:"_alert_url,omitempty"`       // string
 	BrokerCID          string   `json:"_broker,omitempty"`          // string
 	CheckCID           string   `json:"_check,omitempty"`           // string
 	CheckName          string   `json:"_check_name,omitempty"`      // string
+	CID                string   `json:"_cid,omitempty"`             // string
 	ClearedOn          *uint    `json:"_cleared_on,omitempty"`      // uint or null
 	ClearedValue       *string  `json:"_cleared_value,omitempty"`   // string or null
 	Maintenance        []string `json:"_maintenance,omitempty"`     // [] len >= 0

@@ -19,11 +19,11 @@ import (
 // CheckBundleMetric individual metric configuration
 type CheckBundleMetric struct {
 	Name   string   `json:"name"`             // string
-	Type   string   `json:"type"`             // string
-	Units  *string  `json:"units,omitempty"`  // string or null
+	Result *string  `json:"result,omitempty"` // string or null, NOTE not settable - return/information value only
 	Status string   `json:"status"`           // string
 	Tags   []string `json:"tags"`             // [] len >= 0
-	Result *string  `json:"result,omitempty"` // string or null, NOTE not settable - return/information value only
+	Type   string   `json:"type"`             // string
+	Units  *string  `json:"units,omitempty"`  // string or null
 }
 
 // CheckBundleConfig contains the check type specific configuration settings
@@ -33,20 +33,20 @@ type CheckBundleConfig map[config.Key]string
 
 // CheckBundle defines a check bundle. See https://login.circonus.com/resources/api/calls/check_bundle for more information.
 type CheckBundle struct {
-	CheckUUIDs         []string            `json:"_check_uuids,omitempty"`             // [] len >= 0
-	Checks             []string            `json:"_checks,omitempty"`                  // [] len >= 0
-	CID                string              `json:"_cid,omitempty"`                     // string
-	Created            uint                `json:"_created,omitempty"`                 // uint
-	LastModified       uint                `json:"_last_modified,omitempty"`           // uint
-	LastModifedBy      string              `json:"_last_modifed_by,omitempty"`         // string
-	ReverseConnectURLs []string            `json:"_reverse_connection_urls,omitempty"` // [] len >= 0
 	Brokers            []string            `json:"brokers"`                            // [] len >= 0
+	Checks             []string            `json:"_checks,omitempty"`                  // [] len >= 0
+	CheckUUIDs         []string            `json:"_check_uuids,omitempty"`             // [] len >= 0
+	CID                string              `json:"_cid,omitempty"`                     // string
 	Config             CheckBundleConfig   `json:"config,omitempty"`                   // NOTE contents of config are check type specific, map len >= 0
+	Created            uint                `json:"_created,omitempty"`                 // uint
 	DisplayName        string              `json:"display_name"`                       // string
-	Metrics            []CheckBundleMetric `json:"metrics"`                            // [] >= 0
+	LastModifedBy      string              `json:"_last_modifed_by,omitempty"`         // string
+	LastModified       uint                `json:"_last_modified,omitempty"`           // uint
 	MetricLimit        int                 `json:"metric_limit,omitempty"`             // int
+	Metrics            []CheckBundleMetric `json:"metrics"`                            // [] >= 0
 	Notes              *string             `json:"notes,omitempty"`                    // string or null
 	Period             uint                `json:"period,omitempty"`                   // uint
+	ReverseConnectURLs []string            `json:"_reverse_connection_urls,omitempty"` // [] len >= 0
 	Status             string              `json:"status,omitempty"`                   // string
 	Tags               []string            `json:"tags,omitempty"`                     // [] len >= 0
 	Target             string              `json:"target"`                             // string

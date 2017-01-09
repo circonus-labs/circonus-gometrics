@@ -22,11 +22,11 @@ type CheckDetails map[config.Key]string
 
 // Check defines a check. See https://login.circonus.com/resources/api/calls/check for more information.
 type Check struct {
-	CID            string       `json:"_cid"`          // string
 	Active         bool         `json:"_active"`       // bool
 	BrokerCID      string       `json:"_broker"`       // string
 	CheckBundleCID string       `json:"_check_bundle"` // string
 	CheckUUID      string       `json:"_check_uuid"`   // string
+	CID            string       `json:"_cid"`          // string
 	Details        CheckDetails `json:"_details"`      // NOTE contents of details are check type specific, map len >= 0
 }
 
