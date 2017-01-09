@@ -150,7 +150,7 @@ func (a *API) CreateMaintenanceWindow(cfg *Maintenance) (*Maintenance, error) {
 // DeleteMaintenanceWindow deletes passed maintenance [window].
 func (a *API) DeleteMaintenanceWindow(cfg *Maintenance) (bool, error) {
 	if cfg == nil {
-		return false, fmt.Errorf("Invalid maintenance window config [none]")
+		return false, fmt.Errorf("Invalid maintenance window config [nil]")
 	}
 	return a.DeleteMaintenanceWindowByCID(CIDType(&cfg.CID))
 }
