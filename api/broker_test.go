@@ -17,23 +17,23 @@ import (
 var (
 	testBroker = Broker{
 		CID:       "/broker/1234",
-		Longitude: "",
-		Latitude:  "",
+		Longitude: nil,
+		Latitude:  nil,
 		Name:      "test broker",
 		Tags:      []string{},
 		Type:      "enterprise",
 		Details: []BrokerDetail{
 			BrokerDetail{
 				CN:           "testbroker.example.com",
-				ExternalHost: "testbroker.example.com",
+				ExternalHost: &[]string{"testbroker.example.com"}[0],
 				ExternalPort: 43191,
-				IP:           "127.0.0.1",
+				IP:           &[]string{"127.0.0.1"}[0],
 				MinVer:       0,
 				Modules:      []string{"a", "b", "c"},
-				Port:         43191,
-				Skew:         "",
+				Port:         &[]uint16{43191}[0],
+				Skew:         nil,
 				Status:       "active",
-				Version:      1,
+				Version:      nil,
 			},
 		},
 	}
