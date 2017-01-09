@@ -181,6 +181,19 @@ func TestFetchContactGroup(t *testing.T) {
 		}
 	}
 
+	t.Log("invalid CID [\"\"]")
+	{
+		cid := ""
+		expectedError := errors.New("Invalid contact group CID [none]")
+		_, err := apih.FetchContactGroup(CIDType(&cid))
+		if err == nil {
+			t.Fatalf("Expected error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
 	t.Log("invalid CID [/invalid]")
 	{
 		cid := "/invalid"
@@ -245,8 +258,6 @@ func TestUpdateContactGroup(t *testing.T) {
 	server := testContactGroupServer()
 	defer server.Close()
 
-	var apih *API
-
 	ac := &Config{
 		TokenKey: "abc123",
 		TokenApp: "test",
@@ -255,6 +266,31 @@ func TestUpdateContactGroup(t *testing.T) {
 	apih, err := NewAPI(ac)
 	if err != nil {
 		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	t.Log("invalid config [nil]")
+	{
+		expectedError := errors.New("Invalid contact group config [nil]")
+		_, err := apih.UpdateContactGroup(nil)
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("invalid config [CID /invalid]")
+	{
+		expectedError := errors.New("Invalid contact group CID [/invalid]")
+		x := &ContactGroup{CID: "/invalid"}
+		_, err := apih.UpdateContactGroup(x)
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
 	}
 
 	t.Log("valid CID")
@@ -270,26 +306,11 @@ func TestUpdateContactGroup(t *testing.T) {
 			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 		}
 	}
-
-	t.Log("invalid CID [/invalid]")
-	{
-		expectedError := errors.New("Invalid contact group CID [/invalid]")
-		x := &ContactGroup{CID: "/invalid"}
-		_, err := apih.UpdateContactGroup(x)
-		if err == nil {
-			t.Fatal("Expected an error")
-		}
-		if err.Error() != expectedError.Error() {
-			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
-		}
-	}
 }
 
 func TestCreateContactGroup(t *testing.T) {
 	server := testContactGroupServer()
 	defer server.Close()
-
-	var apih *API
 
 	ac := &Config{
 		TokenKey: "abc123",
@@ -301,15 +322,30 @@ func TestCreateContactGroup(t *testing.T) {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
-	contactGroup, err := apih.CreateContactGroup(&testContactGroup)
-	if err != nil {
-		t.Fatalf("Expected no error, got '%v'", err)
+	t.Log("invalid config [nil]")
+	{
+		expectedError := errors.New("Invalid contact group config [nil]")
+		_, err := apih.CreateContactGroup(nil)
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
 	}
 
-	actualType := reflect.TypeOf(contactGroup)
-	expectedType := "*api.ContactGroup"
-	if actualType.String() != expectedType {
-		t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+	t.Log("valid config")
+	{
+		contactGroup, err := apih.CreateContactGroup(&testContactGroup)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(contactGroup)
+		expectedType := "*api.ContactGroup"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
 	}
 }
 
@@ -329,15 +365,19 @@ func TestDeleteContactGroup(t *testing.T) {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
-	t.Log("valid CID")
+	t.Log("invalid config [nil]")
 	{
-		_, err := apih.DeleteContactGroup(&testContactGroup)
-		if err != nil {
-			t.Fatalf("Expected no error, got '%v'", err)
+		expectedError := errors.New("Invalid contact group config [nil]")
+		_, err := apih.DeleteContactGroup(nil)
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
 		}
 	}
 
-	t.Log("invalid CID [/invalid]")
+	t.Log("invalid config [CID /invalid]")
 	{
 		expectedError := errors.New("Invalid contact group CID [/invalid]")
 		x := &ContactGroup{CID: "/invalid"}
@@ -347,6 +387,14 @@ func TestDeleteContactGroup(t *testing.T) {
 		}
 		if err.Error() != expectedError.Error() {
 			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("valid config")
+	{
+		_, err := apih.DeleteContactGroup(&testContactGroup)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
 		}
 	}
 }
@@ -367,12 +415,28 @@ func TestDeleteContactGroupByCID(t *testing.T) {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
-	t.Log("valid CID")
+	t.Log("invalid CID [nil]")
 	{
-		cid := "/contact_group/1234"
+		expectedError := errors.New("Invalid contact group CID [none]")
+		_, err := apih.DeleteContactGroupByCID(nil)
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("invalid CID [\"\"]")
+	{
+		cid := ""
+		expectedError := errors.New("Invalid contact group CID [none]")
 		_, err := apih.DeleteContactGroupByCID(CIDType(&cid))
-		if err != nil {
-			t.Fatalf("Expected no error, got '%v'", err)
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
 		}
 	}
 
@@ -386,6 +450,15 @@ func TestDeleteContactGroupByCID(t *testing.T) {
 		}
 		if err.Error() != expectedError.Error() {
 			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("valid CID")
+	{
+		cid := "/contact_group/1234"
+		_, err := apih.DeleteContactGroupByCID(CIDType(&cid))
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
 		}
 	}
 }
