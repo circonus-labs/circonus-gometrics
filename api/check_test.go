@@ -97,7 +97,32 @@ func TestFetchCheck(t *testing.T) {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
-	t.Log("invalid CID")
+	t.Log("invalid CID [nil]")
+	{
+		expectedError := errors.New("Invalid check CID [none]")
+		_, err = apih.FetchCheck(nil)
+		if err == nil {
+			t.Fatalf("Expected error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("invalid CID [\"\"]")
+	{
+		cid := ""
+		expectedError := errors.New("Invalid check CID [none]")
+		_, err = apih.FetchCheck(CIDType(&cid))
+		if err == nil {
+			t.Fatalf("Expected error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("invalid CID [/invalid]")
 	{
 		cid := "/invalid"
 		expectedError := errors.New("Invalid check CID [/invalid]")
