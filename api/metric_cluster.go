@@ -24,13 +24,13 @@ type MetricQuery struct {
 
 // MetricCluster defines a metric cluster. See https://login.circonus.com/resources/api/calls/metric_cluster for more information.
 type MetricCluster struct {
-	CID                 string              `json:"_cid,omitempty"`
-	MatchingMetrics     []string            `json:"_matching_metrics,omitempty"`
-	MatchingUUIDMetrics map[string][]string `json:"_matching_uuid_metrics,omitempty"`
-	Description         string              `json:"description"`
-	Name                string              `json:"name"`
-	Queries             []MetricQuery       `json:"queries"`
-	Tags                []string            `json:"tags"`
+	CID                 string              `json:"_cid,omitempty"`                   // string
+	MatchingMetrics     []string            `json:"_matching_metrics,omitempty"`      // [] >= 1 (result info only, if query has extras - cannot be set)
+	MatchingUUIDMetrics map[string][]string `json:"_matching_uuid_metrics,omitempty"` // [] >= 1 (result info only, if query has extras - cannot be set)
+	Description         string              `json:"description"`                      // string
+	Name                string              `json:"name"`                             // string
+	Queries             []MetricQuery       `json:"queries"`                          // [] >= 1
+	Tags                []string            `json:"tags"`                             // [] >= 0
 }
 
 // NewMetricCluster returns a new MetricCluster (with defaults, if applicable)
