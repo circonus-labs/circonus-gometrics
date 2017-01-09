@@ -27,7 +27,7 @@ var (
 		IPAddress:    "192.168.1.10",
 		Latitude:     "",
 		Longitude:    "",
-		NoitName:     "abc123",
+		Name:         "abc123",
 		Port:         "43191",
 		PreferReverseConnection: true,
 		Rebuild:                 false,
