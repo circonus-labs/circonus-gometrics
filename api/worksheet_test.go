@@ -408,6 +408,19 @@ func TestDeleteWorksheetByCID(t *testing.T) {
 		}
 	}
 
+	t.Log("invalid CID [\"\"]")
+	{
+		cid := ""
+		expectedError := errors.New("Invalid worksheet CID [none]")
+		_, err := apih.DeleteWorksheetByCID(CIDType(&cid))
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
 	t.Log("invalid CID [/invalid]")
 	{
 		cid := "/invalid"
@@ -421,7 +434,7 @@ func TestDeleteWorksheetByCID(t *testing.T) {
 		}
 	}
 
-	t.Log("valid config")
+	t.Log("valid CID")
 	{
 		cid := "/worksheet/01234567-89ab-cdef-0123-456789abcdef"
 		_, err := apih.DeleteWorksheetByCID(CIDType(&cid))
