@@ -24,6 +24,7 @@ type CheckBundleMetric struct {
 	Tags   []string `json:"tags"`             // [] len >= 0
 	Type   string   `json:"type"`             // string
 	Units  *string  `json:"units,omitempty"`  // string or null
+
 }
 
 // CheckBundleConfig contains the check type specific configuration settings
@@ -57,6 +58,7 @@ type CheckBundle struct {
 // NewCheckBundle returns new CheckBundle (with defaults, if applicable)
 func NewCheckBundle() *CheckBundle {
 	return &CheckBundle{
+		Config:      make(CheckBundleConfig, config.DefaultConfigOptionsSize),
 		MetricLimit: config.DefaultCheckBundleMetricLimit,
 		Period:      config.DefaultCheckBundlePeriod,
 		Timeout:     config.DefaultCheckBundleTimeout,

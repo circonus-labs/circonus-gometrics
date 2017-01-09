@@ -13,6 +13,7 @@ const (
 	DefaultCheckBundleStatus      = "active"
 	DefaultCheckBundlePeriod      = 60
 	DefaultCheckBundleTimeout     = 10
+	DefaultConfigOptionsSize      = 20
 
 	//
 	// common (apply to more than one check type)

@@ -299,7 +299,7 @@ func (cm *CheckManager) createNewCheck() (*api.CheckBundle, *api.Broker, error) 
 		Brokers: []string{broker.CID},
 		Config: map[config.Key]string{
 			config.AsyncMetrics: "true",
-			config.SecretKey:    checkSecret,
+			config.Secret:       checkSecret,
 		},
 		DisplayName: string(cm.checkDisplayName),
 		Metrics:     []api.CheckBundleMetric{},
