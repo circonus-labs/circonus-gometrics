@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"net/http"
 	"net/url"
 	"os"
@@ -18,6 +19,10 @@ import (
 
 	"github.com/hashicorp/go-retryablehttp"
 )
+
+func init() {
+	rand.Seed(time.Now().Unix())
+}
 
 const (
 	// a few sensible defaults
@@ -162,6 +167,10 @@ func (a *API) Put(reqPath string, data []byte) ([]byte, error) {
 	return a.apiRequest("PUT", reqPath, data)
 }
 
+func backoff(interval uint) uint {
+	return (interval + uint(rand.Intn(int(interval)))) / 2
+}
+
 // apiRequest manages retry strategy for exponential backoffs
 func (a *API) apiRequest(reqMethod string, reqPath string, data []byte) ([]byte, error) {
 	backoffs := []uint{2, 4, 8, 16, 32}
@@ -187,9 +196,9 @@ func (a *API) apiRequest(reqMethod string, reqPath string, data []byte) ([]byte,
 		if !success {
 			var wait uint
 			if attempts >= len(backoffs) {
-				wait = backoffs[len(backoffs)-1]
+				wait = backoff(backoffs[len(backoffs)-1])
 			} else {
-				wait = backoffs[attempts]
+				wait = backoff(backoffs[attempts])
 			}
 			attempts++
 			a.Log.Printf("[WARN] API call failed %s, retrying in %d seconds.\n", err.Error(), wait)
