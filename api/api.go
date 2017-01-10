@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math"
 	"math/rand"
 	"net/http"
 	"net/url"
@@ -167,8 +168,8 @@ func (a *API) Put(reqPath string, data []byte) ([]byte, error) {
 	return a.apiRequest("PUT", reqPath, data)
 }
 
-func backoff(interval uint) uint {
-	return (interval + uint(rand.Intn(int(interval)))) / 2
+func backoff(interval uint) float64 {
+	return math.Floor(((float64(interval) * (1 + rand.Float64())) / 2) + .5)
 }
 
 // apiRequest manages retry strategy for exponential backoffs
@@ -194,14 +195,14 @@ func (a *API) apiRequest(reqMethod string, reqPath string, data []byte) ([]byte,
 		}
 
 		if !success {
-			var wait uint
+			var wait float64
 			if attempts >= len(backoffs) {
 				wait = backoff(backoffs[len(backoffs)-1])
 			} else {
 				wait = backoff(backoffs[attempts])
 			}
 			attempts++
-			a.Log.Printf("[WARN] API call failed %s, retrying in %d seconds.\n", err.Error(), wait)
+			a.Log.Printf("[WARN] API call failed %s, retrying in %d seconds.\n", err.Error(), uint(wait))
 			time.Sleep(time.Duration(wait) * time.Second)
 		}
 	}
