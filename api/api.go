@@ -185,14 +185,14 @@ func (a *API) apiRequest(reqMethod string, reqPath string, data []byte) ([]byte,
 		}
 
 		if !success {
-			attempts++
 			var wait uint
 			if attempts >= len(backoffs) {
-				wait = backoffs[len(backoffs)]
+				wait = backoffs[len(backoffs)-1]
 			} else {
 				wait = backoffs[attempts]
 			}
-			a.Log.Printf("[WARN] %s, retrying in %d seconds.\n", err.Error(), wait)
+			attempts++
+			a.Log.Printf("[WARN] API call failed %s, retrying in %d seconds.\n", err.Error(), wait)
 			time.Sleep(time.Duration(wait) * time.Second)
 		}
 	}
@@ -233,9 +233,9 @@ func (a *API) apiCall(reqMethod string, reqPath string, data []byte) ([]byte, er
 			resp.StatusCode == 429 { // rate limit
 			body, readErr := ioutil.ReadAll(resp.Body)
 			if readErr != nil {
-				lastHTTPError = fmt.Errorf("- last HTTP error: %d %+v", resp.StatusCode, readErr)
+				lastHTTPError = fmt.Errorf("- response: %d %s", resp.StatusCode, readErr.Error())
 			} else {
-				lastHTTPError = fmt.Errorf("- last HTTP error: %d %s", resp.StatusCode, string(body))
+				lastHTTPError = fmt.Errorf("- response: %d %s", resp.StatusCode, strings.TrimSpace(string(body)))
 			}
 			return true, nil
 		}
@@ -257,7 +257,7 @@ func (a *API) apiCall(reqMethod string, reqPath string, data []byte) ([]byte, er
 		// limit to one request if using exponential backoff
 		client.RetryWaitMin = 1
 		client.RetryWaitMax = 2
-		client.RetryMax = 1
+		client.RetryMax = 0
 	} else {
 		client.RetryWaitMin = minRetryWait
 		client.RetryWaitMax = maxRetryWait
