@@ -11,8 +11,7 @@ import (
 func TestGauge(t *testing.T) {
 	t.Log("int")
 	{
-		cm := &CirconusMetrics{}
-		cm.gauges = make(map[string]string)
+		cm := &CirconusMetrics{gauges: make(map[string]string)}
 
 		cm.Gauge("foo", int(1))
 		val, ok := cm.gauges["foo"]
@@ -27,8 +26,7 @@ func TestGauge(t *testing.T) {
 
 	t.Log("int8")
 	{
-		cm := &CirconusMetrics{}
-		cm.gauges = make(map[string]string)
+		cm := &CirconusMetrics{gauges: make(map[string]string)}
 
 		cm.Gauge("foo", int8(1))
 		val, ok := cm.gauges["foo"]
@@ -43,8 +41,7 @@ func TestGauge(t *testing.T) {
 
 	t.Log("int16")
 	{
-		cm := &CirconusMetrics{}
-		cm.gauges = make(map[string]string)
+		cm := &CirconusMetrics{gauges: make(map[string]string)}
 
 		cm.Gauge("foo", int16(1))
 		val, ok := cm.gauges["foo"]
@@ -59,8 +56,7 @@ func TestGauge(t *testing.T) {
 
 	t.Log("int32")
 	{
-		cm := &CirconusMetrics{}
-		cm.gauges = make(map[string]string)
+		cm := &CirconusMetrics{gauges: make(map[string]string)}
 
 		cm.Gauge("foo", int32(1))
 		val, ok := cm.gauges["foo"]
@@ -75,8 +71,7 @@ func TestGauge(t *testing.T) {
 
 	t.Log("int64")
 	{
-		cm := &CirconusMetrics{}
-		cm.gauges = make(map[string]string)
+		cm := &CirconusMetrics{gauges: make(map[string]string)}
 
 		cm.Gauge("foo", int64(1))
 		val, ok := cm.gauges["foo"]
@@ -91,8 +86,7 @@ func TestGauge(t *testing.T) {
 
 	t.Log("uint")
 	{
-		cm := &CirconusMetrics{}
-		cm.gauges = make(map[string]string)
+		cm := &CirconusMetrics{gauges: make(map[string]string)}
 
 		cm.Gauge("foo", uint(1))
 		val, ok := cm.gauges["foo"]
@@ -107,8 +101,7 @@ func TestGauge(t *testing.T) {
 
 	t.Log("uint8")
 	{
-		cm := &CirconusMetrics{}
-		cm.gauges = make(map[string]string)
+		cm := &CirconusMetrics{gauges: make(map[string]string)}
 
 		cm.Gauge("foo", uint8(1))
 		val, ok := cm.gauges["foo"]
@@ -123,8 +116,7 @@ func TestGauge(t *testing.T) {
 
 	t.Log("uint16")
 	{
-		cm := &CirconusMetrics{}
-		cm.gauges = make(map[string]string)
+		cm := &CirconusMetrics{gauges: make(map[string]string)}
 
 		cm.Gauge("foo", uint16(1))
 		val, ok := cm.gauges["foo"]
@@ -139,8 +131,7 @@ func TestGauge(t *testing.T) {
 
 	t.Log("uint32")
 	{
-		cm := &CirconusMetrics{}
-		cm.gauges = make(map[string]string)
+		cm := &CirconusMetrics{gauges: make(map[string]string)}
 
 		cm.Gauge("foo", uint32(1))
 		val, ok := cm.gauges["foo"]
@@ -155,8 +146,7 @@ func TestGauge(t *testing.T) {
 
 	t.Log("uint64")
 	{
-		cm := &CirconusMetrics{}
-		cm.gauges = make(map[string]string)
+		cm := &CirconusMetrics{gauges: make(map[string]string)}
 
 		cm.Gauge("foo", uint64(1))
 		val, ok := cm.gauges["foo"]
@@ -171,8 +161,7 @@ func TestGauge(t *testing.T) {
 
 	t.Log("float32")
 	{
-		cm := &CirconusMetrics{}
-		cm.gauges = make(map[string]string)
+		cm := &CirconusMetrics{gauges: make(map[string]string)}
 
 		cm.Gauge("foo", float32(3.12))
 		val, ok := cm.gauges["foo"]
@@ -187,8 +176,7 @@ func TestGauge(t *testing.T) {
 
 	t.Log("float64")
 	{
-		cm := &CirconusMetrics{}
-		cm.gauges = make(map[string]string)
+		cm := &CirconusMetrics{gauges: make(map[string]string)}
 
 		cm.Gauge("foo", float64(3.12))
 		val, ok := cm.gauges["foo"]
@@ -205,8 +193,8 @@ func TestGauge(t *testing.T) {
 func TestSetGauge(t *testing.T) {
 	t.Log("Testing gauge.SetGauge")
 
-	cm := &CirconusMetrics{}
-	cm.gauges = make(map[string]string)
+	cm := &CirconusMetrics{gauges: make(map[string]string)}
+
 	cm.SetGauge("foo", 10)
 
 	val, ok := cm.gauges["foo"]
@@ -222,8 +210,8 @@ func TestSetGauge(t *testing.T) {
 func TestRemoveGauge(t *testing.T) {
 	t.Log("Testing gauge.RemoveGauge")
 
-	cm := &CirconusMetrics{}
-	cm.gauges = make(map[string]string)
+	cm := &CirconusMetrics{gauges: make(map[string]string)}
+
 	cm.Gauge("foo", 5)
 
 	val, ok := cm.gauges["foo"]
@@ -253,8 +241,9 @@ func TestSetGaugeFunc(t *testing.T) {
 	gf := func() int64 {
 		return 1
 	}
-	cm := &CirconusMetrics{}
-	cm.gaugeFuncs = make(map[string]func() int64)
+
+	cm := &CirconusMetrics{gaugeFuncs: make(map[string]func() int64)}
+
 	cm.SetGaugeFunc("foo", gf)
 
 	val, ok := cm.gaugeFuncs["foo"]
@@ -273,8 +262,9 @@ func TestRemoveGaugeFunc(t *testing.T) {
 	gf := func() int64 {
 		return 1
 	}
-	cm := &CirconusMetrics{}
-	cm.gaugeFuncs = make(map[string]func() int64)
+
+	cm := &CirconusMetrics{gaugeFuncs: make(map[string]func() int64)}
+
 	cm.SetGaugeFunc("foo", gf)
 
 	val, ok := cm.gaugeFuncs["foo"]
