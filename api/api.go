@@ -6,11 +6,13 @@ package api
 
 import (
 	"bytes"
+	crand "crypto/rand"
 	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"math"
+	"math/big"
 	"math/rand"
 	"net/http"
 	"net/url"
@@ -22,7 +24,12 @@ import (
 )
 
 func init() {
-	rand.Seed(time.Now().Unix())
+	n, err := crand.Int(crand.Reader, big.NewInt(math.MaxInt64))
+	if err != nil {
+		rand.Seed(time.Now().UTC().UnixNano())
+		return
+	}
+	rand.Seed(n.Int64())
 }
 
 const (
