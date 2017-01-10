@@ -65,9 +65,9 @@ type Config struct {
 
 // CirconusMetrics state
 type CirconusMetrics struct {
-	Log             *log.Logger
-	Debug           bool
-	initialized     bool
+	Log   *log.Logger
+	Debug bool
+
 	resetCounters   bool
 	resetGauges     bool
 	resetHistograms bool
@@ -198,8 +198,11 @@ func New(cfg *Config) (*CirconusMetrics, error) {
 		cm.check = check
 	}
 
+	// start background initialization
 	cm.check.Initialize()
 
+	// if automatic flush is enabled, start it.
+	// note: submit will jettison metrics until initialization has completed.
 	if cm.flushInterval > time.Duration(0) {
 		go func() {
 			for _ = range time.NewTicker(cm.flushInterval).C {
