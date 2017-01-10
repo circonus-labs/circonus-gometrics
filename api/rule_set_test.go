@@ -13,40 +13,58 @@ import (
 	"net/http/httptest"
 	"reflect"
 	"testing"
-
-	"github.com/circonus-labs/circonus-gometrics/api/config"
 )
 
 var (
-	testCheckBundle = CheckBundle{
-		CheckUUIDs:         []string{"abc123-a1b2-c3d4-e5f6-123abc"},
-		Checks:             []string{"/check/1234"},
-		CID:                "/check_bundle/1234",
-		Created:            0,
-		LastModified:       0,
-		LastModifedBy:      "",
-		ReverseConnectURLs: []string{""},
-		Config:             map[config.Key]string{},
-		Brokers:            []string{"/broker/1234"},
-		DisplayName:        "test check",
-		Metrics:            []CheckBundleMetric{},
-		MetricLimit:        0,
-		Notes:              nil,
-		Period:             60,
-		Status:             "active",
-		Target:             "127.0.0.1",
-		Timeout:            10,
-		Type:               "httptrap",
-		Tags:               []string{},
+	testRuleSet = RuleSet{
+		CID:      "/rule_set/1234_tt_firstbyte",
+		CheckCID: "/check/1234",
+		ContactGroups: map[uint8][]string{
+			1: []string{"/contact_group/1234", "/contact_group/5678"},
+			2: []string{"/contact_group/1234"},
+			3: []string{"/contact_group/1234"},
+			4: []string{},
+			5: []string{},
+		},
+		Derive:     nil,
+		Link:       &[]string{"http://example.com/how2fix/webserver_down/"}[0],
+		MetricName: "tt_firstbyte",
+		MetricType: "numeric",
+		Notes:      &[]string{"Determine if the HTTP request is taking too long to start (or is down.)  Don't fire if ping is already alerting"}[0],
+		Parent:     &[]string{"1233_ping"}[0],
+		Rules: []RuleSetRule{
+			RuleSetRule{
+				Criteria:          "on absence",
+				Severity:          1,
+				Value:             "300",
+				Wait:              5,
+				WindowingDuration: 300,
+				WindowingFunction: nil,
+			},
+			RuleSetRule{
+				Criteria: "max value",
+				Severity: 2,
+				Value:    "1000",
+				Wait:     5,
+			},
+		},
 	}
 )
 
-func testCheckBundleServer() *httptest.Server {
+func testRuleSetServer() *httptest.Server {
 	f := func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
-		if path == "/check_bundle/1234" {
+		if path == "/rule_set/1234_tt_firstbyte" {
 			switch r.Method {
-			case "PUT": // update
+			case "GET":
+				ret, err := json.Marshal(testRuleSet)
+				if err != nil {
+					panic(err)
+				}
+				w.WriteHeader(200)
+				w.Header().Set("Content-Type", "application/json")
+				fmt.Fprintln(w, string(ret))
+			case "PUT":
 				defer r.Body.Close()
 				b, err := ioutil.ReadAll(r.Body)
 				if err != nil {
@@ -55,36 +73,28 @@ func testCheckBundleServer() *httptest.Server {
 				w.WriteHeader(200)
 				w.Header().Set("Content-Type", "application/json")
 				fmt.Fprintln(w, string(b))
-			case "GET": // get by id/cid
-				ret, err := json.Marshal(testCheckBundle)
-				if err != nil {
-					panic(err)
-				}
+			case "DELETE":
 				w.WriteHeader(200)
 				w.Header().Set("Content-Type", "application/json")
-				fmt.Fprintln(w, string(ret))
-			case "DELETE": // delete
-				w.WriteHeader(200)
-				fmt.Fprintln(w, "")
 			default:
 				w.WriteHeader(404)
 				fmt.Fprintln(w, fmt.Sprintf("not found: %s %s", r.Method, path))
 			}
-		} else if path == "/check_bundle" {
+		} else if path == "/rule_set" {
 			switch r.Method {
 			case "GET":
 				reqURL := r.URL.String()
-				var c []CheckBundle
-				if reqURL == "/check_bundle?search=test" {
-					c = []CheckBundle{testCheckBundle}
-				} else if reqURL == "/check_bundle?f__tags_has=cat%3Atag" {
-					c = []CheckBundle{testCheckBundle}
-				} else if reqURL == "/check_bundle?f__tags_has=cat%3Atag&search=test" {
-					c = []CheckBundle{testCheckBundle}
-				} else if reqURL == "/check_bundle" {
-					c = []CheckBundle{testCheckBundle}
+				var c []RuleSet
+				if reqURL == "/rule_set?search=request%60latency_ms" {
+					c = []RuleSet{testRuleSet}
+				} else if reqURL == "/rule_set?f_tags_has=service%3Aweb" {
+					c = []RuleSet{testRuleSet}
+				} else if reqURL == "/rule_set?f_tags_has=service%3Aweb&search=request%60latency_ms" {
+					c = []RuleSet{testRuleSet}
+				} else if reqURL == "/rule_set" {
+					c = []RuleSet{testRuleSet}
 				} else {
-					c = []CheckBundle{}
+					c = []RuleSet{}
 				}
 				if len(c) > 0 {
 					ret, err := json.Marshal(c)
@@ -98,15 +108,19 @@ func testCheckBundleServer() *httptest.Server {
 					w.WriteHeader(404)
 					fmt.Fprintln(w, fmt.Sprintf("not found: %s %s", r.Method, reqURL))
 				}
-			case "POST": // create
+			case "POST":
 				defer r.Body.Close()
-				b, err := ioutil.ReadAll(r.Body)
+				_, err := ioutil.ReadAll(r.Body)
+				if err != nil {
+					panic(err)
+				}
+				ret, err := json.Marshal(testRuleSet)
 				if err != nil {
 					panic(err)
 				}
 				w.WriteHeader(200)
 				w.Header().Set("Content-Type", "application/json")
-				fmt.Fprintln(w, string(b))
+				fmt.Fprintln(w, string(ret))
 			default:
 				w.WriteHeader(404)
 				fmt.Fprintln(w, fmt.Sprintf("not found: %s %s", r.Method, path))
@@ -120,236 +134,17 @@ func testCheckBundleServer() *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(f))
 }
 
-func TestNewCheckBundle(t *testing.T) {
-	bundle := NewCheckBundle()
+func TestNewRuleSet(t *testing.T) {
+	bundle := NewRuleSet()
 	actualType := reflect.TypeOf(bundle)
-	expectedType := "*api.CheckBundle"
+	expectedType := "*api.RuleSet"
 	if actualType.String() != expectedType {
 		t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 	}
 }
 
-func TestFetchCheckBundle(t *testing.T) {
-	server := testCheckBundleServer()
-	defer server.Close()
-
-	ac := &Config{
-		TokenKey: "abc123",
-		TokenApp: "test",
-		URL:      server.URL,
-	}
-	apih, err := New(ac)
-	if err != nil {
-		t.Errorf("Expected no error, got '%v'", err)
-	}
-
-	t.Log("invalid CID [nil]")
-	{
-		expectedError := errors.New("Invalid check bundle CID [none]")
-		_, err := apih.FetchCheckBundle(nil)
-		if err == nil {
-			t.Fatalf("Expected error")
-		}
-		if err.Error() != expectedError.Error() {
-			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
-		}
-	}
-
-	t.Log("invalid CID [\"\"]")
-	{
-		cid := ""
-		expectedError := errors.New("Invalid check bundle CID [none]")
-		_, err := apih.FetchCheckBundle(CIDType(&cid))
-		if err == nil {
-			t.Fatalf("Expected error")
-		}
-		if err.Error() != expectedError.Error() {
-			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
-		}
-	}
-
-	t.Log("invalid CID [/invalid]")
-	{
-		cid := "/invalid"
-		expectedError := errors.New("Invalid check bundle CID [/invalid]")
-		_, err := apih.FetchCheckBundle(CIDType(&cid))
-		if err == nil {
-			t.Fatalf("Expected error")
-		}
-		if err.Error() != expectedError.Error() {
-			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
-		}
-	}
-
-	t.Log("valid CID")
-	{
-		cid := CIDType(&testCheckBundle.CID)
-		bundle, err := apih.FetchCheckBundle(cid)
-		if err != nil {
-			t.Fatalf("Expected no error, got '%v'", err)
-		}
-
-		actualType := reflect.TypeOf(bundle)
-		expectedType := "*api.CheckBundle"
-		if actualType.String() != expectedType {
-			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
-		}
-
-		if bundle.CID != testCheckBundle.CID {
-			t.Fatalf("CIDs do not match: %+v != %+v\n", bundle, testCheckBundle)
-		}
-	}
-}
-
-func TestUpdateCheckBundle(t *testing.T) {
-	server := testCheckBundleServer()
-	defer server.Close()
-
-	ac := &Config{
-		TokenKey: "abc123",
-		TokenApp: "test",
-		URL:      server.URL,
-	}
-	apih, err := NewAPI(ac)
-	if err != nil {
-		t.Errorf("Expected no error, got '%v'", err)
-	}
-
-	t.Log("invalid config [nil]")
-	{
-		expectedError := errors.New("Invalid check bundle config [nil]")
-		_, err = apih.UpdateCheckBundle(nil)
-		if err == nil {
-			t.Fatal("Expected an error")
-		}
-		if err.Error() != expectedError.Error() {
-			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
-		}
-	}
-
-	t.Log("invalid config [CID /invalid]")
-	{
-		expectedError := errors.New("Invalid check bundle CID [/invalid]")
-		x := &CheckBundle{CID: "/invalid"}
-		_, err = apih.UpdateCheckBundle(x)
-		if err == nil {
-			t.Fatal("Expected an error")
-		}
-		if err.Error() != expectedError.Error() {
-			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
-		}
-	}
-
-	t.Log("valid config")
-	{
-		bundle, err := apih.UpdateCheckBundle(&testCheckBundle)
-		if err != nil {
-			t.Fatalf("Expected no error, got '%v'", err)
-		}
-
-		actualType := reflect.TypeOf(bundle)
-		expectedType := "*api.CheckBundle"
-		if actualType.String() != expectedType {
-			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
-		}
-	}
-}
-
-func TestCreateCheckBundle(t *testing.T) {
-	server := testCheckBundleServer()
-	defer server.Close()
-
-	ac := &Config{
-		TokenKey: "abc123",
-		TokenApp: "test",
-		URL:      server.URL,
-	}
-	apih, err := NewAPI(ac)
-	if err != nil {
-		t.Errorf("Expected no error, got '%v'", err)
-	}
-
-	t.Log("invalid config [nil]")
-	{
-		expectedError := errors.New("Invalid check bundle config [nil]")
-		_, err = apih.CreateCheckBundle(nil)
-		if err == nil {
-			t.Fatal("Expected an error")
-		}
-		if err.Error() != expectedError.Error() {
-			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
-		}
-	}
-
-	t.Log("valid config")
-	{
-		bundle, err := apih.CreateCheckBundle(&testCheckBundle)
-		if err != nil {
-			t.Fatalf("Expected no error, got '%v'", err)
-		}
-
-		actualType := reflect.TypeOf(bundle)
-		expectedType := "*api.CheckBundle"
-		if actualType.String() != expectedType {
-			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
-		}
-	}
-}
-
-func TestDeleteCheckBundle(t *testing.T) {
-	server := testCheckBundleServer()
-	defer server.Close()
-
-	ac := &Config{
-		TokenKey: "abc123",
-		TokenApp: "test",
-		URL:      server.URL,
-	}
-	apih, err := NewAPI(ac)
-	if err != nil {
-		t.Errorf("Expected no error, got '%v'", err)
-	}
-
-	t.Log("invalid config [nil]")
-	{
-		expectedError := errors.New("Invalid check bundle config [nil]")
-		_, err := apih.DeleteCheckBundle(nil)
-		if err == nil {
-			t.Fatalf("Expected error")
-		}
-		if err.Error() != expectedError.Error() {
-			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
-		}
-	}
-
-	t.Log("invalid config [CID /invalid]")
-	{
-		cb := &CheckBundle{CID: "/invalid"}
-		expectedError := errors.New("Invalid check bundle CID [/invalid]")
-		_, err := apih.DeleteCheckBundle(cb)
-		if err == nil {
-			t.Fatalf("Expected error")
-		}
-		if err.Error() != expectedError.Error() {
-			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
-		}
-	}
-
-	t.Log("valid config")
-	{
-		success, err := apih.DeleteCheckBundle(&testCheckBundle)
-		if err != nil {
-			t.Fatalf("Expected no error, got '%v'", err)
-		}
-
-		if !success {
-			t.Fatalf("Expected success to be true")
-		}
-	}
-}
-
-func TestDeleteCheckBundleByCID(t *testing.T) {
-	server := testCheckBundleServer()
+func TestFetchRuleSet(t *testing.T) {
+	server := testRuleSetServer()
 	defer server.Close()
 
 	ac := &Config{
@@ -364,8 +159,8 @@ func TestDeleteCheckBundleByCID(t *testing.T) {
 
 	t.Log("invalid CID [nil]")
 	{
-		expectedError := errors.New("Invalid check bundle CID [none]")
-		_, err := apih.DeleteCheckBundleByCID(nil)
+		expectedError := errors.New("Invalid rule set CID [none]")
+		_, err := apih.FetchRuleSet(nil)
 		if err == nil {
 			t.Fatalf("Expected error")
 		}
@@ -377,8 +172,8 @@ func TestDeleteCheckBundleByCID(t *testing.T) {
 	t.Log("invalid CID [\"\"]")
 	{
 		cid := ""
-		expectedError := errors.New("Invalid check bundle CID [none]")
-		_, err := apih.DeleteCheckBundleByCID(CIDType(&cid))
+		expectedError := errors.New("Invalid rule set CID [none]")
+		_, err := apih.FetchRuleSet(CIDType(&cid))
 		if err == nil {
 			t.Fatalf("Expected error")
 		}
@@ -390,8 +185,8 @@ func TestDeleteCheckBundleByCID(t *testing.T) {
 	t.Log("invalid CID [/invalid]")
 	{
 		cid := "/invalid"
-		expectedError := errors.New("Invalid check bundle CID [/invalid]")
-		_, err := apih.DeleteCheckBundleByCID(CIDType(&cid))
+		expectedError := errors.New("Invalid rule set CID [/invalid]")
+		_, err := apih.FetchRuleSet(CIDType(&cid))
 		if err == nil {
 			t.Fatalf("Expected error")
 		}
@@ -402,20 +197,26 @@ func TestDeleteCheckBundleByCID(t *testing.T) {
 
 	t.Log("valid CID")
 	{
-		cid := CIDType(&testCheckBundle.CID)
-		success, err := apih.DeleteCheckBundleByCID(cid)
+		cid := "/rule_set/1234_tt_firstbyte"
+		ruleset, err := apih.FetchRuleSet(CIDType(&cid))
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
 
-		if !success {
-			t.Fatalf("Expected success to be true")
+		actualType := reflect.TypeOf(ruleset)
+		expectedType := "*api.RuleSet"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
+
+		if ruleset.CID != testRuleSet.CID {
+			t.Fatalf("CIDs do not match: %+v != %+v\n", ruleset, testRuleSet)
 		}
 	}
 }
 
-func TestSearchCheckBundles(t *testing.T) {
-	server := testCheckBundleServer()
+func TestFetchRuleSets(t *testing.T) {
+	server := testRuleSetServer()
 	defer server.Close()
 
 	ac := &Config{
@@ -427,16 +228,260 @@ func TestSearchCheckBundles(t *testing.T) {
 	if err != nil {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
+
+	rulesets, err := apih.FetchRuleSets()
+	if err != nil {
+		t.Fatalf("Expected no error, got '%v'", err)
+	}
+
+	actualType := reflect.TypeOf(rulesets)
+	expectedType := "*[]api.RuleSet"
+	if actualType.String() != expectedType {
+		t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+	}
+}
+
+func TestUpdateRuleSet(t *testing.T) {
+	server := testRuleSetServer()
+	defer server.Close()
+
+	var apih *API
+
+	ac := &Config{
+		TokenKey: "abc123",
+		TokenApp: "test",
+		URL:      server.URL,
+	}
+	apih, err := NewAPI(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	t.Log("invalid config [nil]")
+	{
+		expectedError := errors.New("Invalid rule set config [nil]")
+		_, err := apih.UpdateRuleSet(nil)
+		if err == nil {
+			t.Fatalf("Expected error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("invalid config [CID /invalid]")
+	{
+		expectedError := errors.New("Invalid rule set CID [/invalid]")
+		x := &RuleSet{CID: "/invalid"}
+		_, err := apih.UpdateRuleSet(x)
+		if err == nil {
+			t.Fatalf("Expected error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("valid config")
+	{
+		ruleset, err := apih.UpdateRuleSet(&testRuleSet)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(ruleset)
+		expectedType := "*api.RuleSet"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
+	}
+}
+
+func TestCreateRuleSet(t *testing.T) {
+	server := testRuleSetServer()
+	defer server.Close()
+
+	var apih *API
+
+	ac := &Config{
+		TokenKey: "abc123",
+		TokenApp: "test",
+		URL:      server.URL,
+	}
+	apih, err := NewAPI(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	t.Log("invalid config [nil]")
+	{
+		expectedError := errors.New("Invalid rule set config [nil]")
+		_, err := apih.CreateRuleSet(nil)
+		if err == nil {
+			t.Fatalf("Expected error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("valid config")
+	{
+		ruleset, err := apih.CreateRuleSet(&testRuleSet)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(ruleset)
+		expectedType := "*api.RuleSet"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
+	}
+}
+
+func TestDeleteRuleSet(t *testing.T) {
+	server := testRuleSetServer()
+	defer server.Close()
+
+	var apih *API
+
+	ac := &Config{
+		TokenKey: "abc123",
+		TokenApp: "test",
+		URL:      server.URL,
+	}
+	apih, err := NewAPI(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	t.Log("invalid config [nil]")
+	{
+		expectedError := errors.New("Invalid rule set config [nil]")
+		_, err := apih.DeleteRuleSet(nil)
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("invalid config [CID /invalid]")
+	{
+		expectedError := errors.New("Invalid rule set CID [/invalid]")
+		x := &RuleSet{CID: "/invalid"}
+		_, err := apih.DeleteRuleSet(x)
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("valid config")
+	{
+		_, err := apih.DeleteRuleSet(&testRuleSet)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+	}
+}
+
+func TestDeleteRuleSetByCID(t *testing.T) {
+	server := testRuleSetServer()
+	defer server.Close()
+
+	var apih *API
+
+	ac := &Config{
+		TokenKey: "abc123",
+		TokenApp: "test",
+		URL:      server.URL,
+	}
+	apih, err := NewAPI(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	t.Log("invalid config [nil]")
+	{
+		expectedError := errors.New("Invalid rule set CID [none]")
+		_, err := apih.DeleteRuleSetByCID(nil)
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("invalid CID [\"\"]")
+	{
+		expectedError := errors.New("Invalid rule set CID [none]")
+		cid := ""
+		_, err := apih.DeleteRuleSetByCID(CIDType(&cid))
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("invalid CID [/invalid]")
+	{
+		expectedError := errors.New("Invalid rule set CID [/invalid]")
+		cid := "/invalid"
+		_, err := apih.DeleteRuleSetByCID(CIDType(&cid))
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("valid CID")
+	{
+		cid := "/rule_set/1234_tt_firstbyte"
+		_, err := apih.DeleteRuleSetByCID(CIDType(&cid))
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+	}
+}
+
+func TestSearchRuleSets(t *testing.T) {
+	server := testRuleSetServer()
+	defer server.Close()
+
+	var apih *API
+
+	ac := &Config{
+		TokenKey: "abc123",
+		TokenApp: "test",
+		URL:      server.URL,
+	}
+	apih, err := NewAPI(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	search := SearchQueryType("request`latency_ms")
+	filter := SearchFilterType(map[string][]string{"f_tags_has": []string{"service:web"}})
 
 	t.Log("no search, no filter")
 	{
-		bundles, err := apih.SearchCheckBundles(nil, nil)
+		rulesets, err := apih.SearchRuleSets(nil, nil)
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
 
-		actualType := reflect.TypeOf(bundles)
-		expectedType := "*[]api.CheckBundle"
+		actualType := reflect.TypeOf(rulesets)
+		expectedType := "*[]api.RuleSet"
 		if actualType.String() != expectedType {
 			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 		}
@@ -444,14 +489,13 @@ func TestSearchCheckBundles(t *testing.T) {
 
 	t.Log("search, no filter")
 	{
-		search := SearchQueryType("test")
-		bundles, err := apih.SearchCheckBundles(&search, nil)
+		rulesets, err := apih.SearchRuleSets(&search, nil)
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
 
-		actualType := reflect.TypeOf(bundles)
-		expectedType := "*[]api.CheckBundle"
+		actualType := reflect.TypeOf(rulesets)
+		expectedType := "*[]api.RuleSet"
 		if actualType.String() != expectedType {
 			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 		}
@@ -459,14 +503,13 @@ func TestSearchCheckBundles(t *testing.T) {
 
 	t.Log("no search, filter")
 	{
-		filter := map[string][]string{"f__tags_has": []string{"cat:tag"}}
-		bundles, err := apih.SearchCheckBundles(nil, &filter)
+		rulesets, err := apih.SearchRuleSets(nil, &filter)
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
 
-		actualType := reflect.TypeOf(bundles)
-		expectedType := "*[]api.CheckBundle"
+		actualType := reflect.TypeOf(rulesets)
+		expectedType := "*[]api.RuleSet"
 		if actualType.String() != expectedType {
 			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 		}
@@ -474,15 +517,13 @@ func TestSearchCheckBundles(t *testing.T) {
 
 	t.Log("search, filter")
 	{
-		search := SearchQueryType("test")
-		filter := map[string][]string{"f__tags_has": []string{"cat:tag"}}
-		bundles, err := apih.SearchCheckBundles(&search, &filter)
+		rulesets, err := apih.SearchRuleSets(&search, &filter)
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
 
-		actualType := reflect.TypeOf(bundles)
-		expectedType := "*[]api.CheckBundle"
+		actualType := reflect.TypeOf(rulesets)
+		expectedType := "*[]api.RuleSet"
 		if actualType.String() != expectedType {
 			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 		}

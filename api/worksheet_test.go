@@ -16,26 +16,42 @@ import (
 )
 
 var (
-	testMetricCluster = MetricCluster{
-		Name: "test",
-		CID:  "/metric_cluster/1234",
-		Queries: []MetricQuery{
-			MetricQuery{
-				Query: "*Req*",
-				Type:  "average",
+	testWorksheet = Worksheet{
+		CID:         "/worksheet/01234567-89ab-cdef-0123-456789abcdef",
+		Description: &[]string{"One graph per active server in our primary data center"}[0],
+		Favorite:    true,
+		Graphs: []WorksheetGraph{
+			WorksheetGraph{GraphCID: "/graph/aaaaaaaa-0000-1111-2222-0123456789ab"},
+			WorksheetGraph{GraphCID: "/graph/bbbbbbbb-3333-4444-5555-0123456789ab"},
+			WorksheetGraph{GraphCID: "/graph/cccccccc-6666-7777-8888-0123456789ab"},
+		},
+		Notes: &[]string{"Currently maintained by Oscar"}[0],
+		SmartQueries: []WorksheetSmartQuery{
+			WorksheetSmartQuery{
+				Name:  "Virtual Machines",
+				Order: []string{"/graph/dddddddd-9999-aaaa-bbbb-0123456789ab"},
+				Query: "virtual",
 			},
 		},
-		Description: "",
-		Tags:        []string{},
+		Tags:  []string{"datacenter:primary"},
+		Title: "Primary Datacenter Server Graphs",
 	}
 )
 
-func testMetricClusterServer() *httptest.Server {
+func testWorksheetServer() *httptest.Server {
 	f := func(w http.ResponseWriter, r *http.Request) {
-		switch r.URL.Path {
-		case "/metric_cluster/1234": // handle GET/PUT/DELETE
+		path := r.URL.Path
+		if path == "/worksheet/01234567-89ab-cdef-0123-456789abcdef" {
 			switch r.Method {
-			case "PUT": // update
+			case "GET":
+				ret, err := json.Marshal(testWorksheet)
+				if err != nil {
+					panic(err)
+				}
+				w.WriteHeader(200)
+				w.Header().Set("Content-Type", "application/json")
+				fmt.Fprintln(w, string(ret))
+			case "PUT":
 				defer r.Body.Close()
 				b, err := ioutil.ReadAll(r.Body)
 				if err != nil {
@@ -44,40 +60,28 @@ func testMetricClusterServer() *httptest.Server {
 				w.WriteHeader(200)
 				w.Header().Set("Content-Type", "application/json")
 				fmt.Fprintln(w, string(b))
-			case "GET": // get by id/cid
-				ret, err := json.Marshal(testMetricCluster)
-				if err != nil {
-					panic(err)
-				}
+			case "DELETE":
 				w.WriteHeader(200)
 				w.Header().Set("Content-Type", "application/json")
-				fmt.Fprintln(w, string(ret))
-			case "DELETE": // delete
-				w.WriteHeader(200)
-				fmt.Fprintln(w, "")
 			default:
-				w.WriteHeader(500)
-				fmt.Fprintln(w, "unsupported")
+				w.WriteHeader(404)
+				fmt.Fprintln(w, fmt.Sprintf("not found: %s %s", r.Method, path))
 			}
-		case "/metric_cluster":
+		} else if path == "/worksheet" {
 			switch r.Method {
 			case "GET":
 				reqURL := r.URL.String()
-				var c []MetricCluster
-				if reqURL == "/metric_cluster?search=web+servers" {
-					c = []MetricCluster{testMetricCluster}
-				} else if reqURL == "/metric_cluster?f_tags_has=dc%3Asfo1" {
-					c = []MetricCluster{testMetricCluster}
-				} else if reqURL == "/metric_cluster?f_tags_has=dc%3Asfo1&search=web+servers" {
-					c = []MetricCluster{testMetricCluster}
-				} else if reqURL == "/metric_cluster" {
-					c = []MetricCluster{testMetricCluster}
-				} else if reqURL == "/metric_cluster?extra=_matching_metrics" {
-					c = []MetricCluster{testMetricCluster}
-				} else if reqURL == "/metric_cluster?extra=_matching_uuid_metrics" {
-					c = []MetricCluster{testMetricCluster}
+				var c []Worksheet
+				if reqURL == "/worksheet?search=web+servers" {
+					c = []Worksheet{testWorksheet}
+				} else if reqURL == "/worksheet?f_favorite=true" {
+					c = []Worksheet{testWorksheet}
+				} else if reqURL == "/worksheet?f_favorite=true&search=web+servers" {
+					c = []Worksheet{testWorksheet}
+				} else if reqURL == "/worksheet" {
+					c = []Worksheet{testWorksheet}
 				} else {
-					c = []MetricCluster{}
+					c = []Worksheet{}
 				}
 				if len(c) > 0 {
 					ret, err := json.Marshal(c)
@@ -91,59 +95,59 @@ func testMetricClusterServer() *httptest.Server {
 					w.WriteHeader(404)
 					fmt.Fprintln(w, fmt.Sprintf("not found: %s %s", r.Method, reqURL))
 				}
-			case "POST": // create
+			case "POST":
 				defer r.Body.Close()
-				b, err := ioutil.ReadAll(r.Body)
+				_, err := ioutil.ReadAll(r.Body)
+				if err != nil {
+					panic(err)
+				}
+				ret, err := json.Marshal(testWorksheet)
 				if err != nil {
 					panic(err)
 				}
 				w.WriteHeader(200)
 				w.Header().Set("Content-Type", "application/json")
-				fmt.Fprintln(w, string(b))
+				fmt.Fprintln(w, string(ret))
 			default:
-				w.WriteHeader(500)
-				fmt.Fprintln(w, "unsupported")
+				w.WriteHeader(404)
+				fmt.Fprintln(w, fmt.Sprintf("not found: %s %s", r.Method, path))
 			}
-		default:
-			w.WriteHeader(500)
-			fmt.Fprintln(w, "unsupported")
+		} else {
+			w.WriteHeader(404)
+			fmt.Fprintln(w, fmt.Sprintf("not found: %s %s", r.Method, path))
 		}
 	}
 
 	return httptest.NewServer(http.HandlerFunc(f))
 }
 
-func TestNewMetricCluster(t *testing.T) {
-	bundle := NewMetricCluster()
+func TestNewWorksheet(t *testing.T) {
+	bundle := NewWorksheet()
 	actualType := reflect.TypeOf(bundle)
-	expectedType := "*api.MetricCluster"
+	expectedType := "*api.Worksheet"
 	if actualType.String() != expectedType {
 		t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 	}
 }
 
-func TestFetchMetricCluster(t *testing.T) {
-	server := testMetricClusterServer()
+func TestFetchWorksheet(t *testing.T) {
+	server := testWorksheetServer()
 	defer server.Close()
-
-	var apih *API
-	var err error
-	var cluster *MetricCluster
 
 	ac := &Config{
 		TokenKey: "abc123",
 		TokenApp: "test",
 		URL:      server.URL,
 	}
-	apih, err = NewAPI(ac)
+	apih, err := NewAPI(ac)
 	if err != nil {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
 	t.Log("invalid CID [nil]")
 	{
-		expectedError := errors.New("Invalid metric cluster CID [none]")
-		_, err = apih.FetchMetricCluster(nil, "")
+		expectedError := errors.New("Invalid worksheet CID [none]")
+		_, err := apih.FetchWorksheet(nil)
 		if err == nil {
 			t.Fatalf("Expected error")
 		}
@@ -155,8 +159,8 @@ func TestFetchMetricCluster(t *testing.T) {
 	t.Log("invalid CID [\"\"]")
 	{
 		cid := ""
-		expectedError := errors.New("Invalid metric cluster CID [none]")
-		_, err = apih.FetchMetricCluster(CIDType(&cid), "")
+		expectedError := errors.New("Invalid worksheet CID [none]")
+		_, err := apih.FetchWorksheet(CIDType(&cid))
 		if err == nil {
 			t.Fatalf("Expected error")
 		}
@@ -168,8 +172,8 @@ func TestFetchMetricCluster(t *testing.T) {
 	t.Log("invalid CID [/invalid]")
 	{
 		cid := "/invalid"
-		expectedError := errors.New("Invalid metric cluster CID [/invalid]")
-		_, err = apih.FetchMetricCluster(CIDType(&cid), "")
+		expectedError := errors.New("Invalid worksheet CID [/invalid]")
+		_, err := apih.FetchWorksheet(CIDType(&cid))
 		if err == nil {
 			t.Fatalf("Expected error")
 		}
@@ -178,51 +182,28 @@ func TestFetchMetricCluster(t *testing.T) {
 		}
 	}
 
-	t.Log("valid CID, extras ''")
+	t.Log("valid CID")
 	{
-		cluster, err = apih.FetchMetricCluster(CIDType(&testMetricCluster.CID), "")
+		cid := "/worksheet/01234567-89ab-cdef-0123-456789abcdef"
+		worksheet, err := apih.FetchWorksheet(CIDType(&cid))
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
 
-		actualType := reflect.TypeOf(cluster)
-		expectedType := "*api.MetricCluster"
+		actualType := reflect.TypeOf(worksheet)
+		expectedType := "*api.Worksheet"
 		if actualType.String() != expectedType {
 			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 		}
 
-		if cluster.CID != testMetricCluster.CID {
-			t.Fatalf("CIDs do not match: %+v != %+v\n", cluster, testMetricCluster)
-		}
-	}
-
-	t.Log("valid CID, extras 'metrics'")
-	{
-		cluster, err = apih.FetchMetricCluster(CIDType(&testMetricCluster.CID), "metrics")
-		if err != nil {
-			t.Fatalf("Expected no error, got '%v'", err)
-		}
-
-		if cluster.CID != testMetricCluster.CID {
-			t.Fatalf("CIDs do not match: %+v != %+v\n", cluster, testMetricCluster)
-		}
-	}
-
-	t.Log("valid CID, extras 'uuids'")
-	{
-		cluster, err = apih.FetchMetricCluster(CIDType(&testMetricCluster.CID), "uuids")
-		if err != nil {
-			t.Fatalf("Expected no error, got '%v'", err)
-		}
-
-		if cluster.CID != testMetricCluster.CID {
-			t.Fatalf("CIDs do not match: %+v != %+v\n", cluster, testMetricCluster)
+		if worksheet.CID != testWorksheet.CID {
+			t.Fatalf("CIDs do not match: %+v != %+v\n", worksheet, testWorksheet)
 		}
 	}
 }
 
-func TestFetchMetricClusters(t *testing.T) {
-	server := testMetricClusterServer()
+func TestFetchWorksheets(t *testing.T) {
+	server := testWorksheetServer()
 	defer server.Close()
 
 	ac := &Config{
@@ -235,149 +216,21 @@ func TestFetchMetricClusters(t *testing.T) {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
-	t.Log("no extras")
-	{
-		clusters, err := apih.FetchMetricClusters("")
-		if err != nil {
-			t.Fatalf("Expected no error, got '%v'", err)
-		}
-
-		actualType := reflect.TypeOf(clusters)
-		expectedType := "*[]api.MetricCluster"
-		if actualType.String() != expectedType {
-			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
-		}
-	}
-
-	t.Log("extras 'metrics'")
-	{
-		clusters, err := apih.FetchMetricClusters("metrics")
-		if err != nil {
-			t.Fatalf("Expected no error, got '%v'", err)
-		}
-
-		actualType := reflect.TypeOf(clusters)
-		expectedType := "*[]api.MetricCluster"
-		if actualType.String() != expectedType {
-			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
-		}
-	}
-
-	t.Log("extras 'uuids'")
-	{
-		clusters, err := apih.FetchMetricClusters("uuids")
-		if err != nil {
-			t.Fatalf("Expected no error, got '%v'", err)
-		}
-
-		actualType := reflect.TypeOf(clusters)
-		expectedType := "*[]api.MetricCluster"
-		if actualType.String() != expectedType {
-			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
-		}
-	}
-}
-
-func TestUpdateMetricCluster(t *testing.T) {
-	server := testMetricClusterServer()
-	defer server.Close()
-
-	ac := &Config{
-		TokenKey: "abc123",
-		TokenApp: "test",
-		URL:      server.URL,
-	}
-	apih, err := NewAPI(ac)
+	worksheets, err := apih.FetchWorksheets()
 	if err != nil {
-		t.Errorf("Expected no error, got '%v'", err)
+		t.Fatalf("Expected no error, got '%v'", err)
 	}
 
-	t.Log("invalid config [nil]")
-	{
-		expectedError := errors.New("Invalid metric cluster config [nil]")
-		_, err := apih.UpdateMetricCluster(nil)
-		if err == nil {
-			t.Fatal("Expected an error")
-		}
-		if err.Error() != expectedError.Error() {
-			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
-		}
+	actualType := reflect.TypeOf(worksheets)
+	expectedType := "*[]api.Worksheet"
+	if actualType.String() != expectedType {
+		t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 	}
 
-	t.Log("invalid config [CID /invalid]")
-	{
-		expectedError := errors.New("Invalid metric cluster CID [/invalid]")
-		x := &MetricCluster{CID: "/invalid"}
-		_, err := apih.UpdateMetricCluster(x)
-		if err == nil {
-			t.Fatal("Expected an error")
-		}
-		if err.Error() != expectedError.Error() {
-			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
-		}
-	}
-
-	t.Log("valid config")
-	{
-		cluster, err := apih.UpdateMetricCluster(&testMetricCluster)
-		if err != nil {
-			t.Fatalf("Expected no error, got '%v'", err)
-		}
-
-		actualType := reflect.TypeOf(cluster)
-		expectedType := "*api.MetricCluster"
-		if actualType.String() != expectedType {
-			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
-		}
-	}
 }
 
-func TestCreateMetricCluster(t *testing.T) {
-	server := testMetricClusterServer()
-	defer server.Close()
-
-	var apih *API
-	var err error
-
-	ac := &Config{
-		TokenKey: "abc123",
-		TokenApp: "test",
-		URL:      server.URL,
-	}
-	apih, err = NewAPI(ac)
-	if err != nil {
-		t.Errorf("Expected no error, got '%v'", err)
-	}
-
-	t.Log("invalid config [nil]")
-	{
-		expectedError := errors.New("Invalid metric cluster config [nil]")
-		_, err := apih.CreateMetricCluster(nil)
-		if err == nil {
-			t.Fatal("Expected an error")
-		}
-		if err.Error() != expectedError.Error() {
-			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
-		}
-	}
-
-	t.Log("valid config")
-	{
-		cluster, err := apih.CreateMetricCluster(&testMetricCluster)
-		if err != nil {
-			t.Fatalf("Expected no error, got '%v'", err)
-		}
-
-		actualType := reflect.TypeOf(cluster)
-		expectedType := "*api.MetricCluster"
-		if actualType.String() != expectedType {
-			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
-		}
-	}
-}
-
-func TestDeleteMetricCluster(t *testing.T) {
-	server := testMetricClusterServer()
+func TestUpdateWorksheet(t *testing.T) {
+	server := testWorksheetServer()
 	defer server.Close()
 
 	var apih *API
@@ -394,8 +247,8 @@ func TestDeleteMetricCluster(t *testing.T) {
 
 	t.Log("invalid config [nil]")
 	{
-		expectedError := errors.New("Invalid metric cluster config [nil]")
-		_, err := apih.DeleteMetricCluster(nil)
+		expectedError := errors.New("Invalid worksheet config [nil]")
+		_, err := apih.UpdateWorksheet(nil)
 		if err == nil {
 			t.Fatal("Expected an error")
 		}
@@ -406,9 +259,9 @@ func TestDeleteMetricCluster(t *testing.T) {
 
 	t.Log("invalid config [CID /invalid]")
 	{
-		expectedError := errors.New("Invalid metric cluster CID [/invalid]")
-		x := &MetricCluster{CID: "/invalid"}
-		_, err := apih.DeleteMetricCluster(x)
+		expectedError := errors.New("Invalid worksheet CID [/invalid]")
+		x := &Worksheet{CID: "/invalid"}
+		_, err := apih.UpdateWorksheet(x)
 		if err == nil {
 			t.Fatal("Expected an error")
 		}
@@ -419,15 +272,116 @@ func TestDeleteMetricCluster(t *testing.T) {
 
 	t.Log("valid config")
 	{
-		_, err := apih.DeleteMetricCluster(&testMetricCluster)
+		worksheet, err := apih.UpdateWorksheet(&testWorksheet)
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(worksheet)
+		expectedType := "*api.Worksheet"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
+	}
+
+}
+
+func TestCreateWorksheet(t *testing.T) {
+	server := testWorksheetServer()
+	defer server.Close()
+
+	var apih *API
+
+	ac := &Config{
+		TokenKey: "abc123",
+		TokenApp: "test",
+		URL:      server.URL,
+	}
+	apih, err := NewAPI(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	t.Log("invalid config [nil]")
+	{
+		expectedError := errors.New("Invalid worksheet config [nil]")
+		_, err := apih.CreateWorksheet(nil)
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("valid config")
+	{
+		worksheet, err := apih.CreateWorksheet(&testWorksheet)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(worksheet)
+		expectedType := "*api.Worksheet"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 		}
 	}
 }
 
-func TestDeleteMetricClusterByCID(t *testing.T) {
-	server := testMetricClusterServer()
+func TestDeleteWorksheet(t *testing.T) {
+	server := testWorksheetServer()
+	defer server.Close()
+
+	var apih *API
+
+	ac := &Config{
+		TokenKey: "abc123",
+		TokenApp: "test",
+		URL:      server.URL,
+	}
+	apih, err := NewAPI(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	t.Log("invalid config [nil]")
+	{
+		expectedError := errors.New("Invalid worksheet config [nil]")
+		_, err := apih.DeleteWorksheet(nil)
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("invalid config [CID /invalid]")
+	{
+		expectedError := errors.New("Invalid worksheet CID [/invalid]")
+		x := &Worksheet{CID: "/invalid"}
+		_, err := apih.DeleteWorksheet(x)
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("valid config")
+	{
+		_, err := apih.DeleteWorksheet(&testWorksheet)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+	}
+
+}
+
+func TestDeleteWorksheetByCID(t *testing.T) {
+	server := testWorksheetServer()
 	defer server.Close()
 
 	var apih *API
@@ -444,8 +398,8 @@ func TestDeleteMetricClusterByCID(t *testing.T) {
 
 	t.Log("invalid CID [nil]")
 	{
-		expectedError := errors.New("Invalid metric cluster CID [none]")
-		_, err := apih.DeleteMetricClusterByCID(nil)
+		expectedError := errors.New("Invalid worksheet CID [none]")
+		_, err := apih.DeleteWorksheetByCID(nil)
 		if err == nil {
 			t.Fatal("Expected an error")
 		}
@@ -457,8 +411,8 @@ func TestDeleteMetricClusterByCID(t *testing.T) {
 	t.Log("invalid CID [\"\"]")
 	{
 		cid := ""
-		expectedError := errors.New("Invalid metric cluster CID [none]")
-		_, err := apih.DeleteMetricClusterByCID(CIDType(&cid))
+		expectedError := errors.New("Invalid worksheet CID [none]")
+		_, err := apih.DeleteWorksheetByCID(CIDType(&cid))
 		if err == nil {
 			t.Fatal("Expected an error")
 		}
@@ -470,8 +424,8 @@ func TestDeleteMetricClusterByCID(t *testing.T) {
 	t.Log("invalid CID [/invalid]")
 	{
 		cid := "/invalid"
-		expectedError := errors.New("Invalid metric cluster CID [/invalid]")
-		_, err := apih.DeleteMetricClusterByCID(CIDType(&cid))
+		expectedError := errors.New("Invalid worksheet CID [/invalid]")
+		_, err := apih.DeleteWorksheetByCID(CIDType(&cid))
 		if err == nil {
 			t.Fatal("Expected an error")
 		}
@@ -482,16 +436,16 @@ func TestDeleteMetricClusterByCID(t *testing.T) {
 
 	t.Log("valid CID")
 	{
-		cid := "/metric_cluster/1234"
-		_, err := apih.DeleteMetricClusterByCID(CIDType(&cid))
+		cid := "/worksheet/01234567-89ab-cdef-0123-456789abcdef"
+		_, err := apih.DeleteWorksheetByCID(CIDType(&cid))
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
 	}
 }
 
-func TestSearchMetricClusters(t *testing.T) {
-	server := testMetricClusterServer()
+func TestSearchWorksheets(t *testing.T) {
+	server := testWorksheetServer()
 	defer server.Close()
 
 	var apih *API
@@ -507,17 +461,17 @@ func TestSearchMetricClusters(t *testing.T) {
 	}
 
 	search := SearchQueryType("web servers")
-	filter := SearchFilterType(map[string][]string{"f_tags_has": []string{"dc:sfo1"}})
+	filter := SearchFilterType(map[string][]string{"f_favorite": []string{"true"}})
 
 	t.Log("no search, no filter")
 	{
-		clusters, err := apih.SearchMetricClusters(nil, nil)
+		worksheets, err := apih.SearchWorksheets(nil, nil)
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
 
-		actualType := reflect.TypeOf(clusters)
-		expectedType := "*[]api.MetricCluster"
+		actualType := reflect.TypeOf(worksheets)
+		expectedType := "*[]api.Worksheet"
 		if actualType.String() != expectedType {
 			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 		}
@@ -525,13 +479,13 @@ func TestSearchMetricClusters(t *testing.T) {
 
 	t.Log("search, no filter")
 	{
-		clusters, err := apih.SearchMetricClusters(&search, nil)
+		worksheets, err := apih.SearchWorksheets(&search, nil)
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
 
-		actualType := reflect.TypeOf(clusters)
-		expectedType := "*[]api.MetricCluster"
+		actualType := reflect.TypeOf(worksheets)
+		expectedType := "*[]api.Worksheet"
 		if actualType.String() != expectedType {
 			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 		}
@@ -539,13 +493,13 @@ func TestSearchMetricClusters(t *testing.T) {
 
 	t.Log("no search, filter")
 	{
-		clusters, err := apih.SearchMetricClusters(nil, &filter)
+		worksheets, err := apih.SearchWorksheets(nil, &filter)
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
 
-		actualType := reflect.TypeOf(clusters)
-		expectedType := "*[]api.MetricCluster"
+		actualType := reflect.TypeOf(worksheets)
+		expectedType := "*[]api.Worksheet"
 		if actualType.String() != expectedType {
 			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 		}
@@ -553,13 +507,13 @@ func TestSearchMetricClusters(t *testing.T) {
 
 	t.Log("search, filter")
 	{
-		clusters, err := apih.SearchMetricClusters(&search, &filter)
+		worksheets, err := apih.SearchWorksheets(&search, &filter)
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
 
-		actualType := reflect.TypeOf(clusters)
-		expectedType := "*[]api.MetricCluster"
+		actualType := reflect.TypeOf(worksheets)
+		expectedType := "*[]api.Worksheet"
 		if actualType.String() != expectedType {
 			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 		}

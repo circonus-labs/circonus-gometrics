@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/circonus-labs/circonus-gometrics/api"
+	"github.com/circonus-labs/circonus-gometrics/api/config"
 )
 
 var (
@@ -29,9 +30,7 @@ var (
 		BrokerCID:      "/broker/1234",
 		CheckBundleCID: "/check_bundle/1234",
 		CheckUUID:      "abc123-a1b2-c3d4-e5f6-123abc",
-		Details: api.CheckDetails{
-			SubmissionURL: "http://127.0.0.1:43191/module/httptrap/abc123-a1b2-c3d4-e5f6-123abc/blah",
-		},
+		Details:        map[config.Key]string{config.SubmissionURL: "http://127.0.0.1:43191/module/httptrap/abc123-a1b2-c3d4-e5f6-123abc/blah"},
 	}
 
 	testCheckBundle = api.CheckBundle{
@@ -46,9 +45,9 @@ var (
 		},
 		Brokers:     []string{"/broker/1234"},
 		DisplayName: "test check",
-		Config: api.CheckBundleConfig{
-			SubmissionURL: "http://127.0.0.1:43191/module/httptrap/abc123-a1b2-c3d4-e5f6-123abc/blah",
-			ReverseSecret: "blah",
+		Config: map[config.Key]string{
+			config.SubmissionURL:    "https://127.0.0.1:43191/module/httptrap/abc123-a1b2-c3d4-e5f6-123abc/blah",
+			config.ReverseSecretKey: "blah",
 		},
 		Metrics: []api.CheckBundleMetric{
 			api.CheckBundleMetric{
@@ -58,7 +57,7 @@ var (
 			},
 		},
 		MetricLimit: 0,
-		Notes:       "",
+		Notes:       nil,
 		Period:      60,
 		Status:      "active",
 		Target:      "127.0.0.1",
@@ -74,11 +73,11 @@ var (
 		Details: []api.BrokerDetail{
 			api.BrokerDetail{
 				CN:           "testbroker.example.com",
-				ExternalHost: "",
+				ExternalHost: nil,
 				ExternalPort: 43191,
-				IP:           "127.0.0.1",
+				IP:           &[]string{"127.0.0.1"}[0],
 				Modules:      []string{"httptrap"},
-				Port:         43191,
+				Port:         &[]uint16{43191}[0],
 				Status:       "active",
 			},
 		},
@@ -140,13 +139,17 @@ func testCheckServer() *httptest.Server {
 				}
 			case "POST": // create
 				defer r.Body.Close()
-				b, err := ioutil.ReadAll(r.Body)
+				_, err := ioutil.ReadAll(r.Body)
+				if err != nil {
+					panic(err)
+				}
+				ret, err := json.Marshal(testCheckBundle)
 				if err != nil {
 					panic(err)
 				}
 				w.WriteHeader(200)
 				w.Header().Set("Content-Type", "application/json")
-				fmt.Fprintln(w, string(b))
+				fmt.Fprintln(w, string(ret))
 			default:
 				w.WriteHeader(405)
 				fmt.Fprintf(w, "method not allowed %s", r.Method)
@@ -314,8 +317,8 @@ func TestCreateNewCheck(t *testing.T) {
 		t.Fatalf("Error converting port to numeric %v", err)
 	}
 
-	testBroker.Details[0].ExternalHost = hostParts[0]
-	testBroker.Details[0].ExternalPort = hostPort
+	testBroker.Details[0].ExternalHost = &hostParts[0]
+	testBroker.Details[0].ExternalPort = uint16(hostPort)
 
 	cm := &CheckManager{
 		enabled:               true,
@@ -360,8 +363,8 @@ func TestInitializeTrapURL(t *testing.T) {
 		t.Fatalf("Error converting port to numeric %v", err)
 	}
 
-	testBroker.Details[0].ExternalHost = hostParts[0]
-	testBroker.Details[0].ExternalPort = hostPort
+	testBroker.Details[0].ExternalHost = &hostParts[0]
+	testBroker.Details[0].ExternalPort = uint16(hostPort)
 
 	cm := &CheckManager{
 		enabled: false,

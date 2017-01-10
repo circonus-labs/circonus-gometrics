@@ -22,69 +22,69 @@ import (
 var (
 	invalidBroker = api.Broker{
 		CID:       "/broker/1",
-		Longitude: "",
-		Latitude:  "",
+		Longitude: nil,
+		Latitude:  nil,
 		Name:      "test broker",
 		Tags:      []string{},
 		Type:      "foo",
 		Details: []api.BrokerDetail{
 			api.BrokerDetail{
 				CN:           "testbroker.example.com",
-				ExternalHost: "testbroker.example.com",
+				ExternalHost: &[]string{"testbroker.example.com"}[0],
 				ExternalPort: 43191,
-				IP:           "127.0.0.1",
+				IP:           &[]string{"127.0.0.1"}[0],
 				MinVer:       0,
 				Modules:      []string{"a", "b", "c"},
-				Port:         43191,
-				Skew:         "",
+				Port:         &[]uint16{43191}[0],
+				Skew:         nil,
 				Status:       "unprovisioned",
-				Version:      1,
+				Version:      nil,
 			},
 		},
 	}
 
 	validBroker = api.Broker{
 		CID:       "/broker/2",
-		Longitude: "",
-		Latitude:  "",
+		Longitude: nil,
+		Latitude:  nil,
 		Name:      "test broker",
 		Tags:      []string{},
 		Type:      "enterprise",
 		Details: []api.BrokerDetail{
 			api.BrokerDetail{
 				CN:           "testbroker.example.com",
-				ExternalHost: "",
+				ExternalHost: nil,
 				ExternalPort: 43191,
-				IP:           "127.0.0.1",
+				IP:           &[]string{"127.0.0.1"}[0],
 				MinVer:       0,
 				Modules:      []string{"httptrap"},
-				Port:         43191,
-				Skew:         "",
+				Port:         &[]uint16{43191}[0],
+				Skew:         nil,
 				Status:       "active",
-				Version:      1,
+				Version:      nil,
 			},
 		},
 	}
 
 	validBrokerNonEnterprise = api.Broker{
 		CID:       "/broker/3",
-		Longitude: "",
-		Latitude:  "",
+		Longitude: nil,
+		Latitude:  nil,
 		Name:      "test broker",
 		Tags:      []string{},
 		Type:      "foo",
 		Details: []api.BrokerDetail{
 			api.BrokerDetail{
 				CN:           "testbroker.example.com",
-				ExternalHost: "",
+				ExternalHost: nil,
 				ExternalPort: 43191,
-				IP:           "127.0.0.1",
+				IP:           &[]string{"127.0.0.1"}[0],
 				MinVer:       0,
 				Modules:      []string{"httptrap"},
-				Port:         43191,
-				Skew:         "",
+				Port:         &[]uint16{43191}[0],
+				Skew:         nil,
 				Status:       "active",
-				Version:      1,
+				Version:      nil,
 			},
 		},
 	}
@@ -125,9 +125,9 @@ func testBrokerServer() *httptest.Server {
 			switch r.Method {
 			case "GET": // search or filter
 				var c []api.Broker
-				if strings.Contains(r.URL.String(), "f__tags_has=no:broker") {
+				if strings.Contains(r.URL.String(), "f__tags_has=no%3Abroker") {
 					c = []api.Broker{}
-				} else if strings.Contains(r.URL.String(), "f__tags_has=multi:broker") {
+				} else if strings.Contains(r.URL.String(), "f__tags_has=multi%3Abroker") {
 					c = []api.Broker{invalidBroker, invalidBroker}
 				} else {
 					c = []api.Broker{validBroker, validBrokerNonEnterprise}
@@ -232,15 +232,15 @@ func TestSelectBroker(t *testing.T) {
 		t.Fatalf("Error converting port to numeric %v", err)
 	}
 
-	validBroker.Details[0].ExternalHost = hostParts[0]
-	validBroker.Details[0].ExternalPort = hostPort
-	validBroker.Details[0].IP = hostParts[0]
-	validBroker.Details[0].Port = hostPort
+	validBroker.Details[0].ExternalHost = &hostParts[0]
+	validBroker.Details[0].ExternalPort = uint16(hostPort)
+	validBroker.Details[0].IP = &hostParts[0]
+	validBroker.Details[0].Port = &[]uint16{uint16(hostPort)}[0]
 
-	validBrokerNonEnterprise.Details[0].ExternalHost = hostParts[0]
-	validBrokerNonEnterprise.Details[0].ExternalPort = hostPort
-	validBrokerNonEnterprise.Details[0].IP = hostParts[0]
-	validBrokerNonEnterprise.Details[0].Port = hostPort
+	validBrokerNonEnterprise.Details[0].ExternalHost = &hostParts[0]
+	validBrokerNonEnterprise.Details[0].ExternalPort = uint16(hostPort)
+	validBrokerNonEnterprise.Details[0].IP = &hostParts[0]
+	validBrokerNonEnterprise.Details[0].Port = &[]uint16{uint16(hostPort)}[0]
 
 	t.Log("default broker selection")
 	{
@@ -253,7 +253,7 @@ func TestSelectBroker(t *testing.T) {
 			TokenKey: "1234",
 			URL:      server.URL,
 		}
-		apih, err := api.NewAPI(ac)
+		apih, err := api.New(ac)
 		if err != nil {
 			t.Errorf("Expected no error, got '%v'", err)
 		}
@@ -277,7 +277,7 @@ func TestSelectBroker(t *testing.T) {
 			TokenKey: "1234",
 			URL:      server.URL,
 		}
-		apih, err := api.NewAPI(ac)
+		apih, err := api.New(ac)
 		if err != nil {
 			t.Errorf("Expected no error, got '%v'", err)
 		}
@@ -338,11 +338,11 @@ func TestIsValidBroker(t *testing.T) {
 		Details: []api.BrokerDetail{
 			api.BrokerDetail{
 				CN:           "testbroker.example.com",
-				ExternalHost: "",
+				ExternalHost: nil,
 				ExternalPort: 43191,
-				IP:           "127.0.0.1",
+				IP:           &[]string{"127.0.0.1"}[0],
 				Modules:      []string{"httptrap"},
-				Port:         43191,
+				Port:         &[]uint16{43191}[0],
 				Status:       "unprovisioned",
 			},
 		},
@@ -386,7 +386,7 @@ func TestIsValidBroker(t *testing.T) {
 	t.Log("unable to connect, default port")
 	{
 		broker.Details[0].ExternalPort = 0
-		broker.Details[0].Port = 0
+		broker.Details[0].Port = &[]uint16{0}[0]
 		broker.Details[0].Modules = []string{"httptrap"}
 		broker.Details[0].Status = "active"
 		if cm.isValidBroker(&broker) {
@@ -410,10 +410,10 @@ func TestGetBroker(t *testing.T) {
 		t.Fatalf("Error converting port to numeric %v", err)
 	}
 
-	validBroker.Details[0].ExternalHost = hostParts[0]
-	validBroker.Details[0].ExternalPort = hostPort
-	validBroker.Details[0].IP = hostParts[0]
-	validBroker.Details[0].Port = hostPort
+	validBroker.Details[0].ExternalHost = &hostParts[0]
+	validBroker.Details[0].ExternalPort = uint16(hostPort)
+	validBroker.Details[0].IP = &hostParts[0]
+	validBroker.Details[0].Port = &[]uint16{uint16(hostPort)}[0]
 
 	t.Log("invalid custom broker")
 	{

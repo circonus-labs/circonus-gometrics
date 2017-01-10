@@ -13,40 +13,71 @@ import (
 	"net/http/httptest"
 	"reflect"
 	"testing"
-
-	"github.com/circonus-labs/circonus-gometrics/api/config"
 )
 
 var (
-	testCheckBundle = CheckBundle{
-		CheckUUIDs:         []string{"abc123-a1b2-c3d4-e5f6-123abc"},
-		Checks:             []string{"/check/1234"},
-		CID:                "/check_bundle/1234",
-		Created:            0,
-		LastModified:       0,
-		LastModifedBy:      "",
-		ReverseConnectURLs: []string{""},
-		Config:             map[config.Key]string{},
-		Brokers:            []string{"/broker/1234"},
-		DisplayName:        "test check",
-		Metrics:            []CheckBundleMetric{},
-		MetricLimit:        0,
-		Notes:              nil,
-		Period:             60,
-		Status:             "active",
-		Target:             "127.0.0.1",
-		Timeout:            10,
-		Type:               "httptrap",
-		Tags:               []string{},
+	testContactGroup = ContactGroup{
+		CID:               "/contact_group/1234",
+		LastModifiedBy:    "/user/1234",
+		LastModified:      1483041636,
+		AggregationWindow: 300,
+		Contacts: ContactGroupContacts{
+			External: []ContactGroupContactsExternal{
+				ContactGroupContactsExternal{
+					Info:   "12125550100",
+					Method: "sms",
+				},
+				ContactGroupContactsExternal{
+					Info:   "bert@example.com",
+					Method: "xmpp",
+				},
+				ContactGroupContactsExternal{
+					Info:   "ernie@example.com",
+					Method: "email",
+				},
+			},
+			Users: []ContactGroupContactsUser{
+				ContactGroupContactsUser{
+					Info:    "snuffy@example.com",
+					Method:  "email",
+					UserCID: "/user/1234",
+				},
+				ContactGroupContactsUser{
+					Info:    "12125550199",
+					Method:  "sms",
+					UserCID: "/user/4567",
+				},
+			},
+		},
+		Escalations: []*ContactGroupEscalation{
+			&ContactGroupEscalation{
+				After:           900,
+				ContactGroupCID: "/contact_group/4567",
+			},
+			nil,
+			nil,
+			nil,
+			nil,
+		},
+		Name:      "FooBar",
+		Reminders: []uint{10, 0, 0, 15, 30},
 	}
 )
 
-func testCheckBundleServer() *httptest.Server {
+func testContactGroupServer() *httptest.Server {
 	f := func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
-		if path == "/check_bundle/1234" {
+		if path == "/contact_group/1234" {
 			switch r.Method {
-			case "PUT": // update
+			case "GET":
+				ret, err := json.Marshal(testContactGroup)
+				if err != nil {
+					panic(err)
+				}
+				w.WriteHeader(200)
+				w.Header().Set("Content-Type", "application/json")
+				fmt.Fprintln(w, string(ret))
+			case "PUT":
 				defer r.Body.Close()
 				b, err := ioutil.ReadAll(r.Body)
 				if err != nil {
@@ -55,36 +86,28 @@ func testCheckBundleServer() *httptest.Server {
 				w.WriteHeader(200)
 				w.Header().Set("Content-Type", "application/json")
 				fmt.Fprintln(w, string(b))
-			case "GET": // get by id/cid
-				ret, err := json.Marshal(testCheckBundle)
-				if err != nil {
-					panic(err)
-				}
+			case "DELETE":
 				w.WriteHeader(200)
 				w.Header().Set("Content-Type", "application/json")
-				fmt.Fprintln(w, string(ret))
-			case "DELETE": // delete
-				w.WriteHeader(200)
-				fmt.Fprintln(w, "")
 			default:
 				w.WriteHeader(404)
 				fmt.Fprintln(w, fmt.Sprintf("not found: %s %s", r.Method, path))
 			}
-		} else if path == "/check_bundle" {
+		} else if path == "/contact_group" {
 			switch r.Method {
 			case "GET":
 				reqURL := r.URL.String()
-				var c []CheckBundle
-				if reqURL == "/check_bundle?search=test" {
-					c = []CheckBundle{testCheckBundle}
-				} else if reqURL == "/check_bundle?f__tags_has=cat%3Atag" {
-					c = []CheckBundle{testCheckBundle}
-				} else if reqURL == "/check_bundle?f__tags_has=cat%3Atag&search=test" {
-					c = []CheckBundle{testCheckBundle}
-				} else if reqURL == "/check_bundle" {
-					c = []CheckBundle{testCheckBundle}
+				var c []ContactGroup
+				if reqURL == "/contact_group?search=%28name%3D%22ops%22%29" {
+					c = []ContactGroup{testContactGroup}
+				} else if reqURL == "/contact_group?f__last_modified_gt=1483639916" {
+					c = []ContactGroup{testContactGroup}
+				} else if reqURL == "/contact_group?f__last_modified_gt=1483639916&search=%28name%3D%22ops%22%29" {
+					c = []ContactGroup{testContactGroup}
+				} else if reqURL == "/contact_group" {
+					c = []ContactGroup{testContactGroup}
 				} else {
-					c = []CheckBundle{}
+					c = []ContactGroup{}
 				}
 				if len(c) > 0 {
 					ret, err := json.Marshal(c)
@@ -98,15 +121,19 @@ func testCheckBundleServer() *httptest.Server {
 					w.WriteHeader(404)
 					fmt.Fprintln(w, fmt.Sprintf("not found: %s %s", r.Method, reqURL))
 				}
-			case "POST": // create
+			case "POST":
 				defer r.Body.Close()
-				b, err := ioutil.ReadAll(r.Body)
+				_, err := ioutil.ReadAll(r.Body)
+				if err != nil {
+					panic(err)
+				}
+				ret, err := json.Marshal(testContactGroup)
 				if err != nil {
 					panic(err)
 				}
 				w.WriteHeader(200)
 				w.Header().Set("Content-Type", "application/json")
-				fmt.Fprintln(w, string(b))
+				fmt.Fprintln(w, string(ret))
 			default:
 				w.WriteHeader(404)
 				fmt.Fprintln(w, fmt.Sprintf("not found: %s %s", r.Method, path))
@@ -116,240 +143,20 @@ func testCheckBundleServer() *httptest.Server {
 			fmt.Fprintln(w, fmt.Sprintf("not found: %s %s", r.Method, path))
 		}
 	}
-
 	return httptest.NewServer(http.HandlerFunc(f))
 }
 
-func TestNewCheckBundle(t *testing.T) {
-	bundle := NewCheckBundle()
+func TestNewContactGroup(t *testing.T) {
+	bundle := NewContactGroup()
 	actualType := reflect.TypeOf(bundle)
-	expectedType := "*api.CheckBundle"
+	expectedType := "*api.ContactGroup"
 	if actualType.String() != expectedType {
 		t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 	}
 }
 
-func TestFetchCheckBundle(t *testing.T) {
-	server := testCheckBundleServer()
-	defer server.Close()
-
-	ac := &Config{
-		TokenKey: "abc123",
-		TokenApp: "test",
-		URL:      server.URL,
-	}
-	apih, err := New(ac)
-	if err != nil {
-		t.Errorf("Expected no error, got '%v'", err)
-	}
-
-	t.Log("invalid CID [nil]")
-	{
-		expectedError := errors.New("Invalid check bundle CID [none]")
-		_, err := apih.FetchCheckBundle(nil)
-		if err == nil {
-			t.Fatalf("Expected error")
-		}
-		if err.Error() != expectedError.Error() {
-			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
-		}
-	}
-
-	t.Log("invalid CID [\"\"]")
-	{
-		cid := ""
-		expectedError := errors.New("Invalid check bundle CID [none]")
-		_, err := apih.FetchCheckBundle(CIDType(&cid))
-		if err == nil {
-			t.Fatalf("Expected error")
-		}
-		if err.Error() != expectedError.Error() {
-			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
-		}
-	}
-
-	t.Log("invalid CID [/invalid]")
-	{
-		cid := "/invalid"
-		expectedError := errors.New("Invalid check bundle CID [/invalid]")
-		_, err := apih.FetchCheckBundle(CIDType(&cid))
-		if err == nil {
-			t.Fatalf("Expected error")
-		}
-		if err.Error() != expectedError.Error() {
-			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
-		}
-	}
-
-	t.Log("valid CID")
-	{
-		cid := CIDType(&testCheckBundle.CID)
-		bundle, err := apih.FetchCheckBundle(cid)
-		if err != nil {
-			t.Fatalf("Expected no error, got '%v'", err)
-		}
-
-		actualType := reflect.TypeOf(bundle)
-		expectedType := "*api.CheckBundle"
-		if actualType.String() != expectedType {
-			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
-		}
-
-		if bundle.CID != testCheckBundle.CID {
-			t.Fatalf("CIDs do not match: %+v != %+v\n", bundle, testCheckBundle)
-		}
-	}
-}
-
-func TestUpdateCheckBundle(t *testing.T) {
-	server := testCheckBundleServer()
-	defer server.Close()
-
-	ac := &Config{
-		TokenKey: "abc123",
-		TokenApp: "test",
-		URL:      server.URL,
-	}
-	apih, err := NewAPI(ac)
-	if err != nil {
-		t.Errorf("Expected no error, got '%v'", err)
-	}
-
-	t.Log("invalid config [nil]")
-	{
-		expectedError := errors.New("Invalid check bundle config [nil]")
-		_, err = apih.UpdateCheckBundle(nil)
-		if err == nil {
-			t.Fatal("Expected an error")
-		}
-		if err.Error() != expectedError.Error() {
-			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
-		}
-	}
-
-	t.Log("invalid config [CID /invalid]")
-	{
-		expectedError := errors.New("Invalid check bundle CID [/invalid]")
-		x := &CheckBundle{CID: "/invalid"}
-		_, err = apih.UpdateCheckBundle(x)
-		if err == nil {
-			t.Fatal("Expected an error")
-		}
-		if err.Error() != expectedError.Error() {
-			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
-		}
-	}
-
-	t.Log("valid config")
-	{
-		bundle, err := apih.UpdateCheckBundle(&testCheckBundle)
-		if err != nil {
-			t.Fatalf("Expected no error, got '%v'", err)
-		}
-
-		actualType := reflect.TypeOf(bundle)
-		expectedType := "*api.CheckBundle"
-		if actualType.String() != expectedType {
-			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
-		}
-	}
-}
-
-func TestCreateCheckBundle(t *testing.T) {
-	server := testCheckBundleServer()
-	defer server.Close()
-
-	ac := &Config{
-		TokenKey: "abc123",
-		TokenApp: "test",
-		URL:      server.URL,
-	}
-	apih, err := NewAPI(ac)
-	if err != nil {
-		t.Errorf("Expected no error, got '%v'", err)
-	}
-
-	t.Log("invalid config [nil]")
-	{
-		expectedError := errors.New("Invalid check bundle config [nil]")
-		_, err = apih.CreateCheckBundle(nil)
-		if err == nil {
-			t.Fatal("Expected an error")
-		}
-		if err.Error() != expectedError.Error() {
-			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
-		}
-	}
-
-	t.Log("valid config")
-	{
-		bundle, err := apih.CreateCheckBundle(&testCheckBundle)
-		if err != nil {
-			t.Fatalf("Expected no error, got '%v'", err)
-		}
-
-		actualType := reflect.TypeOf(bundle)
-		expectedType := "*api.CheckBundle"
-		if actualType.String() != expectedType {
-			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
-		}
-	}
-}
-
-func TestDeleteCheckBundle(t *testing.T) {
-	server := testCheckBundleServer()
-	defer server.Close()
-
-	ac := &Config{
-		TokenKey: "abc123",
-		TokenApp: "test",
-		URL:      server.URL,
-	}
-	apih, err := NewAPI(ac)
-	if err != nil {
-		t.Errorf("Expected no error, got '%v'", err)
-	}
-
-	t.Log("invalid config [nil]")
-	{
-		expectedError := errors.New("Invalid check bundle config [nil]")
-		_, err := apih.DeleteCheckBundle(nil)
-		if err == nil {
-			t.Fatalf("Expected error")
-		}
-		if err.Error() != expectedError.Error() {
-			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
-		}
-	}
-
-	t.Log("invalid config [CID /invalid]")
-	{
-		cb := &CheckBundle{CID: "/invalid"}
-		expectedError := errors.New("Invalid check bundle CID [/invalid]")
-		_, err := apih.DeleteCheckBundle(cb)
-		if err == nil {
-			t.Fatalf("Expected error")
-		}
-		if err.Error() != expectedError.Error() {
-			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
-		}
-	}
-
-	t.Log("valid config")
-	{
-		success, err := apih.DeleteCheckBundle(&testCheckBundle)
-		if err != nil {
-			t.Fatalf("Expected no error, got '%v'", err)
-		}
-
-		if !success {
-			t.Fatalf("Expected success to be true")
-		}
-	}
-}
-
-func TestDeleteCheckBundleByCID(t *testing.T) {
-	server := testCheckBundleServer()
+func TestFetchContactGroup(t *testing.T) {
+	server := testContactGroupServer()
 	defer server.Close()
 
 	ac := &Config{
@@ -364,8 +171,8 @@ func TestDeleteCheckBundleByCID(t *testing.T) {
 
 	t.Log("invalid CID [nil]")
 	{
-		expectedError := errors.New("Invalid check bundle CID [none]")
-		_, err := apih.DeleteCheckBundleByCID(nil)
+		expectedError := errors.New("Invalid contact group CID [none]")
+		_, err := apih.FetchContactGroup(nil)
 		if err == nil {
 			t.Fatalf("Expected error")
 		}
@@ -377,8 +184,8 @@ func TestDeleteCheckBundleByCID(t *testing.T) {
 	t.Log("invalid CID [\"\"]")
 	{
 		cid := ""
-		expectedError := errors.New("Invalid check bundle CID [none]")
-		_, err := apih.DeleteCheckBundleByCID(CIDType(&cid))
+		expectedError := errors.New("Invalid contact group CID [none]")
+		_, err := apih.FetchContactGroup(CIDType(&cid))
 		if err == nil {
 			t.Fatalf("Expected error")
 		}
@@ -390,8 +197,8 @@ func TestDeleteCheckBundleByCID(t *testing.T) {
 	t.Log("invalid CID [/invalid]")
 	{
 		cid := "/invalid"
-		expectedError := errors.New("Invalid check bundle CID [/invalid]")
-		_, err := apih.DeleteCheckBundleByCID(CIDType(&cid))
+		expectedError := errors.New("Invalid contact group CID [/invalid]")
+		_, err := apih.FetchContactGroup(CIDType(&cid))
 		if err == nil {
 			t.Fatalf("Expected error")
 		}
@@ -402,21 +209,265 @@ func TestDeleteCheckBundleByCID(t *testing.T) {
 
 	t.Log("valid CID")
 	{
-		cid := CIDType(&testCheckBundle.CID)
-		success, err := apih.DeleteCheckBundleByCID(cid)
+		cid := "/contact_group/1234"
+		contactGroup, err := apih.FetchContactGroup(CIDType(&cid))
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
 
-		if !success {
-			t.Fatalf("Expected success to be true")
+		actualType := reflect.TypeOf(contactGroup)
+		expectedType := "*api.ContactGroup"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
+
+		if contactGroup.CID != testContactGroup.CID {
+			t.Fatalf("CIDs do not match: %+v != %+v\n", contactGroup, testContactGroup)
 		}
 	}
 }
 
-func TestSearchCheckBundles(t *testing.T) {
-	server := testCheckBundleServer()
+func TestFetchContactGroups(t *testing.T) {
+	server := testContactGroupServer()
 	defer server.Close()
+
+	ac := &Config{
+		TokenKey: "abc123",
+		TokenApp: "test",
+		URL:      server.URL,
+	}
+	apih, err := NewAPI(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	contactGroups, err := apih.FetchContactGroups()
+	if err != nil {
+		t.Fatalf("Expected no error, got '%v'", err)
+	}
+
+	actualType := reflect.TypeOf(contactGroups)
+	expectedType := "*[]api.ContactGroup"
+	if actualType.String() != expectedType {
+		t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+	}
+
+}
+
+func TestUpdateContactGroup(t *testing.T) {
+	server := testContactGroupServer()
+	defer server.Close()
+
+	ac := &Config{
+		TokenKey: "abc123",
+		TokenApp: "test",
+		URL:      server.URL,
+	}
+	apih, err := NewAPI(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	t.Log("invalid config [nil]")
+	{
+		expectedError := errors.New("Invalid contact group config [nil]")
+		_, err := apih.UpdateContactGroup(nil)
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("invalid config [CID /invalid]")
+	{
+		expectedError := errors.New("Invalid contact group CID [/invalid]")
+		x := &ContactGroup{CID: "/invalid"}
+		_, err := apih.UpdateContactGroup(x)
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("valid CID")
+	{
+		contactGroup, err := apih.UpdateContactGroup(&testContactGroup)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(contactGroup)
+		expectedType := "*api.ContactGroup"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
+	}
+}
+
+func TestCreateContactGroup(t *testing.T) {
+	server := testContactGroupServer()
+	defer server.Close()
+
+	ac := &Config{
+		TokenKey: "abc123",
+		TokenApp: "test",
+		URL:      server.URL,
+	}
+	apih, err := NewAPI(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	t.Log("invalid config [nil]")
+	{
+		expectedError := errors.New("Invalid contact group config [nil]")
+		_, err := apih.CreateContactGroup(nil)
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("valid config")
+	{
+		contactGroup, err := apih.CreateContactGroup(&testContactGroup)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+
+		actualType := reflect.TypeOf(contactGroup)
+		expectedType := "*api.ContactGroup"
+		if actualType.String() != expectedType {
+			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
+		}
+	}
+}
+
+func TestDeleteContactGroup(t *testing.T) {
+	server := testContactGroupServer()
+	defer server.Close()
+
+	var apih *API
+
+	ac := &Config{
+		TokenKey: "abc123",
+		TokenApp: "test",
+		URL:      server.URL,
+	}
+	apih, err := NewAPI(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	t.Log("invalid config [nil]")
+	{
+		expectedError := errors.New("Invalid contact group config [nil]")
+		_, err := apih.DeleteContactGroup(nil)
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("invalid config [CID /invalid]")
+	{
+		expectedError := errors.New("Invalid contact group CID [/invalid]")
+		x := &ContactGroup{CID: "/invalid"}
+		_, err := apih.DeleteContactGroup(x)
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("valid config")
+	{
+		_, err := apih.DeleteContactGroup(&testContactGroup)
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+	}
+}
+
+func TestDeleteContactGroupByCID(t *testing.T) {
+	server := testContactGroupServer()
+	defer server.Close()
+
+	var apih *API
+
+	ac := &Config{
+		TokenKey: "abc123",
+		TokenApp: "test",
+		URL:      server.URL,
+	}
+	apih, err := NewAPI(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	t.Log("invalid CID [nil]")
+	{
+		expectedError := errors.New("Invalid contact group CID [none]")
+		_, err := apih.DeleteContactGroupByCID(nil)
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("invalid CID [\"\"]")
+	{
+		cid := ""
+		expectedError := errors.New("Invalid contact group CID [none]")
+		_, err := apih.DeleteContactGroupByCID(CIDType(&cid))
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("invalid CID [/invalid]")
+	{
+		cid := "/invalid"
+		expectedError := errors.New("Invalid contact group CID [/invalid]")
+		_, err := apih.DeleteContactGroupByCID(CIDType(&cid))
+		if err == nil {
+			t.Fatal("Expected an error")
+		}
+		if err.Error() != expectedError.Error() {
+			t.Fatalf("Expected %+v got '%+v'", expectedError, err)
+		}
+	}
+
+	t.Log("valid CID")
+	{
+		cid := "/contact_group/1234"
+		_, err := apih.DeleteContactGroupByCID(CIDType(&cid))
+		if err != nil {
+			t.Fatalf("Expected no error, got '%v'", err)
+		}
+	}
+}
+
+func TestSearchContactGroups(t *testing.T) {
+	server := testContactGroupServer()
+	defer server.Close()
+
+	var apih *API
 
 	ac := &Config{
 		TokenKey: "abc123",
@@ -430,13 +481,13 @@ func TestSearchCheckBundles(t *testing.T) {
 
 	t.Log("no search, no filter")
 	{
-		bundles, err := apih.SearchCheckBundles(nil, nil)
+		groups, err := apih.SearchContactGroups(nil, nil)
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
 
-		actualType := reflect.TypeOf(bundles)
-		expectedType := "*[]api.CheckBundle"
+		actualType := reflect.TypeOf(groups)
+		expectedType := "*[]api.ContactGroup"
 		if actualType.String() != expectedType {
 			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 		}
@@ -444,14 +495,14 @@ func TestSearchCheckBundles(t *testing.T) {
 
 	t.Log("search, no filter")
 	{
-		search := SearchQueryType("test")
-		bundles, err := apih.SearchCheckBundles(&search, nil)
+		search := SearchQueryType(`(name="ops")`)
+		groups, err := apih.SearchContactGroups(&search, nil)
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
 
-		actualType := reflect.TypeOf(bundles)
-		expectedType := "*[]api.CheckBundle"
+		actualType := reflect.TypeOf(groups)
+		expectedType := "*[]api.ContactGroup"
 		if actualType.String() != expectedType {
 			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 		}
@@ -459,14 +510,14 @@ func TestSearchCheckBundles(t *testing.T) {
 
 	t.Log("no search, filter")
 	{
-		filter := map[string][]string{"f__tags_has": []string{"cat:tag"}}
-		bundles, err := apih.SearchCheckBundles(nil, &filter)
+		filter := SearchFilterType(map[string][]string{"f__last_modified_gt": []string{"1483639916"}})
+		groups, err := apih.SearchContactGroups(nil, &filter)
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
 
-		actualType := reflect.TypeOf(bundles)
-		expectedType := "*[]api.CheckBundle"
+		actualType := reflect.TypeOf(groups)
+		expectedType := "*[]api.ContactGroup"
 		if actualType.String() != expectedType {
 			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 		}
@@ -474,15 +525,15 @@ func TestSearchCheckBundles(t *testing.T) {
 
 	t.Log("search, filter")
 	{
-		search := SearchQueryType("test")
-		filter := map[string][]string{"f__tags_has": []string{"cat:tag"}}
-		bundles, err := apih.SearchCheckBundles(&search, &filter)
+		search := SearchQueryType(`(name="ops")`)
+		filter := SearchFilterType(map[string][]string{"f__last_modified_gt": []string{"1483639916"}})
+		groups, err := apih.SearchContactGroups(&search, &filter)
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
 
-		actualType := reflect.TypeOf(bundles)
-		expectedType := "*[]api.CheckBundle"
+		actualType := reflect.TypeOf(groups)
+		expectedType := "*[]api.ContactGroup"
 		if actualType.String() != expectedType {
 			t.Fatalf("Expected %s, got %s", expectedType, actualType.String())
 		}

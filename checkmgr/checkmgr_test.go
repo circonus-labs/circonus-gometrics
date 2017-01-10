@@ -17,6 +17,7 @@ import (
 	"testing"
 
 	"github.com/circonus-labs/circonus-gometrics/api"
+	"github.com/circonus-labs/circonus-gometrics/api/config"
 )
 
 var (
@@ -26,9 +27,7 @@ var (
 		BrokerCID:      "/broker/1234",
 		CheckBundleCID: "/check_bundle/1234",
 		CheckUUID:      "abc123-a1b2-c3d4-e5f6-123abc",
-		Details: api.CheckDetails{
-			SubmissionURL: "https://127.0.0.1:43191/module/httptrap/abc123-a1b2-c3d4-e5f6-123abc/blah",
-		},
+		Details:        map[config.Key]string{config.SubmissionURL: "https://127.0.0.1:43191/module/httptrap/abc123-a1b2-c3d4-e5f6-123abc/blah"},
 	}
 
 	testCMCheckBundle = api.CheckBundle{
@@ -43,10 +42,13 @@ var (
 		},
 		Brokers:     []string{"/broker/1234"},
 		DisplayName: "test check",
-		Config: api.CheckBundleConfig{
-			SubmissionURL: "https://127.0.0.1:43191/module/httptrap/abc123-a1b2-c3d4-e5f6-123abc/blah",
-			ReverseSecret: "blah",
+		Config: map[config.Key]string{
+			config.SubmissionURL: "https://127.0.0.1:43191/module/httptrap/abc123-a1b2-c3d4-e5f6-123abc/blah",
 		},
+		// Config: api.CheckBundleConfig{
+		// 	SubmissionURL: "https://127.0.0.1:43191/module/httptrap/abc123-a1b2-c3d4-e5f6-123abc/blah",
+		// 	ReverseSecret: "blah",
+		// },
 		Metrics: []api.CheckBundleMetric{
 			api.CheckBundleMetric{
 				Name:   "elmo",
@@ -55,7 +57,7 @@ var (
 			},
 		},
 		MetricLimit: 0,
-		Notes:       "",
+		Notes:       nil,
 		Period:      60,
 		Status:      "active",
 		Target:      "127.0.0.1",
@@ -71,11 +73,11 @@ var (
 		Details: []api.BrokerDetail{
 			api.BrokerDetail{
 				CN:           "testbroker.example.com",
-				ExternalHost: "",
+				ExternalHost: nil,
 				ExternalPort: 43191,
-				IP:           "127.0.0.1",
+				IP:           &[]string{"127.0.0.1"}[0],
 				Modules:      []string{"httptrap"},
-				Port:         43191,
+				Port:         &[]uint16{43191}[0],
 				Status:       "active",
 			},
 		},
@@ -293,8 +295,8 @@ func TestNewCheckManager(t *testing.T) {
 		t.Fatalf("Error converting port to numeric %v", err)
 	}
 
-	testCMBroker.Details[0].ExternalHost = hostParts[0]
-	testCMBroker.Details[0].ExternalPort = hostPort
+	testCMBroker.Details[0].ExternalHost = &hostParts[0]
+	testCMBroker.Details[0].ExternalPort = uint16(hostPort)
 
 	t.Log("Defaults")
 	{
@@ -314,8 +316,12 @@ func TestNewCheckManager(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
-		if trap.URL.String() != testCMCheckBundle.Config.SubmissionURL {
-			t.Fatalf("Expected '%s' got '%s'", testCMCheckBundle.Config.SubmissionURL, trap.URL.String())
+		suburl, found := testCMCheckBundle.Config["submission_url"]
+		if !found {
+			t.Fatalf("Exected submission_url in check bundle config %+v", testCMCheckBundle)
+		}
+		if trap.URL.String() != suburl {
+			t.Fatalf("Expected '%s' got '%s'", suburl, trap.URL.String())
 		}
 	}
 }
