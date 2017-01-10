@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 )
 
 func testServer() *httptest.Server {
@@ -90,7 +91,12 @@ func TestNew(t *testing.T) {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
 
-		trap, err := cm.check.GetTrap()
+		for !cm.check.IsReady() {
+			t.Log("\twaiting for cm to init")
+			time.Sleep(1 * time.Second)
+		}
+
+		trap, err := cm.check.GetSubmissionURL()
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
