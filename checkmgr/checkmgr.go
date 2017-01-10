@@ -140,6 +140,8 @@ type CheckManager struct {
 	Debug   bool
 	apih    *api.API
 
+	initialized bool
+
 	// check
 	checkType             CheckTypeType
 	checkID               api.IDType
@@ -192,10 +194,9 @@ func New(cfg *Config) (*CheckManager, error) {
 		return nil, errors.New("invalid Check Manager configuration (nil)")
 	}
 
-	cm := &CheckManager{
-		enabled: false,
-	}
+	cm := &CheckManager{enabled: true, initialized: false}
 
+	// Setup logging for check manager
 	cm.Debug = cfg.Debug
 	cm.Log = cfg.Log
 	if cm.Debug && cm.Log == nil {
@@ -208,34 +209,28 @@ func New(cfg *Config) (*CheckManager, error) {
 	if cfg.Check.SubmissionURL != "" {
 		cm.checkSubmissionURL = api.URLType(cfg.Check.SubmissionURL)
 	}
+
 	// Blank API Token *disables* check management
 	if cfg.API.TokenKey == "" {
-		if cm.checkSubmissionURL == "" {
-			return nil, errors.New("invalid check manager configuration (no API token AND no submission url)")
-		}
-		if err := cm.initializeTrapURL(); err != nil {
+		cm.enabled = false
+	}
+
+	if !cm.enabled && cm.checkSubmissionURL == "" {
+		return nil, errors.New("invalid check manager configuration (no API token AND no submission url)")
+	}
+
+	if cm.enabled {
+		// initialize api handle
+		cfg.API.Debug = cm.Debug
+		cfg.API.Log = cm.Log
+		apih, err := api.New(&cfg.API)
+		if err != nil {
 			return nil, err
 		}
-		return cm, nil
+		cm.apih = apih
 	}
-
-	// enable check manager
-
-	cm.enabled = true
-
-	// initialize api handle
-
-	cfg.API.Debug = cm.Debug
-	cfg.API.Log = cm.Log
-
-	apih, err := api.New(&cfg.API)
-	if err != nil {
-		return nil, err
-	}
-	cm.apih = apih
 
 	// initialize check related data
-
 	cm.checkType = defaultCheckType
 
 	idSetting := "0"
@@ -299,7 +294,6 @@ func New(cfg *Config) (*CheckManager, error) {
 	cm.trapMaxURLAge = maxDur
 
 	// setup broker
-
 	idSetting = "0"
 	if cfg.Broker.ID != "" {
 		idSetting = cfg.Broker.ID
@@ -328,19 +322,39 @@ func New(cfg *Config) (*CheckManager, error) {
 	cm.availableMetrics = make(map[string]bool)
 	cm.metricTags = make(map[string][]string)
 
-	if err := cm.initializeTrapURL(); err != nil {
-		return nil, err
-	}
-
 	return cm, nil
 }
 
-// GetTrap return the trap url
-func (cm *CheckManager) GetTrap() (*Trap, error) {
-	if cm.trapURL == "" {
-		if err := cm.initializeTrapURL(); err != nil {
-			return nil, err
+// Initialize for sending metrics
+func (cm *CheckManager) Initialize() {
+	go func() {
+		if cm.enabled {
+			cm.apih.EnableExponentialBackoff()
 		}
+		err := cm.initializeTrapURL()
+		if err == nil {
+			cm.initialized = true
+		} else {
+			fmt.Printf("[WARN] error initializing trap %s", err.Error())
+		}
+		if cm.enabled {
+			cm.apih.DisableExponentialBackoff()
+		}
+	}()
+}
+
+// IsReady reflects if the check has been initialied and metrics can be sent to Circonus
+func (cm *CheckManager) IsReady() bool {
+	return cm.initialized
+}
+
+// GetSubmissionURL returns submission url for circonus
+func (cm *CheckManager) GetSubmissionURL() (*Trap, error) {
+	if cm.trapURL == "" {
+		return nil, fmt.Errorf("[ERROR] no submission url currently available")
+		// if err := cm.initializeTrapURL(); err != nil {
+		// 	return nil, err
+		// }
 	}
 
 	trap := &Trap{}
