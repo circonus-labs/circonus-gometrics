@@ -41,11 +41,13 @@ func (cm *CheckManager) AddMetricTags(metricName string, tags []string, appendTa
 	if !exists {
 		foundMetric := false
 
-		for _, metric := range cm.checkBundle.Metrics {
-			if metric.Name == metricName {
-				foundMetric = true
-				currentTags = metric.Tags
-				break
+		if cm.checkBundle != nil {
+			for _, metric := range cm.checkBundle.Metrics {
+				if metric.Name == metricName {
+					foundMetric = true
+					currentTags = metric.Tags
+					break
+				}
 			}
 		}
 
