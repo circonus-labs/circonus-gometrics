@@ -140,6 +140,34 @@ func TestNew(t *testing.T) {
 	}
 }
 
+func TestEnableExponentialBackoff(t *testing.T) {
+	ac := &Config{
+		TokenKey: "foo",
+		TokenApp: "bar",
+	}
+
+	apih, err := NewAPI(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%+v'", err)
+	}
+
+	apih.EnableExponentialBackoff()
+}
+
+func TestDisableExponentialBackoff(t *testing.T) {
+	ac := &Config{
+		TokenKey: "foo",
+		TokenApp: "bar",
+	}
+
+	apih, err := NewAPI(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%+v'", err)
+	}
+
+	apih.DisableExponentialBackoff()
+}
+
 func TestApiCall(t *testing.T) {
 	server := callServer()
 	defer server.Close()
