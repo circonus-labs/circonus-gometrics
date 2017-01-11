@@ -17,6 +17,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"regexp"
 	"strings"
 	"time"
 
@@ -197,6 +198,9 @@ func (a *API) apiRequest(reqMethod string, reqPath string, data []byte) ([]byte,
 		// break and return error if not using exponential backoff
 		if err != nil {
 			if !a.useExponentialBackoff {
+				break
+			}
+			if matched, _ := regexp.MatchString("code 403", err.Error()); matched {
 				break
 			}
 		}

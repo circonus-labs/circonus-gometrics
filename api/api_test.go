@@ -30,14 +30,25 @@ var (
 
 func retryCallServer() *httptest.Server {
 	f := func(w http.ResponseWriter, r *http.Request) {
-		numReq++
-		if numReq > maxReq {
-			w.WriteHeader(200)
+		path := r.URL.Path
+		if path == "/auth_error_token" {
+			w.WriteHeader(403)
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprintln(w, `{"reference":"abc123","explanation":"The authentication token you supplied is invalid","server":"foo","tag":"bar","message":"The password doesn't match the right format.  Are you passing the app name as the password and the token as the password?","code":"Forbidden.BadToken"}`)
+		} else if path == "/auth_error_app" {
+			w.WriteHeader(403)
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprintln(w, `{"reference":"abc123","explanation":"There is a problem with the application string you are trying to access the API with","server":"foo","tag":"bar","message":"App 'foobar' not allowed","code":"Forbidden.BadApp"}`)
 		} else {
-			w.WriteHeader(500)
+			numReq++
+			if numReq > maxReq {
+				w.WriteHeader(200)
+			} else {
+				w.WriteHeader(500)
+			}
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprintln(w, "blah blah blah, error...")
 		}
-		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprintln(w, "blah blah blah, error...")
 	}
 
 	return httptest.NewServer(http.HandlerFunc(f))
@@ -431,4 +442,41 @@ func TestApiRequest(t *testing.T) {
 			}
 		}
 	}
+
+	apih.DisableExponentialBackoff()
+
+	t.Log("drift retry - bad token")
+	{
+		_, err := apih.apiRequest("GET", "/auth_error_token", nil)
+		if err == nil {
+			t.Fatal("expected error")
+		}
+	}
+
+	t.Log("drift retry - bad app")
+	{
+		_, err := apih.apiRequest("GET", "/auth_error_app", nil)
+		if err == nil {
+			t.Fatal("expected error")
+		}
+	}
+
+	apih.EnableExponentialBackoff()
+
+	t.Log("exponential backoff - bad token")
+	{
+		_, err := apih.apiRequest("GET", "/auth_error_token", nil)
+		if err == nil {
+			t.Fatal("expected error")
+		}
+	}
+
+	t.Log("exponential backoff - bad app")
+	{
+		_, err := apih.apiRequest("GET", "/auth_error_app", nil)
+		if err == nil {
+			t.Fatal("expected error")
+		}
+	}
+
 }
