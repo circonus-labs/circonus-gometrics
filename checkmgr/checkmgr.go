@@ -140,7 +140,8 @@ type CheckManager struct {
 	Debug   bool
 	apih    *api.API
 
-	initialized bool
+	initialized   bool
+	initializedmu sync.RWMutex
 
 	// check
 	checkType             CheckTypeType
@@ -165,15 +166,16 @@ type CheckManager struct {
 	brokerMaxResponseTime time.Duration
 
 	// state
-	checkBundle      *api.CheckBundle
-	cbmu             sync.Mutex
-	availableMetrics map[string]bool
-	trapURL          api.URLType
-	trapCN           BrokerCNType
-	trapLastUpdate   time.Time
-	trapMaxURLAge    time.Duration
-	trapmu           sync.Mutex
-	certPool         *x509.CertPool
+	checkBundle        *api.CheckBundle
+	cbmu               sync.Mutex
+	availableMetrics   map[string]bool
+	availableMetricsmu sync.Mutex
+	trapURL            api.URLType
+	trapCN             BrokerCNType
+	trapLastUpdate     time.Time
+	trapMaxURLAge      time.Duration
+	trapmu             sync.Mutex
+	certPool           *x509.CertPool
 }
 
 // Trap config
@@ -333,7 +335,9 @@ func (cm *CheckManager) Initialize() {
 		}
 		err := cm.initializeTrapURL()
 		if err == nil {
+			cm.initializedmu.Lock()
 			cm.initialized = true
+			cm.initializedmu.Unlock()
 		} else {
 			fmt.Printf("[WARN] error initializing trap %s", err.Error())
 		}
@@ -345,6 +349,8 @@ func (cm *CheckManager) Initialize() {
 
 // IsReady reflects if the check has been initialied and metrics can be sent to Circonus
 func (cm *CheckManager) IsReady() bool {
+	cm.initializedmu.RLock()
+	defer cm.initializedmu.RUnlock()
 	return cm.initialized
 }
 

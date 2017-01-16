@@ -19,6 +19,7 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/hashicorp/go-retryablehttp"
@@ -77,12 +78,13 @@ type Config struct {
 
 // API Circonus API
 type API struct {
-	apiURL                *url.URL
-	key                   TokenKeyType
-	app                   TokenAppType
-	Debug                 bool
-	Log                   *log.Logger
-	useExponentialBackoff bool
+	apiURL                  *url.URL
+	key                     TokenKeyType
+	app                     TokenAppType
+	Debug                   bool
+	Log                     *log.Logger
+	useExponentialBackoff   bool
+	useExponentialBackoffmu sync.Mutex
 }
 
 // NewClient returns a new Circonus API (alias for New)
@@ -129,7 +131,14 @@ func New(ac *Config) (*API, error) {
 		return nil, err
 	}
 
-	a := &API{apiURL, key, app, ac.Debug, ac.Log, false}
+	a := &API{
+		apiURL: apiURL,
+		key:    key,
+		app:    app,
+		Debug:  ac.Debug,
+		Log:    ac.Log,
+		useExponentialBackoff: false,
+	}
 
 	a.Debug = ac.Debug
 	a.Log = ac.Log
@@ -146,14 +155,18 @@ func New(ac *Config) (*API, error) {
 // EnableExponentialBackoff enables use of exponential backoff for next API call(s)
 // and use exponential backoff for all API calls until exponential backoff is disabled.
 func (a *API) EnableExponentialBackoff() {
+	a.useExponentialBackoffmu.Lock()
 	a.useExponentialBackoff = true
+	a.useExponentialBackoffmu.Unlock()
 }
 
 // DisableExponentialBackoff disables use of exponential backoff. If a request using
 // exponential backoff is currently running, it will stop using exponential backoff
 // on its next iteration (if needed).
 func (a *API) DisableExponentialBackoff() {
+	a.useExponentialBackoffmu.Lock()
 	a.useExponentialBackoff = false
+	a.useExponentialBackoffmu.Unlock()
 }
 
 // Get API request
@@ -274,7 +287,11 @@ func (a *API) apiCall(reqMethod string, reqPath string, data []byte) ([]byte, er
 	req.Header.Add("X-Circonus-App-Name", string(a.app))
 
 	client := retryablehttp.NewClient()
-	if a.useExponentialBackoff {
+	a.useExponentialBackoffmu.Lock()
+	eb := a.useExponentialBackoff
+	a.useExponentialBackoffmu.Unlock()
+
+	if eb {
 		// limit to one request if using exponential backoff
 		client.RetryWaitMin = 1
 		client.RetryWaitMax = 2
