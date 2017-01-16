@@ -166,15 +166,16 @@ type CheckManager struct {
 	brokerMaxResponseTime time.Duration
 
 	// state
-	checkBundle      *api.CheckBundle
-	cbmu             sync.Mutex
-	availableMetrics map[string]bool
-	trapURL          api.URLType
-	trapCN           BrokerCNType
-	trapLastUpdate   time.Time
-	trapMaxURLAge    time.Duration
-	trapmu           sync.Mutex
-	certPool         *x509.CertPool
+	checkBundle        *api.CheckBundle
+	cbmu               sync.Mutex
+	availableMetrics   map[string]bool
+	availableMetricsmu sync.Mutex
+	trapURL            api.URLType
+	trapCN             BrokerCNType
+	trapLastUpdate     time.Time
+	trapMaxURLAge      time.Duration
+	trapmu             sync.Mutex
+	certPool           *x509.CertPool
 }
 
 // Trap config

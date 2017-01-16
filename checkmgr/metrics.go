@@ -10,12 +10,18 @@ import (
 
 // IsMetricActive checks whether a given metric name is currently active(enabled)
 func (cm *CheckManager) IsMetricActive(name string) bool {
+	cm.availableMetricsmu.Lock()
+	defer cm.availableMetricsmu.Unlock()
+
 	active, _ := cm.availableMetrics[name]
 	return active
 }
 
 // ActivateMetric determines if a given metric should be activated
 func (cm *CheckManager) ActivateMetric(name string) bool {
+	cm.availableMetricsmu.Lock()
+	defer cm.availableMetricsmu.Unlock()
+
 	active, exists := cm.availableMetrics[name]
 
 	if !exists {
@@ -132,7 +138,9 @@ func (cm *CheckManager) inventoryMetrics() {
 	for _, metric := range cm.checkBundle.Metrics {
 		availableMetrics[metric.Name] = metric.Status == "active"
 	}
+	cm.availableMetricsmu.Lock()
 	cm.availableMetrics = availableMetrics
+	cm.availableMetricsmu.Unlock()
 }
 
 // countNewTags returns a count of new tags which do not exist in the current list of tags
