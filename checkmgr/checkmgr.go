@@ -140,7 +140,8 @@ type CheckManager struct {
 	Debug   bool
 	apih    *api.API
 
-	initialized bool
+	initialized   bool
+	initializedmu sync.RWMutex
 
 	// check
 	checkType             CheckTypeType
@@ -333,7 +334,9 @@ func (cm *CheckManager) Initialize() {
 		}
 		err := cm.initializeTrapURL()
 		if err == nil {
+			cm.initializedmu.Lock()
 			cm.initialized = true
+			cm.initializedmu.Unlock()
 		} else {
 			fmt.Printf("[WARN] error initializing trap %s", err.Error())
 		}
@@ -345,6 +348,8 @@ func (cm *CheckManager) Initialize() {
 
 // IsReady reflects if the check has been initialied and metrics can be sent to Circonus
 func (cm *CheckManager) IsReady() bool {
+	cm.initializedmu.RLock()
+	defer cm.initializedmu.RUnlock()
 	return cm.initialized
 }
 
