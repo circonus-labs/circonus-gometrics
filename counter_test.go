@@ -11,8 +11,7 @@ import (
 func TestSet(t *testing.T) {
 	t.Log("Testing counter.Set")
 
-	cm := &CirconusMetrics{}
-	cm.counters = make(map[string]uint64)
+	cm := &CirconusMetrics{counters: make(map[string]uint64)}
 
 	cm.Set("foo", 30)
 
@@ -40,8 +39,8 @@ func TestSet(t *testing.T) {
 func TestIncrement(t *testing.T) {
 	t.Log("Testing counter.Increment")
 
-	cm := &CirconusMetrics{}
-	cm.counters = make(map[string]uint64)
+	cm := &CirconusMetrics{counters: make(map[string]uint64)}
+
 	cm.Increment("foo")
 
 	val, ok := cm.counters["foo"]
@@ -57,8 +56,8 @@ func TestIncrement(t *testing.T) {
 func TestIncrementByValue(t *testing.T) {
 	t.Log("Testing counter.IncrementByValue")
 
-	cm := &CirconusMetrics{}
-	cm.counters = make(map[string]uint64)
+	cm := &CirconusMetrics{counters: make(map[string]uint64)}
+
 	cm.IncrementByValue("foo", 10)
 
 	val, ok := cm.counters["foo"]
@@ -74,8 +73,8 @@ func TestIncrementByValue(t *testing.T) {
 func TestAdd(t *testing.T) {
 	t.Log("Testing counter.Add")
 
-	cm := &CirconusMetrics{}
-	cm.counters = make(map[string]uint64)
+	cm := &CirconusMetrics{counters: make(map[string]uint64)}
+
 	cm.Add("foo", 5)
 
 	val, ok := cm.counters["foo"]
@@ -91,8 +90,8 @@ func TestAdd(t *testing.T) {
 func TestRemoveCounter(t *testing.T) {
 	t.Log("Testing counter.RemoveCounter")
 
-	cm := &CirconusMetrics{}
-	cm.counters = make(map[string]uint64)
+	cm := &CirconusMetrics{counters: make(map[string]uint64)}
+
 	cm.Increment("foo")
 
 	val, ok := cm.counters["foo"]
@@ -122,8 +121,9 @@ func TestSetCounterFunc(t *testing.T) {
 	cf := func() uint64 {
 		return 1
 	}
-	cm := &CirconusMetrics{}
-	cm.counterFuncs = make(map[string]func() uint64)
+
+	cm := &CirconusMetrics{counterFuncs: make(map[string]func() uint64)}
+
 	cm.SetCounterFunc("foo", cf)
 
 	val, ok := cm.counterFuncs["foo"]
@@ -142,8 +142,9 @@ func TestRemoveCounterFunc(t *testing.T) {
 	cf := func() uint64 {
 		return 1
 	}
-	cm := &CirconusMetrics{}
-	cm.counterFuncs = make(map[string]func() uint64)
+
+	cm := &CirconusMetrics{counterFuncs: make(map[string]func() uint64)}
+
 	cm.SetCounterFunc("foo", cf)
 
 	val, ok := cm.counterFuncs["foo"]

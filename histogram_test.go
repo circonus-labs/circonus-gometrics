@@ -12,8 +12,8 @@ import (
 func TestTiming(t *testing.T) {
 	t.Log("Testing histogram.Timing")
 
-	cm := &CirconusMetrics{}
-	cm.histograms = make(map[string]*Histogram)
+	cm := &CirconusMetrics{histograms: make(map[string]*Histogram)}
+
 	cm.Timing("foo", 1)
 
 	hist, ok := cm.histograms["foo"]
@@ -39,8 +39,8 @@ func TestTiming(t *testing.T) {
 func TestRecordValue(t *testing.T) {
 	t.Log("Testing histogram.RecordValue")
 
-	cm := &CirconusMetrics{}
-	cm.histograms = make(map[string]*Histogram)
+	cm := &CirconusMetrics{histograms: make(map[string]*Histogram)}
+
 	cm.RecordValue("foo", 1)
 
 	hist, ok := cm.histograms["foo"]
@@ -66,8 +66,8 @@ func TestRecordValue(t *testing.T) {
 func TestSetHistogramValue(t *testing.T) {
 	t.Log("Testing histogram.SetHistogramValue")
 
-	cm := &CirconusMetrics{}
-	cm.histograms = make(map[string]*Histogram)
+	cm := &CirconusMetrics{histograms: make(map[string]*Histogram)}
+
 	cm.SetHistogramValue("foo", 1)
 
 	hist, ok := cm.histograms["foo"]
@@ -93,8 +93,8 @@ func TestSetHistogramValue(t *testing.T) {
 func TestRemoveHistogram(t *testing.T) {
 	t.Log("Testing histogram.RemoveHistogram")
 
-	cm := &CirconusMetrics{}
-	cm.histograms = make(map[string]*Histogram)
+	cm := &CirconusMetrics{histograms: make(map[string]*Histogram)}
+
 	cm.SetHistogramValue("foo", 1)
 
 	hist, ok := cm.histograms["foo"]
@@ -131,8 +131,8 @@ func TestRemoveHistogram(t *testing.T) {
 func TestNewHistogram(t *testing.T) {
 	t.Log("Testing histogram.NewHistogram")
 
-	cm := &CirconusMetrics{}
-	cm.histograms = make(map[string]*Histogram)
+	cm := &CirconusMetrics{histograms: make(map[string]*Histogram)}
+
 	hist := cm.NewHistogram("foo")
 
 	actualType := reflect.TypeOf(hist)
@@ -145,8 +145,8 @@ func TestNewHistogram(t *testing.T) {
 func TestHistName(t *testing.T) {
 	t.Log("Testing hist.Name")
 
-	cm := &CirconusMetrics{}
-	cm.histograms = make(map[string]*Histogram)
+	cm := &CirconusMetrics{histograms: make(map[string]*Histogram)}
+
 	hist := cm.NewHistogram("foo")
 
 	actualType := reflect.TypeOf(hist)
@@ -165,8 +165,8 @@ func TestHistName(t *testing.T) {
 func TestHistRecordValue(t *testing.T) {
 	t.Log("Testing hist.RecordValue")
 
-	cm := &CirconusMetrics{}
-	cm.histograms = make(map[string]*Histogram)
+	cm := &CirconusMetrics{histograms: make(map[string]*Histogram)}
+
 	hist := cm.NewHistogram("foo")
 
 	actualType := reflect.TypeOf(hist)

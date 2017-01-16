@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/circonus-labs/circonus-gometrics/api"
 )
@@ -59,6 +60,11 @@ func TestTrapCall(t *testing.T) {
 	cm, err := NewCirconusMetrics(cfg)
 	if err != nil {
 		t.Errorf("Expected no error, got '%v'", err)
+	}
+
+	for !cm.check.IsReady() {
+		t.Log("\twaiting for cm to init")
+		time.Sleep(1 * time.Second)
 	}
 
 	output := make(map[string]interface{})

@@ -15,6 +15,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/circonus-labs/circonus-gometrics/api"
 	"github.com/circonus-labs/circonus-gometrics/api/config"
@@ -243,7 +244,14 @@ func TestNewCheckManager(t *testing.T) {
 			t.Errorf("Expected no error, got '%v'", err)
 		}
 
-		trap, err := cm.GetTrap()
+		cm.Initialize()
+
+		for !cm.IsReady() {
+			t.Log("\twaiting for cm to init")
+			time.Sleep(1 * time.Second)
+		}
+
+		trap, err := cm.GetSubmissionURL()
 		if err != nil {
 			t.Errorf("Expected no error, got '%v'", err)
 		}
@@ -267,7 +275,14 @@ func TestNewCheckManager(t *testing.T) {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
 
-		trap, err := cm.GetTrap()
+		cm.Initialize()
+
+		for !cm.IsReady() {
+			t.Log("\twaiting for cm to init")
+			time.Sleep(1 * time.Second)
+		}
+
+		trap, err := cm.GetSubmissionURL()
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
@@ -312,7 +327,15 @@ func TestNewCheckManager(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}
-		trap, err := cm.GetTrap()
+
+		cm.Initialize()
+
+		for !cm.IsReady() {
+			t.Log("\twaiting for cm to init")
+			time.Sleep(1 * time.Second)
+		}
+
+		trap, err := cm.GetSubmissionURL()
 		if err != nil {
 			t.Fatalf("Expected no error, got '%v'", err)
 		}

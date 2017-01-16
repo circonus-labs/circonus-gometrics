@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 )
 
 func callServer() *httptest.Server {
@@ -17,6 +18,37 @@ func callServer() *httptest.Server {
 		w.WriteHeader(200)
 		w.Header().Set("Content-Type", "application/json")
 		fmt.Fprintln(w, r.Method)
+	}
+
+	return httptest.NewServer(http.HandlerFunc(f))
+}
+
+var (
+	numReq = 0
+	maxReq = 2
+)
+
+func retryCallServer() *httptest.Server {
+	f := func(w http.ResponseWriter, r *http.Request) {
+		path := r.URL.Path
+		if path == "/auth_error_token" {
+			w.WriteHeader(403)
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprintln(w, `{"reference":"abc123","explanation":"The authentication token you supplied is invalid","server":"foo","tag":"bar","message":"The password doesn't match the right format.  Are you passing the app name as the password and the token as the password?","code":"Forbidden.BadToken"}`)
+		} else if path == "/auth_error_app" {
+			w.WriteHeader(403)
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprintln(w, `{"reference":"abc123","explanation":"There is a problem with the application string you are trying to access the API with","server":"foo","tag":"bar","message":"App 'foobar' not allowed","code":"Forbidden.BadApp"}`)
+		} else {
+			numReq++
+			if numReq > maxReq {
+				w.WriteHeader(200)
+			} else {
+				w.WriteHeader(500)
+			}
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprintln(w, "blah blah blah, error...")
+		}
 	}
 
 	return httptest.NewServer(http.HandlerFunc(f))
@@ -140,6 +172,34 @@ func TestNew(t *testing.T) {
 	}
 }
 
+func TestEnableExponentialBackoff(t *testing.T) {
+	ac := &Config{
+		TokenKey: "foo",
+		TokenApp: "bar",
+	}
+
+	apih, err := NewAPI(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%+v'", err)
+	}
+
+	apih.EnableExponentialBackoff()
+}
+
+func TestDisableExponentialBackoff(t *testing.T) {
+	ac := &Config{
+		TokenKey: "foo",
+		TokenApp: "bar",
+	}
+
+	apih, err := NewAPI(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%+v'", err)
+	}
+
+	apih.DisableExponentialBackoff()
+}
+
 func TestApiCall(t *testing.T) {
 	server := callServer()
 	defer server.Close()
@@ -206,7 +266,6 @@ func TestApiCall(t *testing.T) {
 			t.Errorf("Expected\n'%s'\ngot\n'%s'\n", expected, resp)
 		}
 	}
-
 }
 
 func TestApiGet(t *testing.T) {
@@ -317,6 +376,107 @@ func TestApiDelete(t *testing.T) {
 	expected := "DELETE\n"
 	if string(resp) != expected {
 		t.Errorf("Expected\n'%s'\ngot\n'%s'\n", expected, resp)
+	}
+
+}
+
+func TestApiRequest(t *testing.T) {
+	server := retryCallServer()
+	defer server.Close()
+
+	ac := &Config{
+		TokenKey: "foo",
+		TokenApp: "bar",
+		URL:      server.URL,
+	}
+
+	apih, err := NewAPI(ac)
+	if err != nil {
+		t.Errorf("Expected no error, got '%+v'", err)
+	}
+
+	t.Log("Testing api request retries, this may take a few...")
+
+	apih.DisableExponentialBackoff()
+
+	t.Log("drift retry")
+	{
+		calls := []string{"GET", "PUT", "POST", "DELETE"}
+		for _, call := range calls {
+			t.Logf("\tTesting %d %s call(s)", maxReq, call)
+			numReq = 0
+			start := time.Now()
+			resp, err := apih.apiRequest(call, "/", nil)
+			if err != nil {
+				t.Errorf("Expected no error, got '%+v'", resp)
+			}
+			elapsed := time.Since(start)
+			t.Log("\tTime: ", elapsed)
+
+			expected := "blah blah blah, error...\n"
+			if string(resp) != expected {
+				t.Errorf("Expected\n'%s'\ngot\n'%s'\n", expected, resp)
+			}
+		}
+	}
+
+	apih.EnableExponentialBackoff()
+
+	t.Log("exponential backoff")
+	{
+		calls := []string{"GET", "PUT", "POST", "DELETE"}
+		for _, call := range calls {
+			t.Logf("\tTesting %d %s call(s)", maxReq, call)
+			numReq = 0
+			start := time.Now()
+			resp, err := apih.apiRequest(call, "/", nil)
+			if err != nil {
+				t.Errorf("Expected no error, got '%+v'", resp)
+			}
+			elapsed := time.Since(start)
+			t.Log("\tTime: ", elapsed)
+
+			expected := "blah blah blah, error...\n"
+			if string(resp) != expected {
+				t.Errorf("Expected\n'%s'\ngot\n'%s'\n", expected, resp)
+			}
+		}
+	}
+
+	apih.DisableExponentialBackoff()
+
+	t.Log("drift retry - bad token")
+	{
+		_, err := apih.apiRequest("GET", "/auth_error_token", nil)
+		if err == nil {
+			t.Fatal("expected error")
+		}
+	}
+
+	t.Log("drift retry - bad app")
+	{
+		_, err := apih.apiRequest("GET", "/auth_error_app", nil)
+		if err == nil {
+			t.Fatal("expected error")
+		}
+	}
+
+	apih.EnableExponentialBackoff()
+
+	t.Log("exponential backoff - bad token")
+	{
+		_, err := apih.apiRequest("GET", "/auth_error_token", nil)
+		if err == nil {
+			t.Fatal("expected error")
+		}
+	}
+
+	t.Log("exponential backoff - bad app")
+	{
+		_, err := apih.apiRequest("GET", "/auth_error_app", nil)
+		if err == nil {
+			t.Fatal("expected error")
+		}
 	}
 
 }
