@@ -329,21 +329,32 @@ func New(cfg *Config) (*CheckManager, error) {
 
 // Initialize for sending metrics
 func (cm *CheckManager) Initialize() {
-	go func() {
-		if cm.enabled {
-			cm.apih.EnableExponentialBackoff()
-		}
+
+	// if not managing the check, quicker initialization
+	if !cm.enabled {
 		err := cm.initializeTrapURL()
 		if err == nil {
 			cm.initializedmu.Lock()
 			cm.initialized = true
 			cm.initializedmu.Unlock()
 		} else {
-			fmt.Printf("[WARN] error initializing trap %s", err.Error())
+			cm.Log.Printf("[WARN] error initializing trap %s", err.Error())
 		}
-		if cm.enabled {
-			cm.apih.DisableExponentialBackoff()
+		return
+	}
+
+	// background initialization when we have to reach out to the api
+	go func() {
+		cm.apih.EnableExponentialBackoff()
+		err := cm.initializeTrapURL()
+		if err == nil {
+			cm.initializedmu.Lock()
+			cm.initialized = true
+			cm.initializedmu.Unlock()
+		} else {
+			cm.Log.Printf("[WARN] error initializing trap %s", err.Error())
 		}
+		cm.apih.DisableExponentialBackoff()
 	}()
 }
 
