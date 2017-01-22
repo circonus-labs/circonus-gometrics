@@ -21,7 +21,7 @@ type RuleSetRule struct {
 	Criteria          string  `json:"criteria"`                     // string
 	Severity          uint    `json:"severity"`                     // uint
 	Value             string  `json:"value"`                        // string
-	Wait              uint    `json:"wait,omitempty"`               // uint
+	Wait              uint    `json:"wait"`                         // uint
 	WindowingDuration uint    `json:"windowing_duration,omitempty"` // uint
 	WindowingFunction *string `json:"windowing_function,omitempty"` // string or null
 }
