@@ -8,9 +8,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
 	"testing"
@@ -327,6 +329,7 @@ func TestSelectBroker(t *testing.T) {
 
 func TestIsValidBroker(t *testing.T) {
 	cm := &CheckManager{
+		Log:                   log.New(os.Stderr, "", log.LstdFlags),
 		checkType:             "httptrap",
 		brokerMaxResponseTime: time.Duration(time.Millisecond * 50),
 	}
@@ -366,6 +369,7 @@ func TestIsValidBroker(t *testing.T) {
 
 	t.Log("unable to connect, broker.ExternalPort")
 	{
+		broker.Name = "test"
 		broker.Details[0].Modules = []string{"httptrap"}
 		broker.Details[0].Status = "active"
 		if cm.isValidBroker(&broker) {
@@ -375,6 +379,7 @@ func TestIsValidBroker(t *testing.T) {
 
 	t.Log("unable to connect, broker.Port")
 	{
+		broker.Name = "test"
 		broker.Details[0].ExternalPort = 0
 		broker.Details[0].Modules = []string{"httptrap"}
 		broker.Details[0].Status = "active"
@@ -385,6 +390,7 @@ func TestIsValidBroker(t *testing.T) {
 
 	t.Log("unable to connect, default port")
 	{
+		broker.Name = "test"
 		broker.Details[0].ExternalPort = 0
 		broker.Details[0].Port = &[]uint16{0}[0]
 		broker.Details[0].Modules = []string{"httptrap"}
