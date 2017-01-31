@@ -74,7 +74,7 @@ type GraphGuide struct {
 
 // GraphMetricCluster defines a metric cluster
 type GraphMetricCluster struct {
-	AggregateFunc string  `json:"aggregation_function,omitempty"` // string
+	AggregateFunc string  `json:"aggregate_function,omitempty"` // string
 	Axis          string  `json:"axis,omitempty"`                 // string
 	DataFormula   *string `json:"data_formula,omitempty"`         // string or null
 	Hidden        bool    `json:"hidden"`                         // boolean
