@@ -34,7 +34,7 @@ var (
 			GraphDatapoint{
 				Axis:        "l",
 				CheckID:     1234,
-				Color:       "#ff0000",
+				Color:       &[]string{"#ff0000"}[0],
 				DataFormula: &testFormula2,
 				Derive:      "gauge",
 				Hidden:      false,
@@ -45,7 +45,7 @@ var (
 			GraphDatapoint{
 				Axis:        "l",
 				CheckID:     2345,
-				Color:       "#00ff00",
+				Color:       &[]string{"#00ff00"}[0],
 				DataFormula: &testFormula2,
 				Derive:      "gauge",
 				Hidden:      false,
@@ -55,10 +55,10 @@ var (
 			},
 		},
 		Description: "Time to first byte verses time to whole thing",
-		LineStyle:   "interpolated",
-		LogLeftY:    10,
+		LineStyle:   &[]string{"interpolated"}[0],
+		LogLeftY:    &[]int{10}[0],
 		Notes:       &[]string{"This graph shows just the main webserver"}[0],
-		Style:       "line",
+		Style:       &[]string{"line"}[0],
 		Tags:        []string{"datacenter:primary"},
 		Title:       "Slow Webserver",
 	}
