@@ -366,6 +366,35 @@ func TestIsValidBroker(t *testing.T) {
 			t.Fatal("Expected invalid broker")
 		}
 	}
+}
+
+func TestIsValidBrokerTimeout(t *testing.T) {
+	if os.Getenv("CIRCONUS_BROKER_TEST_TIMEOUT") == "" {
+		t.Skip("not testing timeouts, CIRCONUS_BROKER_TEST_TIMEOUT not set")
+	}
+
+	cm := &CheckManager{
+		Log:                   log.New(os.Stderr, "", log.LstdFlags),
+		checkType:             "httptrap",
+		brokerMaxResponseTime: time.Duration(time.Millisecond * 50),
+	}
+
+	broker := api.Broker{
+		CID:  "/broker/2",
+		Name: "test broker",
+		Type: "enterprise",
+		Details: []api.BrokerDetail{
+			api.BrokerDetail{
+				CN:           "testbroker.example.com",
+				ExternalHost: nil,
+				ExternalPort: 43191,
+				IP:           &[]string{"127.0.0.1"}[0],
+				Modules:      []string{"httptrap"},
+				Port:         &[]uint16{43191}[0],
+				Status:       "unprovisioned",
+			},
+		},
+	}
 
 	t.Log("unable to connect, broker.ExternalPort")
 	{
