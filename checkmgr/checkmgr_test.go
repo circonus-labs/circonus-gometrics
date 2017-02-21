@@ -9,9 +9,11 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
 	"testing"
@@ -204,6 +206,10 @@ func testCMServer() *httptest.Server {
 				w.WriteHeader(405)
 				fmt.Fprintf(w, "method not allowed %s", r.Method)
 			}
+		case "/pki/ca.crt":
+			w.WriteHeader(200)
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprintln(w, cert)
 		default:
 			msg := fmt.Sprintf("not found %s", r.URL.Path)
 			w.WriteHeader(404)
@@ -316,6 +322,7 @@ func TestNewCheckManager(t *testing.T) {
 	t.Log("Defaults")
 	{
 		cfg := &Config{
+			Log: log.New(os.Stderr, "", log.LstdFlags),
 			API: api.Config{
 				TokenKey: "1234",
 				TokenApp: "abc",
