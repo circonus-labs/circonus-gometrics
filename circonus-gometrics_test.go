@@ -380,3 +380,151 @@ func TestFlush(t *testing.T) {
 		cm.Flush()
 	}
 }
+
+func TestPackageMetrics(t *testing.T) {
+	cfg := &Config{}
+	cfg.CheckManager.Check.SubmissionURL = "none"
+	cfg.Interval = "0"
+
+	t.Log("Not flushing")
+	{
+		cm, err := NewCirconusMetrics(cfg)
+		if err != nil {
+			t.Errorf("Expected no error, got '%v'", err)
+		}
+
+		cm.flushing = false
+		newMetrics, output := cm.packageMetrics()
+		if len(newMetrics) != 0 && len(output) != 0 {
+			t.Fatal("expected 0 metrics")
+		}
+	}
+}
+
+func TestMetrics(t *testing.T) {
+	cfg := &Config{}
+	cfg.CheckManager.Check.SubmissionURL = "none"
+	cfg.Interval = "0"
+
+	t.Log("Already flushing")
+	{
+		cm, err := NewCirconusMetrics(cfg)
+		if err != nil {
+			t.Errorf("Expected no error, got '%v'", err)
+		}
+
+		cm.flushing = true
+		metrics := cm.Metrics()
+		if len(metrics) != 0 {
+			t.Fatal("expected 0 metrics")
+		}
+	}
+
+	t.Log("No metrics")
+	{
+		cm, err := NewCirconusMetrics(cfg)
+		if err != nil {
+			t.Errorf("Expected no error, got '%v'", err)
+		}
+
+		metrics := cm.Metrics()
+		if len(metrics) != 0 {
+			t.Fatal("expected 0 metrics")
+		}
+	}
+
+	t.Log("counter")
+	{
+		cm, err := NewCirconusMetrics(cfg)
+		if err != nil {
+			t.Errorf("Expected no error, got '%v'", err)
+		}
+
+		cm.Set("foo", 30)
+
+		metrics := cm.Metrics()
+		if len(metrics) == 0 {
+			t.Fatal("expected 1 metric")
+		}
+
+		if m, mok := metrics["foo"].(map[string]interface{}); !mok {
+			t.Fatalf("'foo' not found in %v", metrics)
+		} else if v, vok := m["_value"].(uint64); !vok {
+			t.Fatalf("'_value' not found in %v", m)
+		} else if v != 30 {
+			t.Fatalf("'_value' not correct %v", v)
+		}
+
+	}
+
+	t.Log("gauge")
+	{
+		cm, err := NewCirconusMetrics(cfg)
+		if err != nil {
+			t.Errorf("Expected no error, got '%v'", err)
+		}
+
+		cm.SetGauge("foo", 30)
+
+		metrics := cm.Metrics()
+		if len(metrics) == 0 {
+			t.Fatal("expected 1 metric")
+		}
+
+		if m, mok := metrics["foo"].(map[string]interface{}); !mok {
+			t.Fatalf("'foo' not found in %v", metrics)
+		} else if v, vok := m["_value"]; !vok {
+			t.Fatalf("'_value' not found in %v", m)
+		} else if v != "30" {
+			t.Fatalf("'_value' not correct %v", v)
+		}
+	}
+
+	t.Log("histogram")
+	{
+		cm, err := NewCirconusMetrics(cfg)
+		if err != nil {
+			t.Errorf("Expected no error, got '%v'", err)
+		}
+
+		cm.Timing("foo", 30.28)
+
+		metrics := cm.Metrics()
+		if len(metrics) == 0 {
+			t.Fatal("expected 1 metric")
+		}
+
+		if m, mok := metrics["foo"].(map[string]interface{}); !mok {
+			t.Fatalf("'foo' not found in %v", metrics)
+		} else if v, vok := m["_value"].([]string); !vok {
+			t.Fatalf("'_value' not found in %v", m)
+		} else if len(v) != 1 {
+			t.Fatal("expected 1 value")
+		} else if v[0] != "H[3.0e+01]=1" {
+			t.Fatalf("'_value' not correct %#v", v[0])
+		}
+	}
+
+	t.Log("text")
+	{
+		cm, err := NewCirconusMetrics(cfg)
+		if err != nil {
+			t.Errorf("Expected no error, got '%v'", err)
+		}
+
+		cm.SetText("foo", "bar")
+
+		metrics := cm.Metrics()
+		if len(metrics) == 0 {
+			t.Fatal("expected 1 metric")
+		}
+
+		if m, mok := metrics["foo"].(map[string]interface{}); !mok {
+			t.Fatalf("'foo' not found in %v", metrics)
+		} else if v, vok := m["_value"]; !vok {
+			t.Fatalf("'_value' not found in %v", m)
+		} else if v != "bar" {
+			t.Fatalf("'_value' not correct %v", v)
+		}
+	}
+}

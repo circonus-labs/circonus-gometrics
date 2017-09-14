@@ -75,6 +75,7 @@ type CirconusMetrics struct {
 	flushInterval   time.Duration
 	flushing        bool
 	flushmu         sync.Mutex
+	packagingmu     sync.Mutex
 	check           *checkmgr.CheckManager
 
 	counters map[string]uint64
@@ -224,24 +225,19 @@ func (m *CirconusMetrics) Ready() bool {
 	return m.check.IsReady()
 }
 
-// Flush metrics kicks off the process of sending metrics to Circonus
-func (m *CirconusMetrics) Flush() {
-	if m.flushing {
-		return
-	}
-	m.flushmu.Lock()
-	m.flushing = true
-	m.flushmu.Unlock()
+func (m *CirconusMetrics) packageMetrics() (map[string]*api.CheckBundleMetric, map[string]interface{}) {
+
+	m.packagingmu.Lock()
+	defer m.packagingmu.Unlock()
 
 	if m.Debug {
-		m.Log.Println("[DEBUG] Flushing metrics")
+		m.Log.Println("[DEBUG] Packaging metrics")
 	}
 
-	// check for new metrics and enable them automatically
 	newMetrics := make(map[string]*api.CheckBundleMetric)
+	output := make(map[string]interface{})
 
 	counters, gauges, histograms, text := m.snapshot()
-	output := make(map[string]interface{})
 	for name, value := range counters {
 		send := m.check.IsMetricActive(name)
 		if !send && m.check.ActivateMetric(name) {
@@ -313,6 +309,42 @@ func (m *CirconusMetrics) Flush() {
 			}
 		}
 	}
+
+	return newMetrics, output
+}
+
+// Metrics flushes current metrics to a structure and returns it (does NOT send to Circonus)
+func (m *CirconusMetrics) Metrics() map[string]interface{} {
+	m.flushmu.Lock()
+	if m.flushing {
+		m.flushmu.Unlock()
+		return map[string]interface{}{}
+	}
+
+	m.flushing = true
+	m.flushmu.Unlock()
+
+	_, output := m.packageMetrics()
+
+	m.flushmu.Lock()
+	m.flushing = false
+	m.flushmu.Unlock()
+
+	return output
+}
+
+// Flush metrics kicks off the process of sending metrics to Circonus
+func (m *CirconusMetrics) Flush() {
+	m.flushmu.Lock()
+	if m.flushing {
+		m.flushmu.Unlock()
+		return
+	}
+
+	m.flushing = true
+	m.flushmu.Unlock()
+
+	newMetrics, output := m.packageMetrics()
 
 	if len(output) > 0 {
 		m.submit(output, newMetrics)
