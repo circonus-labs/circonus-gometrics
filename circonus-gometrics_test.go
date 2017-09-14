@@ -414,8 +414,8 @@ func TestMetrics(t *testing.T) {
 		}
 
 		cm.flushing = true
-		metrics := cm.Metrics()
-		if len(metrics) != 0 {
+		metrics := cm.FlushMetrics()
+		if len(*metrics) != 0 {
 			t.Fatal("expected 0 metrics")
 		}
 	}
@@ -427,8 +427,8 @@ func TestMetrics(t *testing.T) {
 			t.Errorf("Expected no error, got '%v'", err)
 		}
 
-		metrics := cm.Metrics()
-		if len(metrics) != 0 {
+		metrics := cm.FlushMetrics()
+		if len(*metrics) != 0 {
 			t.Fatal("expected 0 metrics")
 		}
 	}
@@ -442,17 +442,17 @@ func TestMetrics(t *testing.T) {
 
 		cm.Set("foo", 30)
 
-		metrics := cm.Metrics()
-		if len(metrics) == 0 {
+		metrics := cm.FlushMetrics()
+		if len(*metrics) == 0 {
 			t.Fatal("expected 1 metric")
 		}
 
-		if m, mok := metrics["foo"].(map[string]interface{}); !mok {
+		if m, mok := (*metrics)["foo"]; !mok {
 			t.Fatalf("'foo' not found in %v", metrics)
-		} else if v, vok := m["_value"].(uint64); !vok {
-			t.Fatalf("'_value' not found in %v", m)
-		} else if v != 30 {
-			t.Fatalf("'_value' not correct %v", v)
+		} else if m.Type != "L" {
+			t.Fatalf("'Type' not correct %v", m)
+		} else if m.Value.(uint64) != 30 {
+			t.Fatalf("'Value' not correct %v", m)
 		}
 
 	}
@@ -466,17 +466,17 @@ func TestMetrics(t *testing.T) {
 
 		cm.SetGauge("foo", 30)
 
-		metrics := cm.Metrics()
-		if len(metrics) == 0 {
+		metrics := cm.FlushMetrics()
+		if len(*metrics) == 0 {
 			t.Fatal("expected 1 metric")
 		}
 
-		if m, mok := metrics["foo"].(map[string]interface{}); !mok {
+		if m, mok := (*metrics)["foo"]; !mok {
 			t.Fatalf("'foo' not found in %v", metrics)
-		} else if v, vok := m["_value"]; !vok {
-			t.Fatalf("'_value' not found in %v", m)
-		} else if v != "30" {
-			t.Fatalf("'_value' not correct %v", v)
+		} else if m.Type != "n" {
+			t.Fatalf("'Type' not correct %v", m)
+		} else if m.Value != "30" {
+			t.Fatalf("'Value' not correct %v", m)
 		}
 	}
 
@@ -489,19 +489,19 @@ func TestMetrics(t *testing.T) {
 
 		cm.Timing("foo", 30.28)
 
-		metrics := cm.Metrics()
-		if len(metrics) == 0 {
+		metrics := cm.FlushMetrics()
+		if len(*metrics) == 0 {
 			t.Fatal("expected 1 metric")
 		}
 
-		if m, mok := metrics["foo"].(map[string]interface{}); !mok {
+		if m, mok := (*metrics)["foo"]; !mok {
 			t.Fatalf("'foo' not found in %v", metrics)
-		} else if v, vok := m["_value"].([]string); !vok {
-			t.Fatalf("'_value' not found in %v", m)
-		} else if len(v) != 1 {
+		} else if m.Type != "n" {
+			t.Fatalf("'Type' not correct %v", m)
+		} else if len(m.Value.([]string)) != 1 {
 			t.Fatal("expected 1 value")
-		} else if v[0] != "H[3.0e+01]=1" {
-			t.Fatalf("'_value' not correct %#v", v[0])
+		} else if m.Value.([]string)[0] != "H[3.0e+01]=1" {
+			t.Fatalf("'Value' not correct %v", m)
 		}
 	}
 
@@ -514,17 +514,17 @@ func TestMetrics(t *testing.T) {
 
 		cm.SetText("foo", "bar")
 
-		metrics := cm.Metrics()
-		if len(metrics) == 0 {
+		metrics := cm.FlushMetrics()
+		if len(*metrics) == 0 {
 			t.Fatal("expected 1 metric")
 		}
 
-		if m, mok := metrics["foo"].(map[string]interface{}); !mok {
+		if m, mok := (*metrics)["foo"]; !mok {
 			t.Fatalf("'foo' not found in %v", metrics)
-		} else if v, vok := m["_value"]; !vok {
-			t.Fatalf("'_value' not found in %v", m)
-		} else if v != "bar" {
-			t.Fatalf("'_value' not correct %v", v)
+		} else if m.Type != "s" {
+			t.Fatalf("'Type' not correct %v", m)
+		} else if m.Value != "bar" {
+			t.Fatalf("'Value' not correct %v", m)
 		}
 	}
 }

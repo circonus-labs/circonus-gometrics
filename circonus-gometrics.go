@@ -46,6 +46,15 @@ const (
 	defaultFlushInterval = "10s" // 10 * time.Second
 )
 
+// Metric defines an individual metric
+type Metric struct {
+	Type  string      `json:"_type"`
+	Value interface{} `json:"_value"`
+}
+
+// Metrics holds host metrics
+type Metrics map[string]Metric
+
 // Config options for circonus-gometrics
 type Config struct {
 	Log             *log.Logger
@@ -225,7 +234,7 @@ func (m *CirconusMetrics) Ready() bool {
 	return m.check.IsReady()
 }
 
-func (m *CirconusMetrics) packageMetrics() (map[string]*api.CheckBundleMetric, map[string]interface{}) {
+func (m *CirconusMetrics) packageMetrics() (map[string]*api.CheckBundleMetric, Metrics) {
 
 	m.packagingmu.Lock()
 	defer m.packagingmu.Unlock()
@@ -234,10 +243,9 @@ func (m *CirconusMetrics) packageMetrics() (map[string]*api.CheckBundleMetric, m
 		m.Log.Println("[DEBUG] Packaging metrics")
 	}
 
-	newMetrics := make(map[string]*api.CheckBundleMetric)
-	output := make(map[string]interface{})
-
 	counters, gauges, histograms, text := m.snapshot()
+	newMetrics := make(map[string]*api.CheckBundleMetric)
+	output := make(Metrics, len(counters)+len(gauges)+len(histograms)+len(text))
 	for name, value := range counters {
 		send := m.check.IsMetricActive(name)
 		if !send && m.check.ActivateMetric(name) {
@@ -249,10 +257,7 @@ func (m *CirconusMetrics) packageMetrics() (map[string]*api.CheckBundleMetric, m
 			}
 		}
 		if send {
-			output[name] = map[string]interface{}{
-				"_type":  "L",
-				"_value": value,
-			}
+			output[name] = Metric{Type: "L", Value: value}
 		}
 	}
 
@@ -267,10 +272,7 @@ func (m *CirconusMetrics) packageMetrics() (map[string]*api.CheckBundleMetric, m
 			}
 		}
 		if send {
-			output[name] = map[string]interface{}{
-				"_type":  "n",
-				"_value": value,
-			}
+			output[name] = Metric{Type: "n", Value: value}
 		}
 	}
 
@@ -285,10 +287,7 @@ func (m *CirconusMetrics) packageMetrics() (map[string]*api.CheckBundleMetric, m
 			}
 		}
 		if send {
-			output[name] = map[string]interface{}{
-				"_type":  "n",
-				"_value": value.DecStrings(),
-			}
+			output[name] = Metric{Type: "n", Value: value.DecStrings()}
 		}
 	}
 
@@ -303,22 +302,19 @@ func (m *CirconusMetrics) packageMetrics() (map[string]*api.CheckBundleMetric, m
 			}
 		}
 		if send {
-			output[name] = map[string]interface{}{
-				"_type":  "s",
-				"_value": value,
-			}
+			output[name] = Metric{Type: "s", Value: value}
 		}
 	}
 
 	return newMetrics, output
 }
 
-// Metrics flushes current metrics to a structure and returns it (does NOT send to Circonus)
-func (m *CirconusMetrics) Metrics() map[string]interface{} {
+// FlushMetrics flushes current metrics to a structure and returns it (does NOT send to Circonus)
+func (m *CirconusMetrics) FlushMetrics() *Metrics {
 	m.flushmu.Lock()
 	if m.flushing {
 		m.flushmu.Unlock()
-		return map[string]interface{}{}
+		return &Metrics{}
 	}
 
 	m.flushing = true
@@ -330,7 +326,7 @@ func (m *CirconusMetrics) Metrics() map[string]interface{} {
 	m.flushing = false
 	m.flushmu.Unlock()
 
-	return output
+	return &output
 }
 
 // Flush metrics kicks off the process of sending metrics to Circonus
