@@ -62,7 +62,7 @@
 				
 				<option value="file3">github.com/circonus-labs/circonus-gometrics/api/annotation.go (79.1%)</option>
 				
-				<option value="file4">github.com/circonus-labs/circonus-gometrics/api/api.go (90.8%)</option>
+				<option value="file4">github.com/circonus-labs/circonus-gometrics/api/api.go (91.9%)</option>
 				
 				<option value="file5">github.com/circonus-labs/circonus-gometrics/api/broker.go (80.5%)</option>
 				
@@ -102,7 +102,7 @@
 				
 				<option value="file23">github.com/circonus-labs/circonus-gometrics/checkmgr/check.go (79.4%)</option>
 				
-				<option value="file24">github.com/circonus-labs/circonus-gometrics/checkmgr/checkmgr.go (76.3%)</option>
+				<option value="file24">github.com/circonus-labs/circonus-gometrics/checkmgr/checkmgr.go (82.1%)</option>
 				
 				<option value="file25">github.com/circonus-labs/circonus-gometrics/checkmgr/metrics.go (98.9%)</option>
 				
@@ -955,13 +955,25 @@ type TagType []string
 
 // Config options for Circonus API
 type Config struct {
-        URL            string
-        TokenKey       string
-        TokenApp       string
+        // URL defines the API URL - default https://api.circonus.com/v2/
+        URL string
+
+        // TokenKey defines the key to use when communicating with the API
+        TokenKey string
+
+        // TokenApp defines the app to use when communicating with the API
+        TokenApp string
+
         TokenAccountID string
-        CACert         *x509.CertPool
-        Log            *log.Logger
-        Debug          bool
+
+        // CACert deprecating, use TLSConfig instead
+        CACert *x509.CertPool
+
+        // TLSConfig defines a custom tls configuration to use when communicating with the API
+        TLSConfig *tls.Config
+
+        Log   *log.Logger
+        Debug bool
 }
 
 // API Circonus API
@@ -971,6 +983,7 @@ type API struct {
         app                     TokenAppType
         accountID               TokenAccountIDType
         caCert                  *x509.CertPool
+        tlsConfig               *tls.Config
         Debug                   bool
         Log                     *log.Logger
         useExponentialBackoff   bool
@@ -983,52 +996,53 @@ func NewClient(ac *Config) (*API, error) <span class="cov3" title="4">{
 }</span>
 
 // NewAPI returns a new Circonus API (alias for New)
-func NewAPI(ac *Config) (*API, error) <span class="cov8" title="106">{
+func NewAPI(ac *Config) (*API, error) <span class="cov8" title="108">{
         return New(ac)
 }</span>
 
 // New returns a new Circonus API
-func New(ac *Config) (*API, error) <span class="cov9" title="124">{
+func New(ac *Config) (*API, error) <span class="cov9" title="126">{
 
         if ac == nil </span><span class="cov1" title="1">{
                 return nil, errors.New("Invalid API configuration (nil)")
         }</span>
 
-        <span class="cov9" title="123">key := TokenKeyType(ac.TokenKey)
+        <span class="cov9" title="125">key := TokenKeyType(ac.TokenKey)
         if key == "" </span><span class="cov1" title="1">{
                 return nil, errors.New("API Token is required")
         }</span>
 
-        <span class="cov9" title="122">app := TokenAppType(ac.TokenApp)
+        <span class="cov9" title="124">app := TokenAppType(ac.TokenApp)
         if app == "" </span><span class="cov2" title="2">{
                 app = defaultAPIApp
         }</span>
 
-        <span class="cov9" title="122">acctID := TokenAccountIDType(ac.TokenAccountID)
+        <span class="cov9" title="124">acctID := TokenAccountIDType(ac.TokenAccountID)
 
         au := string(ac.URL)
         if au == "" </span><span class="cov4" title="6">{
                 au = defaultAPIURL
         }</span>
-        <span class="cov9" title="122">if !strings.Contains(au, "/") </span><span class="cov1" title="1">{
+        <span class="cov9" title="124">if !strings.Contains(au, "/") </span><span class="cov1" title="1">{
                 // if just a hostname is passed, ASSume "https" and a path prefix of "/v2"
                 au = fmt.Sprintf("https://%s/v2", ac.URL)
         }</span>
-        <span class="cov9" title="122">if last := len(au) - 1; last &gt;= 0 &amp;&amp; au[last] == '/' </span><span class="cov1" title="1">{
+        <span class="cov9" title="124">if last := len(au) - 1; last &gt;= 0 &amp;&amp; au[last] == '/' </span><span class="cov1" title="1">{
                 // strip off trailing '/'
                 au = au[:last]
         }</span>
-        <span class="cov9" title="122">apiURL, err := url.Parse(au)
+        <span class="cov9" title="124">apiURL, err := url.Parse(au)
         if err != nil </span><span class="cov1" title="1">{
                 return nil, err
         }</span>
 
-        <span class="cov9" title="121">a := &amp;API{
+        <span class="cov9" title="123">a := &amp;API{
                 apiURL:    apiURL,
                 key:       key,
                 app:       app,
                 accountID: acctID,
                 caCert:    ac.CACert,
+                tlsConfig: ac.TLSConfig,
                 Debug:     ac.Debug,
                 Log:       ac.Log,
                 useExponentialBackoff: false,
@@ -1039,11 +1053,11 @@ func New(ac *Config) (*API, error) <span class="cov9" title="124">{
         if a.Debug &amp;&amp; a.Log == nil </span><span class="cov1" title="1">{
                 a.Log = log.New(os.Stderr, "", log.LstdFlags)
         }</span>
-        <span class="cov9" title="121">if a.Log == nil </span><span class="cov9" title="120">{
+        <span class="cov9" title="123">if a.Log == nil </span><span class="cov9" title="122">{
                 a.Log = log.New(ioutil.Discard, "", log.LstdFlags)
         }</span>
 
-        <span class="cov9" title="121">return a, nil</span>
+        <span class="cov9" title="123">return a, nil</span>
 }
 
 // EnableExponentialBackoff enables use of exponential backoff for next API call(s)
@@ -1064,7 +1078,7 @@ func (a *API) DisableExponentialBackoff() <span class="cov2" title="3">{
 }</span>
 
 // Get API request
-func (a *API) Get(reqPath string) ([]byte, error) <span class="cov9" title="113">{
+func (a *API) Get(reqPath string) ([]byte, error) <span class="cov8" title="113">{
         return a.apiRequest("GET", reqPath, nil)
 }</span>
 
@@ -1129,24 +1143,24 @@ func (a *API) apiRequest(reqMethod string, reqPath string, data []byte) ([]byte,
 }
 
 // apiCall call Circonus API
-func (a *API) apiCall(reqMethod string, reqPath string, data []byte) ([]byte, error) <span class="cov9" title="195">{
+func (a *API) apiCall(reqMethod string, reqPath string, data []byte) ([]byte, error) <span class="cov9" title="203">{
         reqURL := a.apiURL.String()
 
         if reqPath == "" </span><span class="cov1" title="1">{
                 return nil, errors.New("Invalid URL path")
         }</span>
-        <span class="cov9" title="194">if reqPath[:1] != "/" </span><span class="cov1" title="1">{
+        <span class="cov9" title="202">if reqPath[:1] != "/" </span><span class="cov1" title="1">{
                 reqURL += "/"
         }</span>
-        <span class="cov9" title="194">if len(reqPath) &gt;= 3 &amp;&amp; reqPath[:3] == "/v2" </span><span class="cov1" title="1">{
+        <span class="cov9" title="202">if len(reqPath) &gt;= 3 &amp;&amp; reqPath[:3] == "/v2" </span><span class="cov1" title="1">{
                 reqURL += reqPath[3:]
-        }</span><span class="cov9" title="193"> else {
+        }</span><span class="cov9" title="201"> else {
                 reqURL += reqPath
         }</span>
 
         // keep last HTTP error in the event of retry failure
-        <span class="cov9" title="194">var lastHTTPError error
-        retryPolicy := func(resp *http.Response, err error) (bool, error) </span><span class="cov10" title="202">{
+        <span class="cov9" title="202">var lastHTTPError error
+        retryPolicy := func(resp *http.Response, err error) (bool, error) </span><span class="cov10" title="210">{
                 if err != nil </span><span class="cov0" title="0">{
                         lastHTTPError = err
                         return true, err
@@ -1156,7 +1170,7 @@ func (a *API) apiCall(reqMethod string, reqPath string, data []byte) ([]byte, er
                 // errors and may relate to outages on the server side. This will catch
                 // invalid response codes as well, like 0 and 999.
                 // Retry on 429 (rate limit) as well.
-                <span class="cov10" title="202">if resp.StatusCode == 0 || // wtf?!
+                <span class="cov10" title="210">if resp.StatusCode == 0 || // wtf?!
                         resp.StatusCode &gt;= 500 || // rutroh
                         resp.StatusCode == 429 </span><span class="cov5" title="16">{ // rate limit
                         body, readErr := ioutil.ReadAll(resp.Body)
@@ -1167,37 +1181,43 @@ func (a *API) apiCall(reqMethod string, reqPath string, data []byte) ([]byte, er
                         }</span>
                         <span class="cov5" title="16">return true, nil</span>
                 }
-                <span class="cov9" title="186">return false, nil</span>
+                <span class="cov9" title="194">return false, nil</span>
         }
 
-        <span class="cov9" title="194">dataReader := bytes.NewReader(data)
+        <span class="cov9" title="202">dataReader := bytes.NewReader(data)
 
         req, err := retryablehttp.NewRequest(reqMethod, reqURL, dataReader)
         if err != nil </span><span class="cov0" title="0">{
                 return nil, fmt.Errorf("[ERROR] creating API request: %s %+v", reqURL, err)
         }</span>
-        <span class="cov9" title="194">req.Header.Add("Accept", "application/json")
+        <span class="cov9" title="202">req.Header.Add("Accept", "application/json")
         req.Header.Add("X-Circonus-Auth-Token", string(a.key))
         req.Header.Add("X-Circonus-App-Name", string(a.app))
-        if string(a.accountID) != "" </span><span class="cov4" title="6">{
+        if string(a.accountID) != "" </span><span class="cov5" title="14">{
                 req.Header.Add("X-Circonus-Account-ID", string(a.accountID))
         }</span>
 
-        <span class="cov9" title="194">client := retryablehttp.NewClient()
-        if a.apiURL.Scheme == "https" &amp;&amp; a.caCert != nil </span><span class="cov0" title="0">{
-                client.HTTPClient.Transport = &amp;http.Transport{
+        <span class="cov9" title="202">client := retryablehttp.NewClient()
+        if a.apiURL.Scheme == "https" </span><span class="cov4" title="8">{
+                var tlscfg *tls.Config
+                if a.tlsConfig != nil </span><span class="cov3" title="4">{ // preference full custom tls config
+                        tlscfg = a.tlsConfig
+                }</span><span class="cov3" title="4"> else if a.caCert != nil </span><span class="cov3" title="4">{
+                        tlscfg = &amp;tls.Config{RootCAs: a.caCert}
+                }</span>
+                <span class="cov4" title="8">client.HTTPClient.Transport = &amp;http.Transport{
                         Proxy: http.ProxyFromEnvironment,
                         Dial: (&amp;net.Dialer{
                                 Timeout:   30 * time.Second,
                                 KeepAlive: 30 * time.Second,
                         }).Dial,
                         TLSHandshakeTimeout: 10 * time.Second,
-                        TLSClientConfig:     &amp;tls.Config{RootCAs: a.caCert},
+                        TLSClientConfig:     tlscfg,
                         DisableKeepAlives:   true,
                         MaxIdleConnsPerHost: -1,
                         DisableCompression:  true,
-                }
-        }</span><span class="cov9" title="194"> else {
+                }</span>
+        }<span class="cov9" title="194"> else {
                 client.HTTPClient.Transport = &amp;http.Transport{
                         Proxy: http.ProxyFromEnvironment,
                         Dial: (&amp;net.Dialer{
@@ -1211,7 +1231,7 @@ func (a *API) apiCall(reqMethod string, reqPath string, data []byte) ([]byte, er
                 }
         }</span>
 
-        <span class="cov9" title="194">a.useExponentialBackoffmu.Lock()
+        <span class="cov9" title="202">a.useExponentialBackoffmu.Lock()
         eb := a.useExponentialBackoff
         a.useExponentialBackoffmu.Unlock()
 
@@ -1220,20 +1240,20 @@ func (a *API) apiCall(reqMethod string, reqPath string, data []byte) ([]byte, er
                 client.RetryWaitMin = 1
                 client.RetryWaitMax = 2
                 client.RetryMax = 0
-        }</span><span class="cov9" title="180"> else {
+        }</span><span class="cov9" title="188"> else {
                 client.RetryWaitMin = minRetryWait
                 client.RetryWaitMax = maxRetryWait
                 client.RetryMax = maxRetries
         }</span>
 
         // retryablehttp only groks log or no log
-        <span class="cov9" title="194">if a.Debug </span><span class="cov0" title="0">{
+        <span class="cov9" title="202">if a.Debug </span><span class="cov0" title="0">{
                 client.Logger = a.Log
-        }</span><span class="cov9" title="194"> else {
+        }</span><span class="cov9" title="202"> else {
                 client.Logger = log.New(ioutil.Discard, "", log.LstdFlags)
         }</span>
 
-        <span class="cov9" title="194">client.CheckRetry = retryPolicy
+        <span class="cov9" title="202">client.CheckRetry = retryPolicy
 
         resp, err := client.Do(req)
         if err != nil </span><span class="cov4" title="8">{
@@ -1243,13 +1263,13 @@ func (a *API) apiCall(reqMethod string, reqPath string, data []byte) ([]byte, er
                 <span class="cov0" title="0">return nil, fmt.Errorf("[ERROR] %s: %+v", reqURL, err)</span>
         }
 
-        <span class="cov9" title="186">defer resp.Body.Close()
+        <span class="cov9" title="194">defer resp.Body.Close()
         body, err := ioutil.ReadAll(resp.Body)
         if err != nil </span><span class="cov0" title="0">{
                 return nil, fmt.Errorf("[ERROR] reading response %+v", err)
         }</span>
 
-        <span class="cov9" title="186">if resp.StatusCode &lt; 200 || resp.StatusCode &gt;= 300 </span><span class="cov3" title="4">{
+        <span class="cov9" title="194">if resp.StatusCode &lt; 200 || resp.StatusCode &gt;= 300 </span><span class="cov3" title="4">{
                 msg := fmt.Sprintf("API response code %d: %s", resp.StatusCode, string(body))
                 if a.Debug </span><span class="cov0" title="0">{
                         a.Log.Printf("[DEBUG] %s\n", msg)
@@ -1258,7 +1278,7 @@ func (a *API) apiCall(reqMethod string, reqPath string, data []byte) ([]byte, er
                 <span class="cov3" title="4">return nil, fmt.Errorf("[ERROR] %s", msg)</span>
         }
 
-        <span class="cov9" title="182">return body, nil</span>
+        <span class="cov9" title="190">return body, nil</span>
 }
 </pre>
 		
@@ -5126,19 +5146,19 @@ import (
 )
 
 // UpdateCheck determines if the check needs to be updated (new metrics, tags, etc.)
-func (cm *CheckManager) UpdateCheck(newMetrics map[string]*api.CheckBundleMetric) <span class="cov7" title="5">{
+func (cm *CheckManager) UpdateCheck(newMetrics map[string]*api.CheckBundleMetric) <span class="cov6" title="5">{
         // only if check manager is enabled
         if !cm.enabled </span><span class="cov1" title="1">{
                 return
         }</span>
 
         // only if checkBundle has been populated
-        <span class="cov6" title="4">if cm.checkBundle == nil </span><span class="cov1" title="1">{
+        <span class="cov5" title="4">if cm.checkBundle == nil </span><span class="cov1" title="1">{
                 return
         }</span>
 
         // only if there is *something* to update
-        <span class="cov5" title="3">if !cm.forceCheckUpdate &amp;&amp; len(newMetrics) == 0 &amp;&amp; len(cm.metricTags) == 0 </span><span class="cov1" title="1">{
+        <span class="cov4" title="3">if !cm.forceCheckUpdate &amp;&amp; len(newMetrics) == 0 &amp;&amp; len(cm.metricTags) == 0 </span><span class="cov1" title="1">{
                 return
         }</span>
 
@@ -5197,18 +5217,18 @@ func (cm *CheckManager) UpdateCheck(newMetrics map[string]*api.CheckBundleMetric
 // check [bundle] by *check* id (note, not check_bundle id)
 // check [bundle] by search
 // create check [bundle]
-func (cm *CheckManager) initializeTrapURL() error <span class="cov10" title="11">{
+func (cm *CheckManager) initializeTrapURL() error <span class="cov10" title="14">{
         if cm.trapURL != "" </span><span class="cov0" title="0">{
                 return nil
         }</span>
 
-        <span class="cov10" title="11">cm.trapmu.Lock()
+        <span class="cov10" title="14">cm.trapmu.Lock()
         defer cm.trapmu.Unlock()
 
         // special case short-circuit: just send to a url, no check management
         // up to user to ensure that if url is https that it will work (e.g. not self-signed)
-        if cm.checkSubmissionURL != "" </span><span class="cov6" title="4">{
-                if !cm.enabled </span><span class="cov5" title="3">{
+        if cm.checkSubmissionURL != "" </span><span class="cov7" title="7">{
+                if !cm.enabled </span><span class="cov7" title="6">{
                         cm.trapURL = cm.checkSubmissionURL
                         cm.trapLastUpdate = time.Now()
                         return nil
@@ -5219,7 +5239,7 @@ func (cm *CheckManager) initializeTrapURL() error <span class="cov10" title="11"
                 return errors.New("unable to initialize trap, check manager is disabled")
         }</span>
 
-        <span class="cov8" title="7">var err error
+        <span class="cov7" title="7">var err error
         var check *api.Check
         var checkBundle *api.CheckBundle
         var broker *api.Broker
@@ -5257,8 +5277,8 @@ func (cm *CheckManager) initializeTrapURL() error <span class="cov10" title="11"
                 <span class="cov3" title="2">if !check.Active </span><span class="cov0" title="0">{
                         return fmt.Errorf("[ERROR] Check ID %v is not active", check.CID)
                 }</span>
-        }<span class="cov6" title="4"> else {
-                if checkBundle == nil </span><span class="cov6" title="4">{
+        }<span class="cov5" title="4"> else {
+                if checkBundle == nil </span><span class="cov5" title="4">{
                         // old search (instanceid as check.target)
                         searchCriteria := fmt.Sprintf(
                                 "(active:1)(type:\"%s\")(host:\"%s\")(tags:%s)", cm.checkType, cm.checkTarget, strings.Join(cm.checkSearchTag, ","))
@@ -5268,7 +5288,7 @@ func (cm *CheckManager) initializeTrapURL() error <span class="cov10" title="11"
                         }</span>
                 }
 
-                <span class="cov6" title="4">if checkBundle == nil </span><span class="cov3" title="2">{
+                <span class="cov5" title="4">if checkBundle == nil </span><span class="cov3" title="2">{
                         // new search (check.target != instanceid, instanceid encoded in notes field)
                         searchCriteria := fmt.Sprintf(
                                 "(active:1)(type:\"%s\")(tags:%s)", cm.checkType, strings.Join(cm.checkSearchTag, ","))
@@ -5279,7 +5299,7 @@ func (cm *CheckManager) initializeTrapURL() error <span class="cov10" title="11"
                         }</span>
                 }
 
-                <span class="cov6" title="4">if checkBundle == nil </span><span class="cov1" title="1">{
+                <span class="cov5" title="4">if checkBundle == nil </span><span class="cov1" title="1">{
                         // err==nil &amp;&amp; checkBundle==nil is "no check bundles matched"
                         // an error *should* be returned for any other invalid scenario
                         checkBundle, broker, err = cm.createNewCheck()
@@ -5289,8 +5309,8 @@ func (cm *CheckManager) initializeTrapURL() error <span class="cov10" title="11"
                 }
         }
 
-        <span class="cov8" title="7">if checkBundle == nil </span><span class="cov5" title="3">{
-                if check != nil </span><span class="cov5" title="3">{
+        <span class="cov7" title="7">if checkBundle == nil </span><span class="cov4" title="3">{
+                if check != nil </span><span class="cov4" title="3">{
                         cid := check.CheckBundleCID
                         checkBundle, err = cm.apih.FetchCheckBundle(api.CIDType(&amp;cid))
                         if err != nil </span><span class="cov0" title="0">{
@@ -5301,7 +5321,7 @@ func (cm *CheckManager) initializeTrapURL() error <span class="cov10" title="11"
                 }</span>
         }
 
-        <span class="cov8" title="7">if broker == nil </span><span class="cov7" title="6">{
+        <span class="cov7" title="7">if broker == nil </span><span class="cov7" title="6">{
                 cid := checkBundle.Brokers[0]
                 broker, err = cm.apih.FetchBroker(api.CIDType(&amp;cid))
                 if err != nil </span><span class="cov0" title="0">{
@@ -5310,7 +5330,7 @@ func (cm *CheckManager) initializeTrapURL() error <span class="cov10" title="11"
         }
 
         // retain to facilitate metric management (adding new metrics specifically)
-        <span class="cov8" title="7">cm.checkBundle = checkBundle
+        <span class="cov7" title="7">cm.checkBundle = checkBundle
         cm.inventoryMetrics()
 
         // determine the trap url to which metrics should be PUT
@@ -5343,25 +5363,25 @@ func (cm *CheckManager) initializeTrapURL() error <span class="cov10" title="11"
 
         // used when sending as "ServerName" get around certs not having IP SANS
         // (cert created with server name as CN but IP used in trap url)
-        <span class="cov8" title="7">cn, err := cm.getBrokerCN(broker, cm.trapURL)
+        <span class="cov7" title="7">cn, err := cm.getBrokerCN(broker, cm.trapURL)
         if err != nil </span><span class="cov0" title="0">{
                 return err
         }</span>
-        <span class="cov8" title="7">cm.trapCN = BrokerCNType(cn)
+        <span class="cov7" title="7">cm.trapCN = BrokerCNType(cn)
 
-        if cm.enabled </span><span class="cov8" title="7">{
+        if cm.enabled </span><span class="cov7" title="7">{
                 u, err := url.Parse(string(cm.trapURL))
                 if err != nil </span><span class="cov0" title="0">{
                         return err
                 }</span>
-                <span class="cov8" title="7">if u.Scheme == "https" </span><span class="cov8" title="7">{
+                <span class="cov7" title="7">if u.Scheme == "https" </span><span class="cov7" title="7">{
                         if err := cm.loadCACert(); err != nil </span><span class="cov0" title="0">{
                                 return err
                         }</span>
                 }
         }
 
-        <span class="cov8" title="7">cm.trapLastUpdate = time.Now()
+        <span class="cov7" title="7">cm.trapLastUpdate = time.Now()
 
         return nil</span>
 }
@@ -5374,25 +5394,25 @@ func (cm *CheckManager) checkBundleSearch(criteria string, filter map[string][]s
                 return nil, err
         }</span>
 
-        <span class="cov7" title="6">if len(*checkBundles) == 0 </span><span class="cov5" title="3">{
+        <span class="cov7" title="6">if len(*checkBundles) == 0 </span><span class="cov4" title="3">{
                 return nil, nil // trigger creation of a new check
         }</span>
 
-        <span class="cov5" title="3">numActive := 0
+        <span class="cov4" title="3">numActive := 0
         checkID := -1
 
-        for idx, check := range *checkBundles </span><span class="cov5" title="3">{
-                if check.Status == statusActive </span><span class="cov5" title="3">{
+        for idx, check := range *checkBundles </span><span class="cov4" title="3">{
+                if check.Status == statusActive </span><span class="cov4" title="3">{
                         numActive++
                         checkID = idx
                 }</span>
         }
 
-        <span class="cov5" title="3">if numActive &gt; 1 </span><span class="cov0" title="0">{
+        <span class="cov4" title="3">if numActive &gt; 1 </span><span class="cov0" title="0">{
                 return nil, fmt.Errorf("[ERROR] multiple check bundles match criteria %s", criteria)
         }</span>
 
-        <span class="cov5" title="3">bundle := (*checkBundles)[checkID]
+        <span class="cov4" title="3">bundle := (*checkBundles)[checkID]
 
         return &amp;bundle, nil</span>
 }
@@ -5454,17 +5474,17 @@ func (cm *CheckManager) createNewCheck() (*api.CheckBundle, *api.Broker, error) 
 }
 
 // Create a dynamic secret to use with a new check
-func (cm *CheckManager) makeSecret() (string, error) <span class="cov5" title="3">{
+func (cm *CheckManager) makeSecret() (string, error) <span class="cov4" title="3">{
         hash := sha256.New()
         x := make([]byte, 2048)
         if _, err := rand.Read(x); err != nil </span><span class="cov0" title="0">{
                 return "", err
         }</span>
-        <span class="cov5" title="3">hash.Write(x)
+        <span class="cov4" title="3">hash.Write(x)
         return hex.EncodeToString(hash.Sum(nil))[0:16], nil</span>
 }
 
-func (cm *CheckManager) getNotes() *string <span class="cov6" title="4">{
+func (cm *CheckManager) getNotes() *string <span class="cov5" title="4">{
         notes := fmt.Sprintf("cgm_instanceid|%s", cm.checkInstanceID)
         return &amp;notes
 }</span>
@@ -5629,6 +5649,8 @@ type BrokerConfig struct {
         // for a broker to be considered viable it must respond to a
         // connection attempt within this amount of time e.g. 200ms, 2s, 1m
         MaxResponseTime string
+        // TLS configuration to use when communicating wtih broker
+        TLSConfig *tls.Config
 }
 
 // Config options
@@ -5697,6 +5719,7 @@ type CheckManager struct {
         brokerID              api.IDType
         brokerSelectTag       api.TagType
         brokerMaxResponseTime time.Duration
+        brokerTLS             *tls.Config
 
         // state
         checkBundle        *api.CheckBundle
@@ -5718,18 +5741,18 @@ type Trap struct {
 }
 
 // NewCheckManager returns a new check manager
-func NewCheckManager(cfg *Config) (*CheckManager, error) <span class="cov10" title="5">{
+func NewCheckManager(cfg *Config) (*CheckManager, error) <span class="cov10" title="6">{
         return New(cfg)
 }</span>
 
 // New returns a new check manager
-func New(cfg *Config) (*CheckManager, error) <span class="cov10" title="5">{
+func New(cfg *Config) (*CheckManager, error) <span class="cov10" title="6">{
 
         if cfg == nil </span><span class="cov1" title="1">{
                 return nil, errors.New("invalid Check Manager configuration (nil)")
         }</span>
 
-        <span class="cov8" title="4">cm := &amp;CheckManager{enabled: true, initialized: false}
+        <span class="cov9" title="5">cm := &amp;CheckManager{enabled: true, initialized: false}
 
         // Setup logging for check manager
         cm.Debug = cfg.Debug
@@ -5737,24 +5760,24 @@ func New(cfg *Config) (*CheckManager, error) <span class="cov10" title="5">{
         if cm.Debug &amp;&amp; cm.Log == nil </span><span class="cov0" title="0">{
                 cm.Log = log.New(os.Stderr, "", log.LstdFlags)
         }</span>
-        <span class="cov8" title="4">if cm.Log == nil </span><span class="cov7" title="3">{
+        <span class="cov9" title="5">if cm.Log == nil </span><span class="cov6" title="3">{
                 cm.Log = log.New(ioutil.Discard, "", log.LstdFlags)
         }</span>
 
-        <span class="cov8" title="4">if cfg.Check.SubmissionURL != "" </span><span class="cov4" title="2">{
+        <span class="cov9" title="5">if cfg.Check.SubmissionURL != "" </span><span class="cov6" title="3">{
                 cm.checkSubmissionURL = api.URLType(cfg.Check.SubmissionURL)
         }</span>
 
         // Blank API Token *disables* check management
-        <span class="cov8" title="4">if cfg.API.TokenKey == "" </span><span class="cov7" title="3">{
+        <span class="cov9" title="5">if cfg.API.TokenKey == "" </span><span class="cov7" title="4">{
                 cm.enabled = false
         }</span>
 
-        <span class="cov8" title="4">if !cm.enabled &amp;&amp; cm.checkSubmissionURL == "" </span><span class="cov1" title="1">{
+        <span class="cov9" title="5">if !cm.enabled &amp;&amp; cm.checkSubmissionURL == "" </span><span class="cov1" title="1">{
                 return nil, errors.New("invalid check manager configuration (no API token AND no submission url)")
         }</span>
 
-        <span class="cov7" title="3">if cm.enabled </span><span class="cov1" title="1">{
+        <span class="cov7" title="4">if cm.enabled </span><span class="cov1" title="1">{
                 // initialize api handle
                 cfg.API.Debug = cm.Debug
                 cfg.API.Log = cm.Log
@@ -5766,21 +5789,21 @@ func New(cfg *Config) (*CheckManager, error) <span class="cov10" title="5">{
         }
 
         // initialize check related data
-        <span class="cov7" title="3">if cfg.Check.Type != "" </span><span class="cov0" title="0">{
+        <span class="cov7" title="4">if cfg.Check.Type != "" </span><span class="cov0" title="0">{
                 cm.checkType = CheckTypeType(cfg.Check.Type)
-        }</span><span class="cov7" title="3"> else {
+        }</span><span class="cov7" title="4"> else {
                 cm.checkType = defaultCheckType
         }</span>
 
-        <span class="cov7" title="3">idSetting := "0"
+        <span class="cov7" title="4">idSetting := "0"
         if cfg.Check.ID != "" </span><span class="cov0" title="0">{
                 idSetting = cfg.Check.ID
         }</span>
-        <span class="cov7" title="3">id, err := strconv.Atoi(idSetting)
+        <span class="cov7" title="4">id, err := strconv.Atoi(idSetting)
         if err != nil </span><span class="cov0" title="0">{
                 return nil, err
         }</span>
-        <span class="cov7" title="3">cm.checkID = api.IDType(id)
+        <span class="cov7" title="4">cm.checkID = api.IDType(id)
 
         cm.checkInstanceID = CheckInstanceIDType(cfg.Check.InstanceID)
         cm.checkTarget = CheckTargetType(cfg.Check.TargetHost)
@@ -5791,78 +5814,81 @@ func New(cfg *Config) (*CheckManager, error) <span class="cov10" title="5">{
         if cfg.Check.ForceMetricActivation != "" </span><span class="cov0" title="0">{
                 fma = cfg.Check.ForceMetricActivation
         }</span>
-        <span class="cov7" title="3">fm, err := strconv.ParseBool(fma)
+        <span class="cov7" title="4">fm, err := strconv.ParseBool(fma)
         if err != nil </span><span class="cov0" title="0">{
                 return nil, err
         }</span>
-        <span class="cov7" title="3">cm.forceMetricActivation = fm
+        <span class="cov7" title="4">cm.forceMetricActivation = fm
 
         _, an := path.Split(os.Args[0])
         hn, err := os.Hostname()
         if err != nil </span><span class="cov0" title="0">{
                 hn = "unknown"
         }</span>
-        <span class="cov7" title="3">if cm.checkInstanceID == "" </span><span class="cov7" title="3">{
+        <span class="cov7" title="4">if cm.checkInstanceID == "" </span><span class="cov7" title="4">{
                 cm.checkInstanceID = CheckInstanceIDType(fmt.Sprintf("%s:%s", hn, an))
         }</span>
-        <span class="cov7" title="3">if cm.checkDisplayName == "" </span><span class="cov7" title="3">{
+        <span class="cov7" title="4">if cm.checkDisplayName == "" </span><span class="cov7" title="4">{
                 cm.checkDisplayName = CheckDisplayNameType(cm.checkInstanceID)
         }</span>
-        <span class="cov7" title="3">if cm.checkTarget == "" </span><span class="cov7" title="3">{
+        <span class="cov7" title="4">if cm.checkTarget == "" </span><span class="cov7" title="4">{
                 cm.checkTarget = CheckTargetType(cm.checkInstanceID)
         }</span>
 
-        <span class="cov7" title="3">if cfg.Check.SearchTag == "" </span><span class="cov7" title="3">{
+        <span class="cov7" title="4">if cfg.Check.SearchTag == "" </span><span class="cov7" title="4">{
                 cm.checkSearchTag = []string{fmt.Sprintf("service:%s", an)}
         }</span><span class="cov0" title="0"> else {
                 cm.checkSearchTag = strings.Split(strings.Replace(cfg.Check.SearchTag, " ", "", -1), ",")
         }</span>
 
-        <span class="cov7" title="3">if cfg.Check.Tags != "" </span><span class="cov0" title="0">{
+        <span class="cov7" title="4">if cfg.Check.Tags != "" </span><span class="cov0" title="0">{
                 cm.checkTags = strings.Split(strings.Replace(cfg.Check.Tags, " ", "", -1), ",")
         }</span>
 
-        <span class="cov7" title="3">cm.customConfigFields = make(map[string]string)
+        <span class="cov7" title="4">cm.customConfigFields = make(map[string]string)
         if len(cfg.Check.CustomConfigFields) &gt; 0 </span><span class="cov0" title="0">{
                 for fld, val := range cfg.Check.CustomConfigFields </span><span class="cov0" title="0">{
                         cm.customConfigFields[fld] = val
                 }</span>
         }
 
-        <span class="cov7" title="3">dur := cfg.Check.MaxURLAge
-        if dur == "" </span><span class="cov7" title="3">{
+        <span class="cov7" title="4">dur := cfg.Check.MaxURLAge
+        if dur == "" </span><span class="cov7" title="4">{
                 dur = defaultTrapMaxURLAge
         }</span>
-        <span class="cov7" title="3">maxDur, err := time.ParseDuration(dur)
+        <span class="cov7" title="4">maxDur, err := time.ParseDuration(dur)
         if err != nil </span><span class="cov0" title="0">{
                 return nil, err
         }</span>
-        <span class="cov7" title="3">cm.trapMaxURLAge = maxDur
+        <span class="cov7" title="4">cm.trapMaxURLAge = maxDur
 
         // setup broker
         idSetting = "0"
         if cfg.Broker.ID != "" </span><span class="cov0" title="0">{
                 idSetting = cfg.Broker.ID
         }</span>
-        <span class="cov7" title="3">id, err = strconv.Atoi(idSetting)
+        <span class="cov7" title="4">id, err = strconv.Atoi(idSetting)
         if err != nil </span><span class="cov0" title="0">{
                 return nil, err
         }</span>
-        <span class="cov7" title="3">cm.brokerID = api.IDType(id)
+        <span class="cov7" title="4">cm.brokerID = api.IDType(id)
 
         if cfg.Broker.SelectTag != "" </span><span class="cov0" title="0">{
                 cm.brokerSelectTag = strings.Split(strings.Replace(cfg.Broker.SelectTag, " ", "", -1), ",")
         }</span>
 
-        <span class="cov7" title="3">dur = cfg.Broker.MaxResponseTime
-        if dur == "" </span><span class="cov7" title="3">{
+        <span class="cov7" title="4">dur = cfg.Broker.MaxResponseTime
+        if dur == "" </span><span class="cov7" title="4">{
                 dur = defaultBrokerMaxResponseTime
         }</span>
-        <span class="cov7" title="3">maxDur, err = time.ParseDuration(dur)
+        <span class="cov7" title="4">maxDur, err = time.ParseDuration(dur)
         if err != nil </span><span class="cov0" title="0">{
                 return nil, err
         }</span>
-        <span class="cov7" title="3">cm.brokerMaxResponseTime = maxDur
+        <span class="cov7" title="4">cm.brokerMaxResponseTime = maxDur
+
+        // add user specified tls config for broker if provided
+        cm.brokerTLS = cfg.Broker.TLSConfig
 
         // metrics
         cm.availableMetrics = make(map[string]bool)
@@ -5872,19 +5898,19 @@ func New(cfg *Config) (*CheckManager, error) <span class="cov10" title="5">{
 }
 
 // Initialize for sending metrics
-func (cm *CheckManager) Initialize() <span class="cov7" title="3">{
+func (cm *CheckManager) Initialize() <span class="cov7" title="4">{
 
         // if not managing the check, quicker initialization
-        if !cm.enabled </span><span class="cov4" title="2">{
+        if !cm.enabled </span><span class="cov6" title="3">{
                 err := cm.initializeTrapURL()
-                if err == nil </span><span class="cov4" title="2">{
+                if err == nil </span><span class="cov6" title="3">{
                         cm.initializedmu.Lock()
                         cm.initialized = true
                         cm.initializedmu.Unlock()
                 }</span><span class="cov0" title="0"> else {
                         cm.Log.Printf("[WARN] error initializing trap %s", err.Error())
                 }</span>
-                <span class="cov4" title="2">return</span>
+                <span class="cov6" title="3">return</span>
         }
 
         // background initialization when we have to reach out to the api
@@ -5903,14 +5929,14 @@ func (cm *CheckManager) Initialize() <span class="cov7" title="3">{
 }
 
 // IsReady reflects if the check has been initialied and metrics can be sent to Circonus
-func (cm *CheckManager) IsReady() bool <span class="cov8" title="4">{
+func (cm *CheckManager) IsReady() bool <span class="cov9" title="5">{
         cm.initializedmu.RLock()
         defer cm.initializedmu.RUnlock()
         return cm.initialized
 }</span>
 
 // GetSubmissionURL returns submission url for circonus
-func (cm *CheckManager) GetSubmissionURL() (*Trap, error) <span class="cov7" title="3">{
+func (cm *CheckManager) GetSubmissionURL() (*Trap, error) <span class="cov10" title="6">{
         if cm.trapURL == "" </span><span class="cov0" title="0">{
                 return nil, fmt.Errorf("[ERROR] no submission url currently available")
                 // if err := cm.initializeTrapURL(); err != nil {
@@ -5918,54 +5944,63 @@ func (cm *CheckManager) GetSubmissionURL() (*Trap, error) <span class="cov7" tit
                 // }
         }</span>
 
-        <span class="cov7" title="3">trap := &amp;Trap{}
+        <span class="cov10" title="6">trap := &amp;Trap{}
 
         u, err := url.Parse(string(cm.trapURL))
         if err != nil </span><span class="cov0" title="0">{
                 return nil, err
         }</span>
 
-        <span class="cov7" title="3">trap.URL = u
+        <span class="cov10" title="6">trap.URL = u
 
-        if u.Scheme == "https" </span><span class="cov4" title="2">{
-                if cm.certPool == nil </span><span class="cov1" title="1">{
-                        if err := cm.loadCACert(); err != nil </span><span class="cov0" title="0">{
-                                return nil, err
-                        }</span>
-                }
-                <span class="cov4" title="2">t := &amp;tls.Config{
-                        RootCAs: cm.certPool,
-                }
-                if cm.trapCN != "" </span><span class="cov1" title="1">{
-                        t.ServerName = string(cm.trapCN)
+        if u.Scheme != "https" </span><span class="cov1" title="1">{
+                return trap, nil
+        }</span>
+
+        // preference user-supplied TLS configuration
+        <span class="cov9" title="5">if cm.brokerTLS != nil </span><span class="cov6" title="3">{
+                trap.TLS = cm.brokerTLS
+                return trap, nil
+        }</span>
+
+        <span class="cov4" title="2">if cm.certPool == nil </span><span class="cov1" title="1">{
+                if err := cm.loadCACert(); err != nil </span><span class="cov0" title="0">{
+                        return nil, err
                 }</span>
-                <span class="cov4" title="2">trap.TLS = t</span>
         }
+        <span class="cov4" title="2">t := &amp;tls.Config{
+                RootCAs: cm.certPool,
+        }
+        if cm.trapCN != "" </span><span class="cov1" title="1">{
+                t.ServerName = string(cm.trapCN)
+        }</span>
+        <span class="cov4" title="2">trap.TLS = t
 
-        <span class="cov7" title="3">return trap, nil</span>
+        return trap, nil</span>
 }
 
 // ResetTrap URL, force request to the API for the submission URL and broker ca cert
-func (cm *CheckManager) ResetTrap() error <span class="cov0" title="0">{
+func (cm *CheckManager) ResetTrap() error <span class="cov4" title="2">{
         if cm.trapURL == "" </span><span class="cov0" title="0">{
                 return nil
         }</span>
 
-        <span class="cov0" title="0">cm.trapURL = ""
-        cm.certPool = nil
-        err := cm.initializeTrapURL()
-        return err</span>
+        <span class="cov4" title="2">cm.trapURL = ""
+        cm.certPool = nil // force re-fetching CA cert (if custom TLS config not supplied)
+        return cm.initializeTrapURL()</span>
 }
 
 // RefreshTrap check when the last time the URL was reset, reset if needed
-func (cm *CheckManager) RefreshTrap() <span class="cov0" title="0">{
+func (cm *CheckManager) RefreshTrap() error <span class="cov1" title="1">{
         if cm.trapURL == "" </span><span class="cov0" title="0">{
-                return
+                return nil
         }</span>
 
-        <span class="cov0" title="0">if time.Since(cm.trapLastUpdate) &gt;= cm.trapMaxURLAge </span><span class="cov0" title="0">{
-                cm.ResetTrap()
+        <span class="cov1" title="1">if time.Since(cm.trapLastUpdate) &gt;= cm.trapMaxURLAge </span><span class="cov1" title="1">{
+                return cm.ResetTrap()
         }</span>
+
+        <span class="cov0" title="0">return nil</span>
 }
 </pre>
 		
