@@ -9,183 +9,429 @@ import (
 )
 
 func TestGauge(t *testing.T) {
+	t.Log("Testing gauge.Gauge")
+
 	t.Log("int")
 	{
-		cm := &CirconusMetrics{gauges: make(map[string]string)}
+		cm := &CirconusMetrics{gauges: make(map[string]interface{})}
 
-		cm.Gauge("foo", int(1))
+		v := int(1)
+		cm.Gauge("foo", v)
 		val, ok := cm.gauges["foo"]
 		if !ok {
 			t.Errorf("Expected to find foo")
 		}
 
-		if val != "1" {
-			t.Errorf("Expected 1, found %s", val)
+		if val.(int) != v {
+			t.Errorf("Expected %d, found %v", v, val)
 		}
 	}
 
 	t.Log("int8")
 	{
-		cm := &CirconusMetrics{gauges: make(map[string]string)}
+		cm := &CirconusMetrics{gauges: make(map[string]interface{})}
 
-		cm.Gauge("foo", int8(1))
+		v := int8(1)
+		cm.Gauge("foo", v)
 		val, ok := cm.gauges["foo"]
 		if !ok {
 			t.Errorf("Expected to find foo")
 		}
 
-		if val != "1" {
-			t.Errorf("Expected 1, found %s", val)
+		if val.(int8) != v {
+			t.Errorf("Expected %v, found %v", v, val)
 		}
 	}
 
 	t.Log("int16")
 	{
-		cm := &CirconusMetrics{gauges: make(map[string]string)}
+		cm := &CirconusMetrics{gauges: make(map[string]interface{})}
 
-		cm.Gauge("foo", int16(1))
+		v := int16(1)
+		cm.Gauge("foo", v)
 		val, ok := cm.gauges["foo"]
 		if !ok {
 			t.Errorf("Expected to find foo")
 		}
 
-		if val != "1" {
-			t.Errorf("Expected 1, found %s", val)
+		if val.(int16) != v {
+			t.Errorf("Expected %v, found %v", v, val)
 		}
 	}
 
 	t.Log("int32")
 	{
-		cm := &CirconusMetrics{gauges: make(map[string]string)}
+		cm := &CirconusMetrics{gauges: make(map[string]interface{})}
 
-		cm.Gauge("foo", int32(1))
+		v := int32(1)
+		cm.Gauge("foo", v)
 		val, ok := cm.gauges["foo"]
 		if !ok {
 			t.Errorf("Expected to find foo")
 		}
 
-		if val != "1" {
-			t.Errorf("Expected 1, found %s", val)
+		if val.(int32) != v {
+			t.Errorf("Expected %v, found %v", v, val)
 		}
 	}
 
 	t.Log("int64")
 	{
-		cm := &CirconusMetrics{gauges: make(map[string]string)}
+		cm := &CirconusMetrics{gauges: make(map[string]interface{})}
 
-		cm.Gauge("foo", int64(1))
+		v := int64(1)
+		cm.Gauge("foo", v)
 		val, ok := cm.gauges["foo"]
 		if !ok {
 			t.Errorf("Expected to find foo")
 		}
 
-		if val != "1" {
-			t.Errorf("Expected 1, found %s", val)
+		if val.(int64) != v {
+			t.Errorf("Expected %v, found %v", v, val)
 		}
 	}
 
 	t.Log("uint")
 	{
-		cm := &CirconusMetrics{gauges: make(map[string]string)}
+		cm := &CirconusMetrics{gauges: make(map[string]interface{})}
 
-		cm.Gauge("foo", uint(1))
+		v := uint(1)
+		cm.Gauge("foo", v)
 		val, ok := cm.gauges["foo"]
 		if !ok {
 			t.Errorf("Expected to find foo")
 		}
 
-		if val != "1" {
-			t.Errorf("Expected 1, found %s", val)
+		if val.(uint) != v {
+			t.Errorf("Expected %v, found %v", v, val)
 		}
 	}
 
 	t.Log("uint8")
 	{
-		cm := &CirconusMetrics{gauges: make(map[string]string)}
+		cm := &CirconusMetrics{gauges: make(map[string]interface{})}
 
-		cm.Gauge("foo", uint8(1))
+		v := uint8(1)
+		cm.Gauge("foo", v)
 		val, ok := cm.gauges["foo"]
 		if !ok {
 			t.Errorf("Expected to find foo")
 		}
 
-		if val != "1" {
-			t.Errorf("Expected 1, found %s", val)
+		if val.(uint8) != v {
+			t.Errorf("Expected %v, found %v", v, val)
 		}
 	}
 
 	t.Log("uint16")
 	{
-		cm := &CirconusMetrics{gauges: make(map[string]string)}
+		cm := &CirconusMetrics{gauges: make(map[string]interface{})}
 
-		cm.Gauge("foo", uint16(1))
+		v := uint16(1)
+		cm.Gauge("foo", v)
 		val, ok := cm.gauges["foo"]
 		if !ok {
 			t.Errorf("Expected to find foo")
 		}
 
-		if val != "1" {
-			t.Errorf("Expected 1, found %s", val)
+		if val.(uint16) != v {
+			t.Errorf("Expected %v, found %v", v, val)
 		}
 	}
 
 	t.Log("uint32")
 	{
-		cm := &CirconusMetrics{gauges: make(map[string]string)}
+		cm := &CirconusMetrics{gauges: make(map[string]interface{})}
 
-		cm.Gauge("foo", uint32(1))
+		v := uint32(1)
+		cm.Gauge("foo", v)
 		val, ok := cm.gauges["foo"]
 		if !ok {
 			t.Errorf("Expected to find foo")
 		}
 
-		if val != "1" {
-			t.Errorf("Expected 1, found %s", val)
+		if val.(uint32) != v {
+			t.Errorf("Expected %v, found %v", v, val)
 		}
 	}
 
 	t.Log("uint64")
 	{
-		cm := &CirconusMetrics{gauges: make(map[string]string)}
+		cm := &CirconusMetrics{gauges: make(map[string]interface{})}
 
-		cm.Gauge("foo", uint64(1))
+		v := uint64(1)
+		cm.Gauge("foo", v)
 		val, ok := cm.gauges["foo"]
 		if !ok {
 			t.Errorf("Expected to find foo")
 		}
 
-		if val != "1" {
-			t.Errorf("Expected 1, found %s", val)
+		if val.(uint64) != v {
+			t.Errorf("Expected %v, found %v", v, val)
 		}
 	}
 
 	t.Log("float32")
 	{
-		cm := &CirconusMetrics{gauges: make(map[string]string)}
+		cm := &CirconusMetrics{gauges: make(map[string]interface{})}
 
-		cm.Gauge("foo", float32(3.12))
+		v := float32(3.12)
+		cm.Gauge("foo", v)
 		val, ok := cm.gauges["foo"]
 		if !ok {
 			t.Errorf("Expected to find foo")
 		}
 
-		if val[0:4] != "3.12" {
-			t.Errorf("Expected 3.12, found %s", val)
+		if val.(float32) != v {
+			t.Errorf("Expected %v, found %v", v, val)
 		}
 	}
 
 	t.Log("float64")
 	{
-		cm := &CirconusMetrics{gauges: make(map[string]string)}
+		cm := &CirconusMetrics{gauges: make(map[string]interface{})}
 
-		cm.Gauge("foo", float64(3.12))
+		v := float64(3.12)
+		cm.Gauge("foo", v)
 		val, ok := cm.gauges["foo"]
 		if !ok {
 			t.Errorf("Expected to find foo")
 		}
 
-		if val[0:4] != "3.12" {
-			t.Errorf("Expected 3.12, found %s", val)
+		if val.(float64) != v {
+			t.Errorf("Expected %v, found %v", v, val)
+		}
+	}
+}
+
+func TestAddGauge(t *testing.T) {
+	t.Log("Testing gauge.AddGauge")
+
+	t.Log("int")
+	{
+		cm := &CirconusMetrics{gauges: make(map[string]interface{})}
+
+		v := int(1)
+		cm.Gauge("foo", v)
+		cm.AddGauge("foo", v)
+		v++
+
+		val, ok := cm.gauges["foo"]
+		if !ok {
+			t.Fatalf("Expected to find foo")
+		}
+
+		if val.(int) != v {
+			t.Fatalf("Expected %v, found %v", v, val)
+		}
+	}
+
+	t.Log("int8")
+	{
+		cm := &CirconusMetrics{gauges: make(map[string]interface{})}
+
+		v := int8(1)
+		cm.Gauge("foo", v)
+		cm.AddGauge("foo", v)
+		v++
+
+		val, ok := cm.gauges["foo"]
+		if !ok {
+			t.Errorf("Expected to find foo")
+		}
+
+		if val.(int8) != v {
+			t.Errorf("Expected %v, found %v", v, val)
+		}
+	}
+
+	t.Log("int16")
+	{
+		cm := &CirconusMetrics{gauges: make(map[string]interface{})}
+
+		v := int16(1)
+		cm.Gauge("foo", v)
+		cm.AddGauge("foo", v)
+		v++
+
+		val, ok := cm.gauges["foo"]
+		if !ok {
+			t.Errorf("Expected to find foo")
+		}
+
+		if val.(int16) != v {
+			t.Errorf("Expected %v, found %v", v, val)
+		}
+	}
+
+	t.Log("int32")
+	{
+		cm := &CirconusMetrics{gauges: make(map[string]interface{})}
+
+		v := int32(1)
+		cm.Gauge("foo", v)
+		cm.AddGauge("foo", v)
+		v++
+
+		val, ok := cm.gauges["foo"]
+		if !ok {
+			t.Errorf("Expected to find foo")
+		}
+
+		if val.(int32) != v {
+			t.Errorf("Expected %v, found %v", v, val)
+		}
+	}
+
+	t.Log("int64")
+	{
+		cm := &CirconusMetrics{gauges: make(map[string]interface{})}
+
+		v := int64(1)
+		cm.Gauge("foo", v)
+		cm.AddGauge("foo", v)
+		v++
+
+		val, ok := cm.gauges["foo"]
+		if !ok {
+			t.Errorf("Expected to find foo")
+		}
+
+		if val.(int64) != v {
+			t.Errorf("Expected %v, found %v", v, val)
+		}
+	}
+
+	t.Log("uint")
+	{
+		cm := &CirconusMetrics{gauges: make(map[string]interface{})}
+
+		v := uint(1)
+		cm.Gauge("foo", v)
+		cm.AddGauge("foo", v)
+		v++
+
+		val, ok := cm.gauges["foo"]
+		if !ok {
+			t.Errorf("Expected to find foo")
+		}
+
+		if val.(uint) != v {
+			t.Errorf("Expected %v, found %v", v, val)
+		}
+	}
+
+	t.Log("uint8")
+	{
+		cm := &CirconusMetrics{gauges: make(map[string]interface{})}
+
+		v := uint8(1)
+		cm.Gauge("foo", v)
+		cm.AddGauge("foo", v)
+		v++
+
+		val, ok := cm.gauges["foo"]
+		if !ok {
+			t.Errorf("Expected to find foo")
+		}
+
+		if val.(uint8) != v {
+			t.Errorf("Expected %v, found %v", v, val)
+		}
+	}
+
+	t.Log("uint16")
+	{
+		cm := &CirconusMetrics{gauges: make(map[string]interface{})}
+
+		v := uint16(1)
+		cm.Gauge("foo", v)
+		cm.AddGauge("foo", v)
+		v++
+
+		val, ok := cm.gauges["foo"]
+		if !ok {
+			t.Errorf("Expected to find foo")
+		}
+
+		if val.(uint16) != v {
+			t.Errorf("Expected %v, found %v", v, val)
+		}
+	}
+
+	t.Log("uint32")
+	{
+		cm := &CirconusMetrics{gauges: make(map[string]interface{})}
+
+		v := uint32(1)
+		cm.Gauge("foo", v)
+		cm.AddGauge("foo", v)
+		v++
+
+		val, ok := cm.gauges["foo"]
+		if !ok {
+			t.Errorf("Expected to find foo")
+		}
+
+		if val.(uint32) != v {
+			t.Errorf("Expected %v, found %v", v, val)
+		}
+	}
+
+	t.Log("uint64")
+	{
+		cm := &CirconusMetrics{gauges: make(map[string]interface{})}
+
+		v := uint64(1)
+		cm.Gauge("foo", v)
+		cm.AddGauge("foo", v)
+		v++
+
+		val, ok := cm.gauges["foo"]
+		if !ok {
+			t.Errorf("Expected to find foo")
+		}
+
+		if val.(uint64) != v {
+			t.Errorf("Expected %v, found %v", v, val)
+		}
+	}
+
+	t.Log("float32")
+	{
+		cm := &CirconusMetrics{gauges: make(map[string]interface{})}
+
+		v := float32(3.12)
+		cm.Gauge("foo", v)
+		cm.AddGauge("foo", v)
+		v = v + v
+
+		val, ok := cm.gauges["foo"]
+		if !ok {
+			t.Errorf("Expected to find foo")
+		}
+
+		if val.(float32) != v {
+			t.Errorf("Expected %v, found %v", v, val)
+		}
+	}
+
+	t.Log("float64")
+	{
+		cm := &CirconusMetrics{gauges: make(map[string]interface{})}
+
+		v := float64(3.12)
+		cm.Gauge("foo", v)
+		cm.AddGauge("foo", v)
+		v = v + v
+
+		val, ok := cm.gauges["foo"]
+		if !ok {
+			t.Errorf("Expected to find foo")
+		}
+
+		if val.(float64) != v {
+			t.Errorf("Expected %v, found %v", v, val)
 		}
 	}
 }
@@ -193,33 +439,35 @@ func TestGauge(t *testing.T) {
 func TestSetGauge(t *testing.T) {
 	t.Log("Testing gauge.SetGauge")
 
-	cm := &CirconusMetrics{gauges: make(map[string]string)}
+	cm := &CirconusMetrics{gauges: make(map[string]interface{})}
 
-	cm.SetGauge("foo", 10)
+	v := int(10)
+	cm.SetGauge("foo", v)
 
 	val, ok := cm.gauges["foo"]
 	if !ok {
 		t.Errorf("Expected to find foo")
 	}
 
-	if val != "10" {
-		t.Errorf("Expected 10, found %s", val)
+	if val.(int) != v {
+		t.Errorf("Expected %d, found %v", val)
 	}
 }
 
 func TestGetGaugeTest(t *testing.T) {
 	t.Log("Testing gauge.GetGaugeTest")
 
-	cm := &CirconusMetrics{gauges: make(map[string]string)}
+	cm := &CirconusMetrics{gauges: make(map[string]interface{})}
 
-	cm.SetGauge("foo", 10)
+	v := int(10)
+	cm.SetGauge("foo", v)
 
 	val, err := cm.GetGaugeTest("foo")
 	if err != nil {
 		t.Errorf("Expected no error %v", err)
 	}
-	if val != "10" {
-		t.Errorf("Expected '10' got '%v'", val)
+	if val.(int) != v {
+		t.Errorf("Expected '%d' got '%v'", v, val)
 	}
 
 	_, err = cm.GetGaugeTest("bar")
@@ -232,17 +480,17 @@ func TestGetGaugeTest(t *testing.T) {
 func TestRemoveGauge(t *testing.T) {
 	t.Log("Testing gauge.RemoveGauge")
 
-	cm := &CirconusMetrics{gauges: make(map[string]string)}
+	cm := &CirconusMetrics{gauges: make(map[string]interface{})}
 
-	cm.Gauge("foo", 5)
-
+	v := int(5)
+	cm.Gauge("foo", v)
 	val, ok := cm.gauges["foo"]
 	if !ok {
 		t.Errorf("Expected to find foo")
 	}
 
-	if val != "5" {
-		t.Errorf("Expected 5, found %s", val)
+	if val.(int) != v {
+		t.Errorf("Expected %d, found %v", v, val)
 	}
 
 	cm.RemoveGauge("foo")
@@ -252,8 +500,8 @@ func TestRemoveGauge(t *testing.T) {
 		t.Errorf("Expected NOT to find foo")
 	}
 
-	if val != "" {
-		t.Errorf("Expected '', found '%s'", val)
+	if val != nil {
+		t.Errorf("Expected nil, found '%v'", val)
 	}
 }
 

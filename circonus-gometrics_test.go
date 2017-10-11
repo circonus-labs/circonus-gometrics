@@ -465,7 +465,8 @@ func TestFlushMetrics(t *testing.T) {
 			t.Errorf("Expected no error, got '%v'", err)
 		}
 
-		cm.SetGauge("foo", 30)
+		v := int(30)
+		cm.SetGauge("foo", v)
 
 		metrics := cm.FlushMetrics()
 		if len(*metrics) == 0 {
@@ -476,8 +477,8 @@ func TestFlushMetrics(t *testing.T) {
 			t.Fatalf("'foo' not found in %v", metrics)
 		} else if m.Type != "n" {
 			t.Fatalf("'Type' not correct %v", m)
-		} else if m.Value != "30" {
-			t.Fatalf("'Value' not correct %v", m)
+		} else if m.Value.(int) != v {
+			t.Fatalf("'Value' not correct, expected %v got %v", v, m.Value)
 		}
 	}
 
@@ -593,7 +594,8 @@ func TestPromOutput(t *testing.T) {
 			t.Errorf("Expected no error, got '%v'", err)
 		}
 
-		cm.SetGauge("foo", 30)
+		v := int(30)
+		cm.SetGauge("foo", v)
 
 		metrics := cm.FlushMetrics()
 		if len(*metrics) == 0 {
@@ -604,8 +606,8 @@ func TestPromOutput(t *testing.T) {
 			t.Fatalf("'foo' not found in %v", metrics)
 		} else if m.Type != "n" {
 			t.Fatalf("'Type' not correct %v", m)
-		} else if m.Value != "30" {
-			t.Fatalf("'Value' not correct %v", m)
+		} else if m.Value.(int) != v {
+			t.Fatalf("'Value' not correct, expected %v got %v", v, m.Value)
 		}
 
 		b, err := cm.PromOutput()
