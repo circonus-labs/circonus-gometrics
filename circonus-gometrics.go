@@ -30,11 +30,15 @@
 package circonusgometrics
 
 import (
+	"bufio"
+	"bytes"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -72,6 +76,12 @@ type Config struct {
 	Interval string
 }
 
+type prevMetrics struct {
+	metrics   *Metrics
+	metricsmu sync.Mutex
+	ts        time.Time
+}
+
 // CirconusMetrics state
 type CirconusMetrics struct {
 	Log   *log.Logger
@@ -86,6 +96,7 @@ type CirconusMetrics struct {
 	flushmu         sync.Mutex
 	packagingmu     sync.Mutex
 	check           *checkmgr.CheckManager
+	lastMetrics     *prevMetrics
 
 	counters map[string]uint64
 	cm       sync.Mutex
@@ -129,6 +140,7 @@ func New(cfg *Config) (*CirconusMetrics, error) {
 		histograms:   make(map[string]*Histogram),
 		text:         make(map[string]string),
 		textFuncs:    make(map[string]func() string),
+		lastMetrics:  &prevMetrics{},
 	}
 
 	// Logging
@@ -306,7 +318,44 @@ func (m *CirconusMetrics) packageMetrics() (map[string]*api.CheckBundleMetric, M
 		}
 	}
 
+	m.lastMetrics.metricsmu.Lock()
+	defer m.lastMetrics.metricsmu.Unlock()
+	m.lastMetrics.metrics = &output
+	m.lastMetrics.ts = time.Now()
+
 	return newMetrics, output
+}
+
+// PromOutput returns lines of metrics in prom format
+func (m *CirconusMetrics) PromOutput() (*bytes.Buffer, error) {
+	m.lastMetrics.metricsmu.Lock()
+	defer m.lastMetrics.metricsmu.Unlock()
+
+	if m.lastMetrics.metrics == nil {
+		return nil, errors.New("no metrics available")
+	}
+
+	var b bytes.Buffer
+	w := bufio.NewWriter(&b)
+
+	ts := m.lastMetrics.ts.UnixNano() / int64(time.Millisecond)
+
+	for name, metric := range *m.lastMetrics.metrics {
+		pfx := ""
+		switch metric.Type {
+		case "n":
+			if strings.HasPrefix(fmt.Sprintf("%v", metric.Value), "[H[") {
+				pfx = "# "
+			}
+		case "s":
+			pfx = "# "
+		}
+		fmt.Fprintf(w, "%s%s %v %d\n", pfx, name, metric.Value, ts)
+	}
+
+	err := w.Flush()
+
+	return &b, err
 }
 
 // FlushMetrics flushes current metrics to a structure and returns it (does NOT send to Circonus)

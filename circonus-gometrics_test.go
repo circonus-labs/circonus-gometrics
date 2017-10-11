@@ -11,6 +11,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 )
@@ -401,7 +402,7 @@ func TestPackageMetrics(t *testing.T) {
 	}
 }
 
-func TestMetrics(t *testing.T) {
+func TestFlushMetrics(t *testing.T) {
 	cfg := &Config{}
 	cfg.CheckManager.Check.SubmissionURL = "none"
 	cfg.Interval = "0"
@@ -525,6 +526,170 @@ func TestMetrics(t *testing.T) {
 			t.Fatalf("'Type' not correct %v", m)
 		} else if m.Value != "bar" {
 			t.Fatalf("'Value' not correct %v", m)
+		}
+	}
+}
+
+func TestPromOutput(t *testing.T) {
+	cfg := &Config{}
+	cfg.CheckManager.Check.SubmissionURL = "none"
+	cfg.Interval = "0"
+
+	t.Log("No metrics")
+	{
+		cm, err := NewCirconusMetrics(cfg)
+		if err != nil {
+			t.Errorf("Expected no error, got '%v'", err)
+		}
+
+		b, err := cm.PromOutput()
+		if err == nil {
+			t.Fatal("expected error")
+		}
+		if b != nil {
+			t.Fatalf("expected nil, got (%v)", b.String())
+		}
+	}
+
+	t.Log("counter")
+	{
+		cm, err := NewCirconusMetrics(cfg)
+		if err != nil {
+			t.Errorf("Expected no error, got '%v'", err)
+		}
+
+		cm.Set("foo", 30)
+
+		metrics := cm.FlushMetrics()
+		if len(*metrics) == 0 {
+			t.Fatal("expected 1 metric")
+		}
+
+		if m, mok := (*metrics)["foo"]; !mok {
+			t.Fatalf("'foo' not found in %v", metrics)
+		} else if m.Type != "L" {
+			t.Fatalf("'Type' not correct %v", m)
+		} else if m.Value.(uint64) != 30 {
+			t.Fatalf("'Value' not correct %v", m)
+		}
+
+		b, err := cm.PromOutput()
+		if err != nil {
+			t.Fatalf("expected no error, got (%s)", err)
+		}
+		if b == nil {
+			t.Fatal("expected not nil")
+		}
+		expect := "foo 30"
+		if !strings.HasPrefix(b.String(), expect) {
+			t.Fatalf("expected prefix (%s) got (%s)", expect, b.String())
+		}
+	}
+
+	t.Log("gauge")
+	{
+		cm, err := NewCirconusMetrics(cfg)
+		if err != nil {
+			t.Errorf("Expected no error, got '%v'", err)
+		}
+
+		cm.SetGauge("foo", 30)
+
+		metrics := cm.FlushMetrics()
+		if len(*metrics) == 0 {
+			t.Fatal("expected 1 metric")
+		}
+
+		if m, mok := (*metrics)["foo"]; !mok {
+			t.Fatalf("'foo' not found in %v", metrics)
+		} else if m.Type != "n" {
+			t.Fatalf("'Type' not correct %v", m)
+		} else if m.Value != "30" {
+			t.Fatalf("'Value' not correct %v", m)
+		}
+
+		b, err := cm.PromOutput()
+		if err != nil {
+			t.Fatalf("expected no error, got (%s)", err)
+		}
+		if b == nil {
+			t.Fatal("expected not nil")
+		}
+		expect := "foo 30"
+		if !strings.HasPrefix(b.String(), expect) {
+			t.Fatalf("expected prefix (%s) got (%s)", expect, b.String())
+		}
+	}
+
+	t.Log("histogram")
+	{
+		cm, err := NewCirconusMetrics(cfg)
+		if err != nil {
+			t.Errorf("Expected no error, got '%v'", err)
+		}
+
+		cm.Timing("foo", 30.28)
+
+		metrics := cm.FlushMetrics()
+		if len(*metrics) == 0 {
+			t.Fatal("expected 1 metric")
+		}
+
+		if m, mok := (*metrics)["foo"]; !mok {
+			t.Fatalf("'foo' not found in %v", metrics)
+		} else if m.Type != "n" {
+			t.Fatalf("'Type' not correct %v", m)
+		} else if len(m.Value.([]string)) != 1 {
+			t.Fatal("expected 1 value")
+		} else if m.Value.([]string)[0] != "H[3.0e+01]=1" {
+			t.Fatalf("'Value' not correct %v", m)
+		}
+
+		b, err := cm.PromOutput()
+		if err != nil {
+			t.Fatalf("expected no error, got (%s)", err)
+		}
+		if b == nil {
+			t.Fatal("expected not nil")
+		}
+		expect := "# foo [H[3.0"
+		if !strings.HasPrefix(b.String(), expect) {
+			t.Fatalf("expected prefix (%s) got (%s)", expect, b.String())
+		}
+	}
+
+	t.Log("text")
+	{
+		cm, err := NewCirconusMetrics(cfg)
+		if err != nil {
+			t.Errorf("Expected no error, got '%v'", err)
+		}
+
+		cm.SetText("foo", "bar")
+
+		metrics := cm.FlushMetrics()
+		if len(*metrics) == 0 {
+			t.Fatal("expected 1 metric")
+		}
+
+		if m, mok := (*metrics)["foo"]; !mok {
+			t.Fatalf("'foo' not found in %v", metrics)
+		} else if m.Type != "s" {
+			t.Fatalf("'Type' not correct %v", m)
+		} else if m.Value != "bar" {
+			t.Fatalf("'Value' not correct %v", m)
+		}
+
+		b, err := cm.PromOutput()
+		if err != nil {
+			t.Fatalf("expected no error, got (%s)", err)
+		}
+		if b == nil {
+			t.Fatal("expected not nil")
+		}
+		expect := "# foo bar"
+		if !strings.HasPrefix(b.String(), expect) {
+			t.Fatalf("expected prefix (%s) got (%s)", expect, b.String())
 		}
 	}
 }
