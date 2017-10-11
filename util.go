@@ -147,3 +147,31 @@ func (m *CirconusMetrics) snapText() map[string]string {
 
 	return t
 }
+
+func (m *CirconusMetrics) getGaugeType(v interface{}) string {
+	mt := "n"
+	switch v.(type) {
+	case int:
+		mt = "i"
+	case int8:
+		mt = "i"
+	case int16:
+		mt = "i"
+	case int32:
+		mt = "i"
+	case uint:
+		mt = "I"
+	case uint8:
+		mt = "I"
+	case uint16:
+		mt = "I"
+	case uint32:
+		mt = "I"
+	case int64:
+		mt = "l"
+	case uint64:
+		mt = "L"
+	}
+
+	return mt
+}

@@ -465,7 +465,7 @@ func TestFlushMetrics(t *testing.T) {
 			t.Errorf("Expected no error, got '%v'", err)
 		}
 
-		v := int(30)
+		v := int64(30)
 		cm.SetGauge("foo", v)
 
 		metrics := cm.FlushMetrics()
@@ -475,9 +475,9 @@ func TestFlushMetrics(t *testing.T) {
 
 		if m, mok := (*metrics)["foo"]; !mok {
 			t.Fatalf("'foo' not found in %v", metrics)
-		} else if m.Type != "n" {
+		} else if m.Type != "l" {
 			t.Fatalf("'Type' not correct %v", m)
-		} else if m.Value.(int) != v {
+		} else if m.Value.(int64) != v {
 			t.Fatalf("'Value' not correct, expected %v got %v", v, m.Value)
 		}
 	}
@@ -604,7 +604,7 @@ func TestPromOutput(t *testing.T) {
 
 		if m, mok := (*metrics)["foo"]; !mok {
 			t.Fatalf("'foo' not found in %v", metrics)
-		} else if m.Type != "n" {
+		} else if m.Type != "i" {
 			t.Fatalf("'Type' not correct %v", m)
 		} else if m.Value.(int) != v {
 			t.Fatalf("'Value' not correct, expected %v got %v", v, m.Value)

@@ -286,7 +286,7 @@ func (m *CirconusMetrics) packageMetrics() (map[string]*api.CheckBundleMetric, M
 			}
 		}
 		if send {
-			output[name] = Metric{Type: "n", Value: value}
+			output[name] = Metric{Type: m.getGaugeType(value), Value: value}
 		}
 	}
 
