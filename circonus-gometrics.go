@@ -343,16 +343,15 @@ func (m *CirconusMetrics) PromOutput() (*bytes.Buffer, error) {
 	ts := m.lastMetrics.ts.UnixNano() / int64(time.Millisecond)
 
 	for name, metric := range *m.lastMetrics.metrics {
-		pfx := ""
 		switch metric.Type {
 		case "n":
 			if strings.HasPrefix(fmt.Sprintf("%v", metric.Value), "[H[") {
-				pfx = "# "
+				continue // circonus histogram != prom "histogram" (aka percentile)
 			}
 		case "s":
-			pfx = "# "
+			continue // text metrics unsupported
 		}
-		fmt.Fprintf(w, "%s%s %v %d\n", pfx, name, metric.Value, ts)
+		fmt.Fprintf(w, "%s %v %d\n", name, metric.Value, ts)
 	}
 
 	err := w.Flush()
