@@ -655,7 +655,7 @@ func TestPromOutput(t *testing.T) {
 			t.Fatal("expected not nil")
 		}
 		expect := ""
-		if !strings.HasPrefix(b.String(), expect) {
+		if b.String() != expect {
 			t.Fatalf("expected prefix (%s) got (%s)", expect, b.String())
 		}
 	}
@@ -690,7 +690,7 @@ func TestPromOutput(t *testing.T) {
 			t.Fatal("expected not nil")
 		}
 		expect := ""
-		if !strings.HasPrefix(b.String(), expect) {
+		if b.String() != expect {
 			t.Fatalf("expected prefix (%s) got (%s)", expect, b.String())
 		}
 	}
