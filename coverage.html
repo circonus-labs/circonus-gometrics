@@ -106,11 +106,11 @@
 				
 				<option value="file25">github.com/circonus-labs/circonus-gometrics/checkmgr/metrics.go (98.9%)</option>
 				
-				<option value="file26">github.com/circonus-labs/circonus-gometrics/circonus-gometrics.go (95.7%)</option>
+				<option value="file26">github.com/circonus-labs/circonus-gometrics/circonus-gometrics.go (96.3%)</option>
 				
 				<option value="file27">github.com/circonus-labs/circonus-gometrics/counter.go (100.0%)</option>
 				
-				<option value="file28">github.com/circonus-labs/circonus-gometrics/gauge.go (100.0%)</option>
+				<option value="file28">github.com/circonus-labs/circonus-gometrics/gauge.go (94.6%)</option>
 				
 				<option value="file29">github.com/circonus-labs/circonus-gometrics/histogram.go (100.0%)</option>
 				
@@ -122,7 +122,7 @@
 				
 				<option value="file33">github.com/circonus-labs/circonus-gometrics/tools.go (0.0%)</option>
 				
-				<option value="file34">github.com/circonus-labs/circonus-gometrics/util.go (96.2%)</option>
+				<option value="file34">github.com/circonus-labs/circonus-gometrics/util.go (87.9%)</option>
 				
 				</select>
 			</div>
@@ -6210,11 +6210,15 @@ func countNewTags(currTags []string, newTags []string) int <span class="cov7" ti
 package circonusgometrics
 
 import (
+        "bufio"
+        "bytes"
         "errors"
+        "fmt"
         "io/ioutil"
         "log"
         "os"
         "strconv"
+        "strings"
         "sync"
         "time"
 
@@ -6252,6 +6256,12 @@ type Config struct {
         Interval string
 }
 
+type prevMetrics struct {
+        metrics   *Metrics
+        metricsmu sync.Mutex
+        ts        time.Time
+}
+
 // CirconusMetrics state
 type CirconusMetrics struct {
         Log   *log.Logger
@@ -6266,6 +6276,7 @@ type CirconusMetrics struct {
         flushmu         sync.Mutex
         packagingmu     sync.Mutex
         check           *checkmgr.CheckManager
+        lastMetrics     *prevMetrics
 
         counters map[string]uint64
         cm       sync.Mutex
@@ -6273,7 +6284,8 @@ type CirconusMetrics struct {
         counterFuncs map[string]func() uint64
         cfm          sync.Mutex
 
-        gauges map[string]string
+        // gauges map[string]string
+        gauges map[string]interface{}
         gm     sync.Mutex
 
         gaugeFuncs map[string]func() int64
@@ -6290,57 +6302,59 @@ type CirconusMetrics struct {
 }
 
 // NewCirconusMetrics returns a CirconusMetrics instance
-func NewCirconusMetrics(cfg *Config) (*CirconusMetrics, error) <span class="cov7" title="15">{
+func NewCirconusMetrics(cfg *Config) (*CirconusMetrics, error) <span class="cov8" title="20">{
         return New(cfg)
 }</span>
 
 // New returns a CirconusMetrics instance
-func New(cfg *Config) (*CirconusMetrics, error) <span class="cov10" title="33">{
+func New(cfg *Config) (*CirconusMetrics, error) <span class="cov10" title="38">{
 
         if cfg == nil </span><span class="cov1" title="1">{
                 return nil, errors.New("invalid configuration (nil)")
         }</span>
 
-        <span class="cov9" title="32">cm := &amp;CirconusMetrics{
+        <span class="cov9" title="37">cm := &amp;CirconusMetrics{
                 counters:     make(map[string]uint64),
                 counterFuncs: make(map[string]func() uint64),
-                gauges:       make(map[string]string),
-                gaugeFuncs:   make(map[string]func() int64),
-                histograms:   make(map[string]*Histogram),
-                text:         make(map[string]string),
-                textFuncs:    make(map[string]func() string),
+                // gauges:       make(map[string]string),
+                gauges:      make(map[string]interface{}),
+                gaugeFuncs:  make(map[string]func() int64),
+                histograms:  make(map[string]*Histogram),
+                text:        make(map[string]string),
+                textFuncs:   make(map[string]func() string),
+                lastMetrics: &amp;prevMetrics{},
         }
 
         // Logging
-        </span><span class="cov9" title="32">{
+        </span><span class="cov9" title="37">{
                 cm.Debug = cfg.Debug
                 cm.Log = cfg.Log
 
                 if cm.Debug &amp;&amp; cm.Log == nil </span><span class="cov1" title="1">{
                         cm.Log = log.New(os.Stderr, "", log.LstdFlags)
                 }</span>
-                <span class="cov9" title="32">if cm.Log == nil </span><span class="cov9" title="31">{
+                <span class="cov9" title="37">if cm.Log == nil </span><span class="cov9" title="36">{
                         cm.Log = log.New(ioutil.Discard, "", log.LstdFlags)
                 }</span>
         }
 
         // Flush Interval
-        <span class="cov9" title="32">{
+        <span class="cov9" title="37">{
                 fi := defaultFlushInterval
-                if cfg.Interval != "" </span><span class="cov6" title="9">{
+                if cfg.Interval != "" </span><span class="cov7" title="14">{
                         fi = cfg.Interval
                 }</span>
 
-                <span class="cov9" title="32">dur, err := time.ParseDuration(fi)
+                <span class="cov9" title="37">dur, err := time.ParseDuration(fi)
                 if err != nil </span><span class="cov1" title="1">{
                         return nil, err
                 }</span>
-                <span class="cov9" title="31">cm.flushInterval = dur</span>
+                <span class="cov9" title="36">cm.flushInterval = dur</span>
         }
 
         // metric resets
 
-        <span class="cov9" title="31">cm.resetCounters = true
+        <span class="cov9" title="36">cm.resetCounters = true
         if cfg.ResetCounters != "" </span><span class="cov3" title="3">{
                 setting, err := strconv.ParseBool(cfg.ResetCounters)
                 if err != nil </span><span class="cov1" title="1">{
@@ -6349,7 +6363,7 @@ func New(cfg *Config) (*CirconusMetrics, error) <span class="cov10" title="33">{
                 <span class="cov2" title="2">cm.resetCounters = setting</span>
         }
 
-        <span class="cov9" title="30">cm.resetGauges = true
+        <span class="cov9" title="35">cm.resetGauges = true
         if cfg.ResetGauges != "" </span><span class="cov3" title="3">{
                 setting, err := strconv.ParseBool(cfg.ResetGauges)
                 if err != nil </span><span class="cov1" title="1">{
@@ -6358,7 +6372,7 @@ func New(cfg *Config) (*CirconusMetrics, error) <span class="cov10" title="33">{
                 <span class="cov2" title="2">cm.resetGauges = setting</span>
         }
 
-        <span class="cov9" title="29">cm.resetHistograms = true
+        <span class="cov9" title="34">cm.resetHistograms = true
         if cfg.ResetHistograms != "" </span><span class="cov3" title="3">{
                 setting, err := strconv.ParseBool(cfg.ResetHistograms)
                 if err != nil </span><span class="cov1" title="1">{
@@ -6367,7 +6381,7 @@ func New(cfg *Config) (*CirconusMetrics, error) <span class="cov10" title="33">{
                 <span class="cov2" title="2">cm.resetHistograms = setting</span>
         }
 
-        <span class="cov9" title="28">cm.resetText = true
+        <span class="cov9" title="33">cm.resetText = true
         if cfg.ResetText != "" </span><span class="cov3" title="3">{
                 setting, err := strconv.ParseBool(cfg.ResetText)
                 if err != nil </span><span class="cov1" title="1">{
@@ -6377,7 +6391,7 @@ func New(cfg *Config) (*CirconusMetrics, error) <span class="cov10" title="33">{
         }
 
         // check manager
-        <span class="cov9" title="27">{
+        <span class="cov9" title="32">{
                 cfg.CheckManager.Debug = cm.Debug
                 cfg.CheckManager.Log = cm.Log
 
@@ -6385,11 +6399,11 @@ func New(cfg *Config) (*CirconusMetrics, error) <span class="cov10" title="33">{
                 if err != nil </span><span class="cov1" title="1">{
                         return nil, err
                 }</span>
-                <span class="cov9" title="26">cm.check = check</span>
+                <span class="cov9" title="31">cm.check = check</span>
         }
 
         // start background initialization
-        <span class="cov9" title="26">cm.check.Initialize()
+        <span class="cov9" title="31">cm.check.Initialize()
 
         // if automatic flush is enabled, start it.
         // note: submit will jettison metrics until initialization has completed.
@@ -6401,7 +6415,7 @@ func New(cfg *Config) (*CirconusMetrics, error) <span class="cov10" title="33">{
                 }()
         }
 
-        <span class="cov9" title="26">return cm, nil</span>
+        <span class="cov9" title="31">return cm, nil</span>
 }
 
 // Start deprecated NOP, automatic flush is started in New if flush interval &gt; 0.
@@ -6414,7 +6428,7 @@ func (m *CirconusMetrics) Ready() bool <span class="cov0" title="0">{
         return m.check.IsReady()
 }</span>
 
-func (m *CirconusMetrics) packageMetrics() (map[string]*api.CheckBundleMetric, Metrics) <span class="cov7" title="11">{
+func (m *CirconusMetrics) packageMetrics() (map[string]*api.CheckBundleMetric, Metrics) <span class="cov7" title="15">{
 
         m.packagingmu.Lock()
         defer m.packagingmu.Unlock()
@@ -6423,12 +6437,12 @@ func (m *CirconusMetrics) packageMetrics() (map[string]*api.CheckBundleMetric, M
                 m.Log.Println("[DEBUG] Packaging metrics")
         }</span>
 
-        <span class="cov7" title="11">counters, gauges, histograms, text := m.snapshot()
+        <span class="cov7" title="15">counters, gauges, histograms, text := m.snapshot()
         newMetrics := make(map[string]*api.CheckBundleMetric)
         output := make(Metrics, len(counters)+len(gauges)+len(histograms)+len(text))
-        for name, value := range counters </span><span class="cov2" title="2">{
+        for name, value := range counters </span><span class="cov3" title="3">{
                 send := m.check.IsMetricActive(name)
-                if !send &amp;&amp; m.check.ActivateMetric(name) </span><span class="cov2" title="2">{
+                if !send &amp;&amp; m.check.ActivateMetric(name) </span><span class="cov3" title="3">{
                         send = true
                         newMetrics[name] = &amp;api.CheckBundleMetric{
                                 Name:   name,
@@ -6436,14 +6450,14 @@ func (m *CirconusMetrics) packageMetrics() (map[string]*api.CheckBundleMetric, M
                                 Status: "active",
                         }
                 }</span>
-                <span class="cov2" title="2">if send </span><span class="cov2" title="2">{
+                <span class="cov3" title="3">if send </span><span class="cov3" title="3">{
                         output[name] = Metric{Type: "L", Value: value}
                 }</span>
         }
 
-        <span class="cov7" title="11">for name, value := range gauges </span><span class="cov2" title="2">{
+        <span class="cov7" title="15">for name, value := range gauges </span><span class="cov3" title="3">{
                 send := m.check.IsMetricActive(name)
-                if !send &amp;&amp; m.check.ActivateMetric(name) </span><span class="cov2" title="2">{
+                if !send &amp;&amp; m.check.ActivateMetric(name) </span><span class="cov3" title="3">{
                         send = true
                         newMetrics[name] = &amp;api.CheckBundleMetric{
                                 Name:   name,
@@ -6451,14 +6465,14 @@ func (m *CirconusMetrics) packageMetrics() (map[string]*api.CheckBundleMetric, M
                                 Status: "active",
                         }
                 }</span>
-                <span class="cov2" title="2">if send </span><span class="cov2" title="2">{
-                        output[name] = Metric{Type: "n", Value: value}
+                <span class="cov3" title="3">if send </span><span class="cov3" title="3">{
+                        output[name] = Metric{Type: m.getGaugeType(value), Value: value}
                 }</span>
         }
 
-        <span class="cov7" title="11">for name, value := range histograms </span><span class="cov2" title="2">{
+        <span class="cov7" title="15">for name, value := range histograms </span><span class="cov3" title="3">{
                 send := m.check.IsMetricActive(name)
-                if !send &amp;&amp; m.check.ActivateMetric(name) </span><span class="cov2" title="2">{
+                if !send &amp;&amp; m.check.ActivateMetric(name) </span><span class="cov3" title="3">{
                         send = true
                         newMetrics[name] = &amp;api.CheckBundleMetric{
                                 Name:   name,
@@ -6466,14 +6480,14 @@ func (m *CirconusMetrics) packageMetrics() (map[string]*api.CheckBundleMetric, M
                                 Status: "active",
                         }
                 }</span>
-                <span class="cov2" title="2">if send </span><span class="cov2" title="2">{
+                <span class="cov3" title="3">if send </span><span class="cov3" title="3">{
                         output[name] = Metric{Type: "n", Value: value.DecStrings()}
                 }</span>
         }
 
-        <span class="cov7" title="11">for name, value := range text </span><span class="cov2" title="2">{
+        <span class="cov7" title="15">for name, value := range text </span><span class="cov3" title="3">{
                 send := m.check.IsMetricActive(name)
-                if !send &amp;&amp; m.check.ActivateMetric(name) </span><span class="cov2" title="2">{
+                if !send &amp;&amp; m.check.ActivateMetric(name) </span><span class="cov3" title="3">{
                         send = true
                         newMetrics[name] = &amp;api.CheckBundleMetric{
                                 Name:   name,
@@ -6481,23 +6495,59 @@ func (m *CirconusMetrics) packageMetrics() (map[string]*api.CheckBundleMetric, M
                                 Status: "active",
                         }
                 }</span>
-                <span class="cov2" title="2">if send </span><span class="cov2" title="2">{
+                <span class="cov3" title="3">if send </span><span class="cov3" title="3">{
                         output[name] = Metric{Type: "s", Value: value}
                 }</span>
         }
 
-        <span class="cov7" title="11">return newMetrics, output</span>
+        <span class="cov7" title="15">m.lastMetrics.metricsmu.Lock()
+        defer m.lastMetrics.metricsmu.Unlock()
+        m.lastMetrics.metrics = &amp;output
+        m.lastMetrics.ts = time.Now()
+
+        return newMetrics, output</span>
+}
+
+// PromOutput returns lines of metrics in prom format
+func (m *CirconusMetrics) PromOutput() (*bytes.Buffer, error) <span class="cov4" title="5">{
+        m.lastMetrics.metricsmu.Lock()
+        defer m.lastMetrics.metricsmu.Unlock()
+
+        if m.lastMetrics.metrics == nil </span><span class="cov1" title="1">{
+                return nil, errors.New("no metrics available")
+        }</span>
+
+        <span class="cov4" title="4">var b bytes.Buffer
+        w := bufio.NewWriter(&amp;b)
+
+        ts := m.lastMetrics.ts.UnixNano() / int64(time.Millisecond)
+
+        for name, metric := range *m.lastMetrics.metrics </span><span class="cov4" title="4">{
+                switch metric.Type </span>{
+                case "n":<span class="cov1" title="1">
+                        if strings.HasPrefix(fmt.Sprintf("%v", metric.Value), "[H[") </span><span class="cov1" title="1">{
+                                continue</span> // circonus histogram != prom "histogram" (aka percentile)
+                        }
+                case "s":<span class="cov1" title="1">
+                        continue</span> // text metrics unsupported
+                }
+                <span class="cov2" title="2">fmt.Fprintf(w, "%s %v %d\n", name, metric.Value, ts)</span>
+        }
+
+        <span class="cov4" title="4">err := w.Flush()
+
+        return &amp;b, err</span>
 }
 
 // FlushMetrics flushes current metrics to a structure and returns it (does NOT send to Circonus)
-func (m *CirconusMetrics) FlushMetrics() *Metrics <span class="cov5" title="6">{
+func (m *CirconusMetrics) FlushMetrics() *Metrics <span class="cov6" title="10">{
         m.flushmu.Lock()
         if m.flushing </span><span class="cov1" title="1">{
                 m.flushmu.Unlock()
                 return &amp;Metrics{}
         }</span>
 
-        <span class="cov5" title="5">m.flushing = true
+        <span class="cov6" title="9">m.flushing = true
         m.flushmu.Unlock()
 
         _, output := m.packageMetrics()
@@ -6517,7 +6567,7 @@ func (m *CirconusMetrics) Flush() <span class="cov5" title="6">{
                 return
         }</span>
 
-        <span class="cov5" title="5">m.flushing = true
+        <span class="cov4" title="5">m.flushing = true
         m.flushmu.Unlock()
 
         newMetrics, output := m.packageMetrics()
@@ -6530,7 +6580,7 @@ func (m *CirconusMetrics) Flush() <span class="cov5" title="6">{
                 }</span>
         }
 
-        <span class="cov5" title="5">m.flushmu.Lock()
+        <span class="cov4" title="5">m.flushmu.Lock()
         m.flushing = false
         m.flushmu.Unlock()</span>
 }
@@ -6560,7 +6610,7 @@ func (m *CirconusMetrics) IncrementByValue(metric string, val uint64) <span clas
 }</span>
 
 // Set a counter to specific value
-func (m *CirconusMetrics) Set(metric string, val uint64) <span class="cov9" title="5">{
+func (m *CirconusMetrics) Set(metric string, val uint64) <span class="cov10" title="6">{
         m.cm.Lock()
         defer m.cm.Unlock()
         m.counters[metric] = val
@@ -6624,16 +6674,57 @@ import (
 )
 
 // Gauge sets a gauge to a value
-func (m *CirconusMetrics) Gauge(metric string, val interface{}) <span class="cov9" title="15">{
+func (m *CirconusMetrics) Gauge(metric string, val interface{}) <span class="cov9" title="27">{
         m.SetGauge(metric, val)
 }</span>
 
 // SetGauge sets a gauge to a value
-func (m *CirconusMetrics) SetGauge(metric string, val interface{}) <span class="cov10" title="19">{
+func (m *CirconusMetrics) SetGauge(metric string, val interface{}) <span class="cov10" title="32">{
         m.gm.Lock()
         defer m.gm.Unlock()
-        m.gauges[metric] = m.gaugeValString(val)
+        m.gauges[metric] = val //m.gaugeValString(val)
 }</span>
+
+// AddGauge adds value to existing gauge
+func (m *CirconusMetrics) AddGauge(metric string, val interface{}) <span class="cov7" title="12">{
+        m.gm.Lock()
+        defer m.gm.Unlock()
+
+        v, ok := m.gauges[metric]
+        if !ok </span><span class="cov0" title="0">{
+                m.gauges[metric] = val
+                return
+        }</span>
+
+        <span class="cov7" title="12">switch val.(type) </span>{
+        default:</span><span class="cov0" title="0">
+                // ignore it, unsupported type
+        case int:<span class="cov1" title="1">
+                m.gauges[metric] = v.(int) + val.(int)</span>
+        case int8:<span class="cov1" title="1">
+                m.gauges[metric] = v.(int8) + val.(int8)</span>
+        case int16:<span class="cov1" title="1">
+                m.gauges[metric] = v.(int16) + val.(int16)</span>
+        case int32:<span class="cov1" title="1">
+                m.gauges[metric] = v.(int32) + val.(int32)</span>
+        case int64:<span class="cov1" title="1">
+                m.gauges[metric] = v.(int64) + val.(int64)</span>
+        case uint:<span class="cov1" title="1">
+                m.gauges[metric] = v.(uint) + val.(uint)</span>
+        case uint8:<span class="cov1" title="1">
+                m.gauges[metric] = v.(uint8) + val.(uint8)</span>
+        case uint16:<span class="cov1" title="1">
+                m.gauges[metric] = v.(uint16) + val.(uint16)</span>
+        case uint32:<span class="cov1" title="1">
+                m.gauges[metric] = v.(uint32) + val.(uint32)</span>
+        case uint64:<span class="cov1" title="1">
+                m.gauges[metric] = v.(uint64) + val.(uint64)</span>
+        case float32:<span class="cov1" title="1">
+                m.gauges[metric] = v.(float32) + val.(float32)</span>
+        case float64:<span class="cov1" title="1">
+                m.gauges[metric] = v.(float64) + val.(float64)</span>
+        }
+}
 
 // RemoveGauge removes a gauge
 func (m *CirconusMetrics) RemoveGauge(metric string) <span class="cov1" title="1">{
@@ -6643,7 +6734,8 @@ func (m *CirconusMetrics) RemoveGauge(metric string) <span class="cov1" title="1
 }</span>
 
 // GetGaugeTest returns the current value for a gauge. (note: it is a function specifically for "testing", disable automatic submission during testing.)
-func (m *CirconusMetrics) GetGaugeTest(metric string) (string, error) <span class="cov3" title="2">{
+func (m *CirconusMetrics) GetGaugeTest(metric string) (interface{}, error) <span class="cov2" title="2">{
+        // func (m *CirconusMetrics) GetGaugeTest(metric string) (string, error) {
         m.gm.Lock()
         defer m.gm.Unlock()
 
@@ -6651,11 +6743,11 @@ func (m *CirconusMetrics) GetGaugeTest(metric string) (string, error) <span clas
                 return val, nil
         }</span>
 
-        <span class="cov1" title="1">return "", fmt.Errorf("Gauge metric '%s' not found", metric)</span>
+        <span class="cov1" title="1">return nil, fmt.Errorf("Gauge metric '%s' not found", metric)</span>
 }
 
 // SetGaugeFunc sets a gauge to a function [called at flush interval]
-func (m *CirconusMetrics) SetGaugeFunc(metric string, fn func() int64) <span class="cov3" title="2">{
+func (m *CirconusMetrics) SetGaugeFunc(metric string, fn func() int64) <span class="cov2" title="2">{
         m.gfm.Lock()
         defer m.gfm.Unlock()
         m.gaugeFuncs[metric] = fn
@@ -6668,39 +6760,39 @@ func (m *CirconusMetrics) RemoveGaugeFunc(metric string) <span class="cov1" titl
         delete(m.gaugeFuncs, metric)
 }</span>
 
-// gaugeValString converts an interface value (of a supported type) to a string
-func (m *CirconusMetrics) gaugeValString(val interface{}) string <span class="cov10" title="19">{
-        vs := ""
-        switch v := val.(type) </span>{
-        default:</span><span class="cov0" title="0">
-                // ignore it, unsupported type
-        case int:<span class="cov7" title="8">
-                vs = fmt.Sprintf("%d", v)</span>
-        case int8:<span class="cov1" title="1">
-                vs = fmt.Sprintf("%d", v)</span>
-        case int16:<span class="cov1" title="1">
-                vs = fmt.Sprintf("%d", v)</span>
-        case int32:<span class="cov1" title="1">
-                vs = fmt.Sprintf("%d", v)</span>
-        case int64:<span class="cov1" title="1">
-                vs = fmt.Sprintf("%d", v)</span>
-        case uint:<span class="cov1" title="1">
-                vs = fmt.Sprintf("%d", v)</span>
-        case uint8:<span class="cov1" title="1">
-                vs = fmt.Sprintf("%d", v)</span>
-        case uint16:<span class="cov1" title="1">
-                vs = fmt.Sprintf("%d", v)</span>
-        case uint32:<span class="cov1" title="1">
-                vs = fmt.Sprintf("%d", v)</span>
-        case uint64:<span class="cov1" title="1">
-                vs = fmt.Sprintf("%d", v)</span>
-        case float32:<span class="cov1" title="1">
-                vs = fmt.Sprintf("%f", v)</span>
-        case float64:<span class="cov1" title="1">
-                vs = fmt.Sprintf("%f", v)</span>
-        }
-        <span class="cov10" title="19">return vs</span>
-}
+// // gaugeValString converts an interface value (of a supported type) to a string
+// func (m *CirconusMetrics) gaugeValString(val interface{}) string {
+//         vs := ""
+//         switch v := val.(type) {
+//         default:
+//                 // ignore it, unsupported type
+//         case int:
+//                 vs = fmt.Sprintf("%d", v)
+//         case int8:
+//                 vs = fmt.Sprintf("%d", v)
+//         case int16:
+//                 vs = fmt.Sprintf("%d", v)
+//         case int32:
+//                 vs = fmt.Sprintf("%d", v)
+//         case int64:
+//                 vs = fmt.Sprintf("%d", v)
+//         case uint:
+//                 vs = fmt.Sprintf("%d", v)
+//         case uint8:
+//                 vs = fmt.Sprintf("%d", v)
+//         case uint16:
+//                 vs = fmt.Sprintf("%d", v)
+//         case uint32:
+//                 vs = fmt.Sprintf("%d", v)
+//         case uint64:
+//                 vs = fmt.Sprintf("%d", v)
+//         case float32:
+//                 vs = fmt.Sprintf("%f", v)
+//         case float64:
+//                 vs = fmt.Sprintf("%f", v)
+//         }
+//         return vs
+// }
 </pre>
 		
 		<pre class="file" id="file29" style="display: none">// Copyright 2016 Circonus, Inc. All rights reserved.
@@ -6724,7 +6816,7 @@ type Histogram struct {
 }
 
 // Timing adds a value to a histogram
-func (m *CirconusMetrics) Timing(metric string, val float64) <span class="cov6" title="5">{
+func (m *CirconusMetrics) Timing(metric string, val float64) <span class="cov7" title="6">{
         m.SetHistogramValue(metric, val)
 }</span>
 
@@ -6734,7 +6826,7 @@ func (m *CirconusMetrics) RecordValue(metric string, val float64) <span class="c
 }</span>
 
 // SetHistogramValue adds a value to a histogram
-func (m *CirconusMetrics) SetHistogramValue(metric string, val float64) <span class="cov8" title="9">{
+func (m *CirconusMetrics) SetHistogramValue(metric string, val float64) <span class="cov8" title="10">{
         hist := m.NewHistogram(metric)
 
         m.hm.Lock()
@@ -6764,7 +6856,7 @@ func (m *CirconusMetrics) RemoveHistogram(metric string) <span class="cov1" titl
 }</span>
 
 // NewHistogram returns a histogram instance.
-func (m *CirconusMetrics) NewHistogram(metric string) *Histogram <span class="cov10" title="13">{
+func (m *CirconusMetrics) NewHistogram(metric string) *Histogram <span class="cov10" title="14">{
         m.hm.Lock()
         defer m.hm.Unlock()
 
@@ -6772,7 +6864,7 @@ func (m *CirconusMetrics) NewHistogram(metric string) *Histogram <span class="co
                 return hist
         }</span>
 
-        <span class="cov9" title="12">hist := &amp;Histogram{
+        <span class="cov9" title="13">hist := &amp;Histogram{
                 name: metric,
                 hist: circonusllhist.New(),
         }
@@ -6996,12 +7088,12 @@ package circonusgometrics
 //
 
 // SetText sets a text metric
-func (m *CirconusMetrics) SetText(metric string, val string) <span class="cov9" title="6">{
+func (m *CirconusMetrics) SetText(metric string, val string) <span class="cov9" title="7">{
         m.SetTextValue(metric, val)
 }</span>
 
 // SetTextValue sets a text metric
-func (m *CirconusMetrics) SetTextValue(metric string, val string) <span class="cov10" title="7">{
+func (m *CirconusMetrics) SetTextValue(metric string, val string) <span class="cov10" title="8">{
         m.tm.Lock()
         defer m.tm.Unlock()
         m.text[metric] = val
@@ -7089,7 +7181,8 @@ func (m *CirconusMetrics) Reset() <span class="cov1" title="1">{
 
         m.counters = make(map[string]uint64)
         m.counterFuncs = make(map[string]func() uint64)
-        m.gauges = make(map[string]string)
+        // m.gauges = make(map[string]string)
+        m.gauges = make(map[string]interface{})
         m.gaugeFuncs = make(map[string]func() int64)
         m.histograms = make(map[string]*Histogram)
         m.text = make(map[string]string)
@@ -7097,7 +7190,8 @@ func (m *CirconusMetrics) Reset() <span class="cov1" title="1">{
 }</span>
 
 // snapshot returns a copy of the values of all registered counters and gauges.
-func (m *CirconusMetrics) snapshot() (c map[string]uint64, g map[string]string, h map[string]*circonusllhist.Histogram, t map[string]string) <span class="cov10" title="12">{
+func (m *CirconusMetrics) snapshot() (c map[string]uint64, g map[string]interface{}, h map[string]*circonusllhist.Histogram, t map[string]string) <span class="cov10" title="16">{
+        // func (m *CirconusMetrics) snapshot() (c map[string]uint64, g map[string]string, h map[string]*circonusllhist.Histogram, t map[string]string) {
         c = m.snapCounters()
         g = m.snapGauges()
         h = m.snapHistograms()
@@ -7106,7 +7200,7 @@ func (m *CirconusMetrics) snapshot() (c map[string]uint64, g map[string]string, 
         return
 }</span>
 
-func (m *CirconusMetrics) snapCounters() map[string]uint64 <span class="cov10" title="12">{
+func (m *CirconusMetrics) snapCounters() map[string]uint64 <span class="cov10" title="16">{
         m.cm.Lock()
         defer m.cm.Unlock()
         m.cfm.Lock()
@@ -7114,67 +7208,70 @@ func (m *CirconusMetrics) snapCounters() map[string]uint64 <span class="cov10" t
 
         c := make(map[string]uint64, len(m.counters)+len(m.counterFuncs))
 
-        for n, v := range m.counters </span><span class="cov4" title="3">{
+        for n, v := range m.counters </span><span class="cov5" title="4">{
                 c[n] = v
         }</span>
-        <span class="cov10" title="12">if m.resetCounters &amp;&amp; len(c) &gt; 0 </span><span class="cov4" title="3">{
+        <span class="cov10" title="16">if m.resetCounters &amp;&amp; len(c) &gt; 0 </span><span class="cov5" title="4">{
                 m.counters = make(map[string]uint64)
         }</span>
 
-        <span class="cov10" title="12">for n, f := range m.counterFuncs </span><span class="cov0" title="0">{
+        <span class="cov10" title="16">for n, f := range m.counterFuncs </span><span class="cov0" title="0">{
                 c[n] = f()
         }</span>
-        <span class="cov10" title="12">if m.resetCounters &amp;&amp; len(c) &gt; 0 </span><span class="cov4" title="3">{
+        <span class="cov10" title="16">if m.resetCounters &amp;&amp; len(c) &gt; 0 </span><span class="cov5" title="4">{
                 m.counterFuncs = make(map[string]func() uint64)
         }</span>
 
-        <span class="cov10" title="12">return c</span>
+        <span class="cov10" title="16">return c</span>
 }
 
-func (m *CirconusMetrics) snapGauges() map[string]string <span class="cov10" title="12">{
+func (m *CirconusMetrics) snapGauges() map[string]interface{} <span class="cov10" title="16">{
+        // func (m *CirconusMetrics) snapGauges() map[string]string {
         m.gm.Lock()
         defer m.gm.Unlock()
         m.gfm.Lock()
         defer m.gfm.Unlock()
 
-        g := make(map[string]string, len(m.gauges)+len(m.gaugeFuncs))
+        // g := make(map[string]string, len(m.gauges)+len(m.gaugeFuncs))
+        g := make(map[string]interface{}, len(m.gauges)+len(m.gaugeFuncs))
 
-        for n, v := range m.gauges </span><span class="cov4" title="3">{
+        for n, v := range m.gauges </span><span class="cov5" title="4">{
                 g[n] = v
         }</span>
-        <span class="cov10" title="12">if m.resetGauges &amp;&amp; len(g) &gt; 0 </span><span class="cov4" title="3">{
-                m.gauges = make(map[string]string)
+        <span class="cov10" title="16">if m.resetGauges &amp;&amp; len(g) &gt; 0 </span><span class="cov5" title="4">{
+                // m.gauges = make(map[string]string)
+                m.gauges = make(map[string]interface{})
         }</span>
 
-        <span class="cov10" title="12">for n, f := range m.gaugeFuncs </span><span class="cov0" title="0">{
-                g[n] = m.gaugeValString(f())
+        <span class="cov10" title="16">for n, f := range m.gaugeFuncs </span><span class="cov0" title="0">{
+                g[n] = f() //m.gaugeValString(f())
         }</span>
-        <span class="cov10" title="12">if m.resetGauges &amp;&amp; len(g) &gt; 0 </span><span class="cov4" title="3">{
+        <span class="cov10" title="16">if m.resetGauges &amp;&amp; len(g) &gt; 0 </span><span class="cov5" title="4">{
                 m.gaugeFuncs = make(map[string]func() int64)
         }</span>
 
-        <span class="cov10" title="12">return g</span>
+        <span class="cov10" title="16">return g</span>
 }
 
-func (m *CirconusMetrics) snapHistograms() map[string]*circonusllhist.Histogram <span class="cov10" title="12">{
+func (m *CirconusMetrics) snapHistograms() map[string]*circonusllhist.Histogram <span class="cov10" title="16">{
         m.hm.Lock()
         defer m.hm.Unlock()
 
         h := make(map[string]*circonusllhist.Histogram, len(m.histograms))
 
-        for n, hist := range m.histograms </span><span class="cov4" title="3">{
+        for n, hist := range m.histograms </span><span class="cov5" title="4">{
                 hist.rw.Lock()
                 h[n] = hist.hist.CopyAndReset()
                 hist.rw.Unlock()
         }</span>
-        <span class="cov10" title="12">if m.resetHistograms &amp;&amp; len(h) &gt; 0 </span><span class="cov4" title="3">{
+        <span class="cov10" title="16">if m.resetHistograms &amp;&amp; len(h) &gt; 0 </span><span class="cov5" title="4">{
                 m.histograms = make(map[string]*Histogram)
         }</span>
 
-        <span class="cov10" title="12">return h</span>
+        <span class="cov10" title="16">return h</span>
 }
 
-func (m *CirconusMetrics) snapText() map[string]string <span class="cov10" title="12">{
+func (m *CirconusMetrics) snapText() map[string]string <span class="cov10" title="16">{
         m.tm.Lock()
         defer m.tm.Unlock()
         m.tfm.Lock()
@@ -7182,21 +7279,49 @@ func (m *CirconusMetrics) snapText() map[string]string <span class="cov10" title
 
         t := make(map[string]string, len(m.text)+len(m.textFuncs))
 
-        for n, v := range m.text </span><span class="cov4" title="3">{
+        for n, v := range m.text </span><span class="cov5" title="4">{
                 t[n] = v
         }</span>
-        <span class="cov10" title="12">if m.resetText &amp;&amp; len(t) &gt; 0 </span><span class="cov4" title="3">{
+        <span class="cov10" title="16">if m.resetText &amp;&amp; len(t) &gt; 0 </span><span class="cov5" title="4">{
                 m.text = make(map[string]string)
         }</span>
 
-        <span class="cov10" title="12">for n, f := range m.textFuncs </span><span class="cov0" title="0">{
+        <span class="cov10" title="16">for n, f := range m.textFuncs </span><span class="cov0" title="0">{
                 t[n] = f()
         }</span>
-        <span class="cov10" title="12">if m.resetText &amp;&amp; len(t) &gt; 0 </span><span class="cov4" title="3">{
+        <span class="cov10" title="16">if m.resetText &amp;&amp; len(t) &gt; 0 </span><span class="cov5" title="4">{
                 m.textFuncs = make(map[string]func() string)
         }</span>
 
-        <span class="cov10" title="12">return t</span>
+        <span class="cov10" title="16">return t</span>
+}
+
+func (m *CirconusMetrics) getGaugeType(v interface{}) string <span class="cov4" title="3">{
+        mt := "n"
+        switch v.(type) </span>{
+        case int:<span class="cov3" title="2">
+                mt = "i"</span>
+        case int8:<span class="cov0" title="0">
+                mt = "i"</span>
+        case int16:<span class="cov0" title="0">
+                mt = "i"</span>
+        case int32:<span class="cov0" title="0">
+                mt = "i"</span>
+        case uint:<span class="cov0" title="0">
+                mt = "I"</span>
+        case uint8:<span class="cov0" title="0">
+                mt = "I"</span>
+        case uint16:<span class="cov0" title="0">
+                mt = "I"</span>
+        case uint32:<span class="cov0" title="0">
+                mt = "I"</span>
+        case int64:<span class="cov1" title="1">
+                mt = "l"</span>
+        case uint64:<span class="cov0" title="0">
+                mt = "L"</span>
+        }
+
+        <span class="cov4" title="3">return mt</span>
 }
 </pre>
 		
