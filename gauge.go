@@ -22,7 +22,7 @@ func (m *CirconusMetrics) Gauge(metric string, val interface{}) {
 func (m *CirconusMetrics) SetGauge(metric string, val interface{}) {
 	m.gm.Lock()
 	defer m.gm.Unlock()
-	m.gauges[metric] = val //m.gaugeValString(val)
+	m.gauges[metric] = val
 }
 
 // AddGauge adds value to existing gauge
@@ -75,7 +75,6 @@ func (m *CirconusMetrics) RemoveGauge(metric string) {
 
 // GetGaugeTest returns the current value for a gauge. (note: it is a function specifically for "testing", disable automatic submission during testing.)
 func (m *CirconusMetrics) GetGaugeTest(metric string) (interface{}, error) {
-	// func (m *CirconusMetrics) GetGaugeTest(metric string) (string, error) {
 	m.gm.Lock()
 	defer m.gm.Unlock()
 
@@ -100,36 +99,31 @@ func (m *CirconusMetrics) RemoveGaugeFunc(metric string) {
 	delete(m.gaugeFuncs, metric)
 }
 
-// // gaugeValString converts an interface value (of a supported type) to a string
-// func (m *CirconusMetrics) gaugeValString(val interface{}) string {
-// 	vs := ""
-// 	switch v := val.(type) {
-// 	default:
-// 		// ignore it, unsupported type
-// 	case int:
-// 		vs = fmt.Sprintf("%d", v)
-// 	case int8:
-// 		vs = fmt.Sprintf("%d", v)
-// 	case int16:
-// 		vs = fmt.Sprintf("%d", v)
-// 	case int32:
-// 		vs = fmt.Sprintf("%d", v)
-// 	case int64:
-// 		vs = fmt.Sprintf("%d", v)
-// 	case uint:
-// 		vs = fmt.Sprintf("%d", v)
-// 	case uint8:
-// 		vs = fmt.Sprintf("%d", v)
-// 	case uint16:
-// 		vs = fmt.Sprintf("%d", v)
-// 	case uint32:
-// 		vs = fmt.Sprintf("%d", v)
-// 	case uint64:
-// 		vs = fmt.Sprintf("%d", v)
-// 	case float32:
-// 		vs = fmt.Sprintf("%f", v)
-// 	case float64:
-// 		vs = fmt.Sprintf("%f", v)
-// 	}
-// 	return vs
-// }
+// getGaugeType returns accurate resmon type for underlying type of gauge value
+func (m *CirconusMetrics) getGaugeType(v interface{}) string {
+	mt := "n"
+	switch v.(type) {
+	case int:
+		mt = "i"
+	case int8:
+		mt = "i"
+	case int16:
+		mt = "i"
+	case int32:
+		mt = "i"
+	case uint:
+		mt = "I"
+	case uint8:
+		mt = "I"
+	case uint16:
+		mt = "I"
+	case uint32:
+		mt = "I"
+	case int64:
+		mt = "l"
+	case uint64:
+		mt = "L"
+	}
+
+	return mt
+}
