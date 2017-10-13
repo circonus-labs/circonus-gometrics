@@ -32,7 +32,6 @@ package circonusgometrics
 import (
 	"bufio"
 	"bytes"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -44,6 +43,7 @@ import (
 
 	"github.com/circonus-labs/circonus-gometrics/api"
 	"github.com/circonus-labs/circonus-gometrics/checkmgr"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -104,7 +104,6 @@ type CirconusMetrics struct {
 	counterFuncs map[string]func() uint64
 	cfm          sync.Mutex
 
-	// gauges map[string]string
 	gauges map[string]interface{}
 	gm     sync.Mutex
 
@@ -136,13 +135,12 @@ func New(cfg *Config) (*CirconusMetrics, error) {
 	cm := &CirconusMetrics{
 		counters:     make(map[string]uint64),
 		counterFuncs: make(map[string]func() uint64),
-		// gauges:       make(map[string]string),
-		gauges:      make(map[string]interface{}),
-		gaugeFuncs:  make(map[string]func() int64),
-		histograms:  make(map[string]*Histogram),
-		text:        make(map[string]string),
-		textFuncs:   make(map[string]func() string),
-		lastMetrics: &prevMetrics{},
+		gauges:       make(map[string]interface{}),
+		gaugeFuncs:   make(map[string]func() int64),
+		histograms:   make(map[string]*Histogram),
+		text:         make(map[string]string),
+		textFuncs:    make(map[string]func() string),
+		lastMetrics:  &prevMetrics{},
 	}
 
 	// Logging
@@ -167,7 +165,7 @@ func New(cfg *Config) (*CirconusMetrics, error) {
 
 		dur, err := time.ParseDuration(fi)
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "parsing flush interval")
 		}
 		cm.flushInterval = dur
 	}
@@ -178,7 +176,7 @@ func New(cfg *Config) (*CirconusMetrics, error) {
 	if cfg.ResetCounters != "" {
 		setting, err := strconv.ParseBool(cfg.ResetCounters)
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "parsing reset counters")
 		}
 		cm.resetCounters = setting
 	}
@@ -187,7 +185,7 @@ func New(cfg *Config) (*CirconusMetrics, error) {
 	if cfg.ResetGauges != "" {
 		setting, err := strconv.ParseBool(cfg.ResetGauges)
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "parsing reset gauges")
 		}
 		cm.resetGauges = setting
 	}
@@ -196,7 +194,7 @@ func New(cfg *Config) (*CirconusMetrics, error) {
 	if cfg.ResetHistograms != "" {
 		setting, err := strconv.ParseBool(cfg.ResetHistograms)
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "parsing reset histograms")
 		}
 		cm.resetHistograms = setting
 	}
@@ -205,7 +203,7 @@ func New(cfg *Config) (*CirconusMetrics, error) {
 	if cfg.ResetText != "" {
 		setting, err := strconv.ParseBool(cfg.ResetText)
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "parsing reset text")
 		}
 		cm.resetText = setting
 	}
@@ -217,7 +215,7 @@ func New(cfg *Config) (*CirconusMetrics, error) {
 
 		check, err := checkmgr.New(&cfg.CheckManager)
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "creating new check manager")
 		}
 		cm.check = check
 	}
@@ -226,7 +224,7 @@ func New(cfg *Config) (*CirconusMetrics, error) {
 	cm.check.Initialize()
 
 	// if automatic flush is enabled, start it.
-	// note: submit will jettison metrics until initialization has completed.
+	// NOTE: submit will jettison metrics until initialization has completed.
 	if cm.flushInterval > time.Duration(0) {
 		go func() {
 			for range time.NewTicker(cm.flushInterval).C {
@@ -355,6 +353,9 @@ func (m *CirconusMetrics) PromOutput() (*bytes.Buffer, error) {
 	}
 
 	err := w.Flush()
+	if err != nil {
+		return nil, errors.Wrap(err, "flushing metric buffer")
+	}
 
 	return &b, err
 }
