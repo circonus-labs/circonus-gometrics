@@ -79,7 +79,7 @@ func main() {
 | `cfg.CheckManager.API.CACert` | nil | DEPRECATED - use TLSConfig ~~[*x509.CertPool](https://golang.org/pkg/crypto/x509/#CertPool) with CA Cert to validate API endpoint using internal CA or self-signed certificates~~ |
 |Check||
 | `cfg.CheckManager.Check.ID` | "" | Check ID of previously created check. (*Note: **check id** not **check bundle id**.*) |
-| `cfg.CheckManager.Check.SubmissionURL` | "" | Submission URL of previously created check. |
+| `cfg.CheckManager.Check.SubmissionURL` | "" | Submission URL of previously created check. Metrics can also be sent to a local [circonus-agent](https://github.com/circonus-labs/circonus-agent) by using the agent's URL (e.g. `http://127.0.0.1:2609/write/appid` where `appid` is a unique identifier for the application which will prefix all metrics. Additionally, the circonus-agent can optionally listen for requests to `/write` on a unix socket - to leverage this feature, use a URL such as `http+unix:///path/to/socket_file/write/appid`). |
 | `cfg.CheckManager.Check.InstanceID` | hostname:program name | An identifier for the 'group of metrics emitted by this process or service'. |
 | `cfg.CheckManager.Check.TargetHost` | InstanceID | Explicit setting of `check.target`. |
 | `cfg.CheckManager.Check.DisplayName` | InstanceID | Custom `check.display_name`. Shows in UI check list. |
