@@ -33,7 +33,6 @@ func (m *CirconusMetrics) Reset() {
 
 	m.counters = make(map[string]uint64)
 	m.counterFuncs = make(map[string]func() uint64)
-	// m.gauges = make(map[string]string)
 	m.gauges = make(map[string]interface{})
 	m.gaugeFuncs = make(map[string]func() int64)
 	m.histograms = make(map[string]*Histogram)
@@ -43,7 +42,6 @@ func (m *CirconusMetrics) Reset() {
 
 // snapshot returns a copy of the values of all registered counters and gauges.
 func (m *CirconusMetrics) snapshot() (c map[string]uint64, g map[string]interface{}, h map[string]*circonusllhist.Histogram, t map[string]string) {
-	// func (m *CirconusMetrics) snapshot() (c map[string]uint64, g map[string]string, h map[string]*circonusllhist.Histogram, t map[string]string) {
 	c = m.snapCounters()
 	g = m.snapGauges()
 	h = m.snapHistograms()
@@ -78,25 +76,22 @@ func (m *CirconusMetrics) snapCounters() map[string]uint64 {
 }
 
 func (m *CirconusMetrics) snapGauges() map[string]interface{} {
-	// func (m *CirconusMetrics) snapGauges() map[string]string {
 	m.gm.Lock()
 	defer m.gm.Unlock()
 	m.gfm.Lock()
 	defer m.gfm.Unlock()
 
-	// g := make(map[string]string, len(m.gauges)+len(m.gaugeFuncs))
 	g := make(map[string]interface{}, len(m.gauges)+len(m.gaugeFuncs))
 
 	for n, v := range m.gauges {
 		g[n] = v
 	}
 	if m.resetGauges && len(g) > 0 {
-		// m.gauges = make(map[string]string)
 		m.gauges = make(map[string]interface{})
 	}
 
 	for n, f := range m.gaugeFuncs {
-		g[n] = f() //m.gaugeValString(f())
+		g[n] = f()
 	}
 	if m.resetGauges && len(g) > 0 {
 		m.gaugeFuncs = make(map[string]func() int64)
@@ -146,32 +141,4 @@ func (m *CirconusMetrics) snapText() map[string]string {
 	}
 
 	return t
-}
-
-func (m *CirconusMetrics) getGaugeType(v interface{}) string {
-	mt := "n"
-	switch v.(type) {
-	case int:
-		mt = "i"
-	case int8:
-		mt = "i"
-	case int16:
-		mt = "i"
-	case int32:
-		mt = "i"
-	case uint:
-		mt = "I"
-	case uint8:
-		mt = "I"
-	case uint16:
-		mt = "I"
-	case uint32:
-		mt = "I"
-	case int64:
-		mt = "l"
-	case uint64:
-		mt = "L"
-	}
-
-	return mt
 }

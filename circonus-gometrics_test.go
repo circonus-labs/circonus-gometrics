@@ -75,7 +75,7 @@ func TestNew(t *testing.T) {
 	t.Log("no API token, no submission URL")
 	{
 		cfg := &Config{}
-		expectedError := errors.New("invalid check manager configuration (no API token AND no submission url)")
+		expectedError := errors.New("creating new check manager: invalid check manager configuration (no API token AND no submission url)")
 		_, err := New(cfg)
 		if err == nil || err.Error() != expectedError.Error() {
 			t.Fatalf("Expected an '%#v' error, got '%#v'", expectedError, err)
@@ -135,7 +135,7 @@ func TestNew(t *testing.T) {
 		cfg := &Config{
 			Interval: "thirty seconds",
 		}
-		expectedError := errors.New("time: invalid duration thirty seconds")
+		expectedError := errors.New("parsing flush interval: time: invalid duration thirty seconds")
 		_, err := New(cfg)
 		if err == nil {
 			t.Fatal("expected error")
@@ -172,7 +172,7 @@ func TestNew(t *testing.T) {
 		cfg := &Config{
 			ResetCounters: "yes",
 		}
-		expectedError := errors.New("strconv.ParseBool: parsing \"yes\": invalid syntax")
+		expectedError := errors.New("parsing reset counters: strconv.ParseBool: parsing \"yes\": invalid syntax")
 		_, err := New(cfg)
 		if err == nil {
 			t.Fatal("expected error")
@@ -209,7 +209,7 @@ func TestNew(t *testing.T) {
 		cfg := &Config{
 			ResetGauges: "yes",
 		}
-		expectedError := errors.New("strconv.ParseBool: parsing \"yes\": invalid syntax")
+		expectedError := errors.New("parsing reset gauges: strconv.ParseBool: parsing \"yes\": invalid syntax")
 		_, err := New(cfg)
 		if err == nil {
 			t.Fatal("expected error")
@@ -246,7 +246,7 @@ func TestNew(t *testing.T) {
 		cfg := &Config{
 			ResetHistograms: "yes",
 		}
-		expectedError := errors.New("strconv.ParseBool: parsing \"yes\": invalid syntax")
+		expectedError := errors.New("parsing reset histograms: strconv.ParseBool: parsing \"yes\": invalid syntax")
 		_, err := New(cfg)
 		if err == nil {
 			t.Fatal("expected error")
@@ -283,7 +283,7 @@ func TestNew(t *testing.T) {
 		cfg := &Config{
 			ResetText: "yes",
 		}
-		expectedError := errors.New("strconv.ParseBool: parsing \"yes\": invalid syntax")
+		expectedError := errors.New("parsing reset text: strconv.ParseBool: parsing \"yes\": invalid syntax")
 		_, err := New(cfg)
 		if err == nil {
 			t.Fatal("expected error")
@@ -655,7 +655,7 @@ func TestPromOutput(t *testing.T) {
 			t.Fatal("expected not nil")
 		}
 		expect := ""
-		if !strings.HasPrefix(b.String(), expect) {
+		if b.String() != expect {
 			t.Fatalf("expected prefix (%s) got (%s)", expect, b.String())
 		}
 	}
@@ -690,7 +690,7 @@ func TestPromOutput(t *testing.T) {
 			t.Fatal("expected not nil")
 		}
 		expect := ""
-		if !strings.HasPrefix(b.String(), expect) {
+		if b.String() != expect {
 			t.Fatalf("expected prefix (%s) got (%s)", expect, b.String())
 		}
 	}

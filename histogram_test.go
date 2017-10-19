@@ -63,6 +63,33 @@ func TestRecordValue(t *testing.T) {
 	}
 }
 
+func TestRecordCountForValue(t *testing.T) {
+	t.Log("Testing histogram.RecordCountForValue")
+
+	cm := &CirconusMetrics{histograms: make(map[string]*Histogram)}
+
+	cm.RecordCountForValue("foo", 1.2, 5)
+
+	hist, ok := cm.histograms["foo"]
+	if !ok {
+		t.Errorf("Expected to find foo")
+	}
+
+	if hist == nil {
+		t.Errorf("Expected *Histogram, found %v", hist)
+	}
+
+	val := hist.hist.DecStrings()
+	if len(val) != 1 {
+		t.Errorf("Expected 1, found '%v'", val)
+	}
+
+	expectedVal := "H[1.2e+00]=5"
+	if val[0] != expectedVal {
+		t.Errorf("Expected '%s', found '%s'", expectedVal, val[0])
+	}
+}
+
 func TestSetHistogramValue(t *testing.T) {
 	t.Log("Testing histogram.SetHistogramValue")
 
