@@ -62,14 +62,18 @@ func (m *CirconusMetrics) snapCounters() map[string]uint64 {
 		c[n] = v
 	}
 	if m.resetCounters && len(c) > 0 {
-		m.counters = make(map[string]uint64)
+		for key := range m.counters {
+			delete(m.counters, key)
+		}
 	}
 
 	for n, f := range m.counterFuncs {
 		c[n] = f()
 	}
 	if m.resetCounters && len(c) > 0 {
-		m.counterFuncs = make(map[string]func() uint64)
+		for key := range m.counterFuncs {
+			delete(m.counterFuncs, key)
+		}
 	}
 
 	return c
@@ -87,14 +91,18 @@ func (m *CirconusMetrics) snapGauges() map[string]interface{} {
 		g[n] = v
 	}
 	if m.resetGauges && len(g) > 0 {
-		m.gauges = make(map[string]interface{})
+		for key := range m.gauges {
+			delete(m.gauges, key)
+		}
 	}
 
 	for n, f := range m.gaugeFuncs {
 		g[n] = f()
 	}
 	if m.resetGauges && len(g) > 0 {
-		m.gaugeFuncs = make(map[string]func() int64)
+		for key := range m.gaugeFuncs {
+			delete(m.gaugeFuncs, key)
+		}
 	}
 
 	return g
@@ -112,7 +120,9 @@ func (m *CirconusMetrics) snapHistograms() map[string]*circonusllhist.Histogram 
 		hist.rw.Unlock()
 	}
 	if m.resetHistograms && len(h) > 0 {
-		m.histograms = make(map[string]*Histogram)
+		for key := range m.histograms {
+			delete(m.histograms, key)
+		}
 	}
 
 	return h
@@ -130,14 +140,18 @@ func (m *CirconusMetrics) snapText() map[string]string {
 		t[n] = v
 	}
 	if m.resetText && len(t) > 0 {
-		m.text = make(map[string]string)
+		for key := range m.text {
+			delete(m.text, key)
+		}
 	}
 
 	for n, f := range m.textFuncs {
 		t[n] = f()
 	}
 	if m.resetText && len(t) > 0 {
-		m.textFuncs = make(map[string]func() string)
+		for key := range m.textFuncs {
+			delete(m.text, key)
+		}
 	}
 
 	return t
