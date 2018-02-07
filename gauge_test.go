@@ -450,7 +450,7 @@ func TestSetGauge(t *testing.T) {
 	}
 
 	if val.(int) != v {
-		t.Errorf("Expected %d, found %v", val)
+		t.Errorf("Expected %d, found %v", v, val)
 	}
 }
 
