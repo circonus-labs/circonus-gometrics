@@ -1,5 +1,6 @@
 # v2.1.1
 
+* dep dependencies
 * fix two instances of shadowed variables
 * fix several documentation typos
 * simplify (gofmt -s)
