@@ -221,11 +221,13 @@ func New(cfg *Config) (*CheckManager, error) {
 		cm.Log = log.New(ioutil.Discard, "", log.LstdFlags)
 	}
 
-	rx, err := regexp.Compile(`^http\+unix://(?P<sockfile>.+)/write/(?P<id>.+)$`)
-	if err != nil {
-		return nil, errors.Wrap(err, "compiling socket regex")
+	{
+		rx, err := regexp.Compile(`^http\+unix://(?P<sockfile>.+)/write/(?P<id>.+)$`)
+		if err != nil {
+			return nil, errors.Wrap(err, "compiling socket regex")
+		}
+		cm.sockRx = rx
 	}
-	cm.sockRx = rx
 
 	if cfg.Check.SubmissionURL != "" {
 		cm.checkSubmissionURL = api.URLType(cfg.Check.SubmissionURL)
@@ -410,7 +412,6 @@ func (cm *CheckManager) GetSubmissionURL() (*Trap, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "get submission url")
 	}
-
 	trap.URL = u
 
 	if u.Scheme == "http+unix" {
@@ -435,11 +436,12 @@ func (cm *CheckManager) GetSubmissionURL() (*Trap, error) {
 			return nil, errors.Errorf("get submission url - invalid socket url (%s)", cm.trapURL)
 		}
 
-		u, err := url.Parse(fmt.Sprintf("http+unix://%s/write/%s", service, metricID))
+		u, err = url.Parse(fmt.Sprintf("http+unix://%s/write/%s", service, metricID))
 		if err != nil {
 			return nil, errors.Wrap(err, "get submission url")
 		}
 		trap.URL = u
+
 		trap.SockTransport = &httpunix.Transport{
 			DialTimeout:           100 * time.Millisecond,
 			RequestTimeout:        1 * time.Second,
