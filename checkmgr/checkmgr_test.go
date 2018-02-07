@@ -65,7 +65,7 @@ var (
 		// 	ReverseSecret: "blah",
 		// },
 		Metrics: []api.CheckBundleMetric{
-			api.CheckBundleMetric{
+			{
 				Name:   "elmo",
 				Type:   "numeric",
 				Status: "active",
@@ -86,7 +86,7 @@ var (
 		Name: "test broker",
 		Type: "enterprise",
 		Details: []api.BrokerDetail{
-			api.BrokerDetail{
+			{
 				CN:           "testbroker.example.com",
 				ExternalHost: nil,
 				ExternalPort: 43191,
@@ -412,7 +412,7 @@ func TestNewCheckManager(t *testing.T) {
 		{
 			err := cm.ResetTrap()
 			if err != nil {
-				t.Fatalf("expected no error, got (%s)")
+				t.Fatalf("expected no error, got (%s)", err)
 			}
 			trap, err := cm.GetSubmissionURL()
 			if err != nil {
