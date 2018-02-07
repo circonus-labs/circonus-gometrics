@@ -412,7 +412,7 @@ func TestNewCheckManager(t *testing.T) {
 		{
 			err := cm.ResetTrap()
 			if err != nil {
-				t.Fatalf("expected no error, got (%s)")
+				t.Fatalf("expected no error, got (%s)", err)
 			}
 			trap, err := cm.GetSubmissionURL()
 			if err != nil {
