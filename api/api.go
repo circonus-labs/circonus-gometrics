@@ -6,6 +6,7 @@ package api
 
 import (
 	"bytes"
+	"context"
 	crand "crypto/rand"
 	"crypto/tls"
 	"crypto/x509"
