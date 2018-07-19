@@ -279,7 +279,7 @@ func (a *API) apiCall(reqMethod string, reqPath string, data []byte) ([]byte, er
 
 	// keep last HTTP error in the event of retry failure
 	var lastHTTPError error
-	retryPolicy := func(resp *http.Response, err error) (bool, error) {
+	retryPolicy := func(_ context.Context, resp *http.Response, err error) (bool, error) {
 		if err != nil {
 			lastHTTPError = err
 			return true, err
