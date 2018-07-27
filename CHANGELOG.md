@@ -1,3 +1,7 @@
+# v2.1.2
+
+* fix: handle edge case where a broker has no ip or external_host set
+
 # v2.1.1
 
 * dep dependencies
