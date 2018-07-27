@@ -45,6 +45,29 @@ var (
 		},
 	}
 
+	noIPorHostBroker = api.Broker{
+		CID:       "/broker/2",
+		Longitude: nil,
+		Latitude:  nil,
+		Name:      "no ip or external host broker",
+		Tags:      []string{},
+		Type:      "enterprise",
+		Details: []api.BrokerDetail{
+			{
+				CN:           "foobar",
+				ExternalHost: nil,
+				ExternalPort: 43191,
+				IP:           nil,
+				MinVer:       0,
+				Modules:      []string{"httptrap"},
+				Port:         &[]uint16{43191}[0],
+				Skew:         nil,
+				Status:       "active",
+				Version:      nil,
+			},
+		},
+	}
+
 	validBroker = api.Broker{
 		CID:       "/broker/2",
 		Longitude: nil,
@@ -354,6 +377,13 @@ func TestIsValidBroker(t *testing.T) {
 	t.Log("status unprovisioned")
 	{
 		if cm.isValidBroker(&broker) {
+			t.Fatal("Expected invalid broker")
+		}
+	}
+
+	t.Log("no ip or host")
+	{
+		if cm.isValidBroker(&noIPorHostBroker) {
 			t.Fatal("Expected invalid broker")
 		}
 	}
