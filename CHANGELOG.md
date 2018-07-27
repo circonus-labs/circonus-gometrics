@@ -1,6 +1,9 @@
-# v2.1.2
+# v2.1.3
 
 * fix: handle case where a broker has no external host or ip set
+
+# v2.1.2
+
 * upd: breaking change in upstream repo
 * upd: upstream deps
 
