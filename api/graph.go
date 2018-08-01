@@ -65,11 +65,11 @@ type GraphDatapoint struct {
 
 // GraphGuide defines a guide
 type GraphGuide struct {
-	Color         string  `json:"color,omitempty"`          // string
-	DataFormula   *string `json:"data_formula,omitempty"`   // string or null
-	Hidden        bool    `json:"hidden,omitempty"`         // boolean
-	LegendFormula *string `json:"legend_formula,omitempty"` // string or null
-	Name          string  `json:"name,omitempty"`           // string
+	Color         string  `json:"color"`          // string
+	DataFormula   *string `json:"data_formula"`   // string or null
+	Hidden        bool    `json:"hidden"`         // boolean
+	LegendFormula *string `json:"legend_formula"` // string or null
+	Name          string  `json:"name"`           // string
 }
 
 // GraphMetricCluster defines a metric cluster
