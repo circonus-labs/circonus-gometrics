@@ -458,8 +458,10 @@ func (cm *CheckManager) GetSubmissionURL() (*Trap, error) {
 			return trap, nil
 		}
 
-		// api.circonus.com uses a public certificate
-		if u.Hostname() == "api.circonus.com" {
+		// api.circonus.com uses a public CA signed certificate
+		// trap.noit.circonus.net uses Circonus CA private certificate
+		// enterprise brokers use private CA certificate
+		if trap.URL.Hostname() == "api.circonus.com" {
 			return trap, nil
 		}
 
