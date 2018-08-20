@@ -1,3 +1,7 @@
+# v2.2.1
+
+* fix: if submission url host is 'api.circonus.com' do not use private CA in TLSConfig
+
 # v2.2.0
 
 * fix: do not reset counter|gauge|text funcs after each snapshot (only on explicit call to Reset)
