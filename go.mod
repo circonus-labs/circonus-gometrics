@@ -1,4 +1,4 @@
-module github.com/circonus-labs/circonus-gometrics
+module github.com/circonus-labs/circonus-gometrics/v2
 
 require (
 	github.com/circonus-labs/circonusllhist v0.0.0-20180430145027-5eb751da55c6
