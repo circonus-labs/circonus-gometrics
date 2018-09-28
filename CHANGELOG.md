@@ -1,3 +1,7 @@
+# v2.2.4
+
+* fix: worksheet.graphs is a required attribute. worksheet.smart_queries is an optional attribute.
+
 # v2.2.3
 
 * upd: remove go.{mod,dep} as cgm being v2 causes more issues than it solves at this point. will re-add after `go mod` becomes more common and adding `v2` to all internal import statements won't cause additional issues.
