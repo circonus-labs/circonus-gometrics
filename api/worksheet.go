@@ -24,7 +24,7 @@ type WorksheetGraph struct {
 // WorksheetSmartQuery defines a query to include multiple worksheets
 type WorksheetSmartQuery struct {
 	Name  string   `json:"name"`
-	Order []string `json:"order"`
+	Order []string `json:"order,omitempty"`
 	Query string   `json:"query"`
 }
 
