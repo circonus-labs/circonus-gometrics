@@ -498,7 +498,7 @@ func TestFlushMetrics(t *testing.T) {
 
 		if m, mok := (*metrics)["foo"]; !mok {
 			t.Fatalf("'foo' not found in %v", metrics)
-		} else if m.Type != "n" {
+		} else if m.Type != "h" {
 			t.Fatalf("'Type' not correct %v", m)
 		} else if len(m.Value.([]string)) != 1 {
 			t.Fatal("expected 1 value")
@@ -639,7 +639,7 @@ func TestPromOutput(t *testing.T) {
 
 		if m, mok := (*metrics)["foo"]; !mok {
 			t.Fatalf("'foo' not found in %v", metrics)
-		} else if m.Type != "n" {
+		} else if m.Type != "h" {
 			t.Fatalf("'Type' not correct %v", m)
 		} else if len(m.Value.([]string)) != 1 {
 			t.Fatal("expected 1 value")

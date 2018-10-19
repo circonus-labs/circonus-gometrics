@@ -299,7 +299,7 @@ func (m *CirconusMetrics) packageMetrics() (map[string]*api.CheckBundleMetric, M
 			}
 		}
 		if send {
-			output[name] = Metric{Type: "n", Value: value.DecStrings()}
+			output[name] = Metric{Type: "h", Value: value.DecStrings()}
 		}
 	}
 
@@ -346,6 +346,8 @@ func (m *CirconusMetrics) PromOutput() (*bytes.Buffer, error) {
 			if strings.HasPrefix(fmt.Sprintf("%v", metric.Value), "[H[") {
 				continue // circonus histogram != prom "histogram" (aka percentile)
 			}
+		case "h":
+			continue // circonus histogram != prom "histogram" (aka percentile)
 		case "s":
 			continue // text metrics unsupported
 		}
