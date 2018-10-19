@@ -23,6 +23,16 @@ type Tag struct {
 // Tags defines a list of tags
 type Tags []Tag
 
+// SetMetricTags sets the tags for the named metric and flags a check update is needed
+func (m *CirconusMetrics) SetMetricTags(name string, tags []string) bool {
+	return m.check.AddMetricTags(name, tags, false)
+}
+
+// AddMetricTags appends tags to any existing tags for the named metric and flags a check update is needed
+func (m *CirconusMetrics) AddMetricTags(name string, tags []string) bool {
+	return m.check.AddMetricTags(name, tags, true)
+}
+
 // EncodeMetricStreamTags encodes Tags into a string suitable for use with
 // stream tags. Tags directly embedded into metric names using the
 // `metric_name|ST[<tags>]` syntax.

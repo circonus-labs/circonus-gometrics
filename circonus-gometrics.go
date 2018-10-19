@@ -30,18 +30,13 @@
 package circonusgometrics
 
 import (
-	"bufio"
-	"bytes"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 
-	"github.com/circonus-labs/circonus-gometrics/api"
 	"github.com/circonus-labs/circonus-gometrics/checkmgr"
 	"github.com/pkg/errors"
 )
@@ -244,166 +239,4 @@ func (m *CirconusMetrics) Start() {
 // Ready returns true or false indicating if the check is ready to accept metrics
 func (m *CirconusMetrics) Ready() bool {
 	return m.check.IsReady()
-}
-
-func (m *CirconusMetrics) packageMetrics() (map[string]*api.CheckBundleMetric, Metrics) {
-
-	m.packagingmu.Lock()
-	defer m.packagingmu.Unlock()
-
-	if m.Debug {
-		m.Log.Println("[DEBUG] Packaging metrics")
-	}
-
-	counters, gauges, histograms, text := m.snapshot()
-	newMetrics := make(map[string]*api.CheckBundleMetric)
-	output := make(Metrics, len(counters)+len(gauges)+len(histograms)+len(text))
-	for name, value := range counters {
-		send := m.check.IsMetricActive(name)
-		if !send && m.check.ActivateMetric(name) {
-			send = true
-			newMetrics[name] = &api.CheckBundleMetric{
-				Name:   name,
-				Type:   "numeric",
-				Status: "active",
-			}
-		}
-		if send {
-			output[name] = Metric{Type: "L", Value: value}
-		}
-	}
-
-	for name, value := range gauges {
-		send := m.check.IsMetricActive(name)
-		if !send && m.check.ActivateMetric(name) {
-			send = true
-			newMetrics[name] = &api.CheckBundleMetric{
-				Name:   name,
-				Type:   "numeric",
-				Status: "active",
-			}
-		}
-		if send {
-			output[name] = Metric{Type: m.getGaugeType(value), Value: value}
-		}
-	}
-
-	for name, value := range histograms {
-		send := m.check.IsMetricActive(name)
-		if !send && m.check.ActivateMetric(name) {
-			send = true
-			newMetrics[name] = &api.CheckBundleMetric{
-				Name:   name,
-				Type:   "histogram",
-				Status: "active",
-			}
-		}
-		if send {
-			output[name] = Metric{Type: "h", Value: value.DecStrings()}
-		}
-	}
-
-	for name, value := range text {
-		send := m.check.IsMetricActive(name)
-		if !send && m.check.ActivateMetric(name) {
-			send = true
-			newMetrics[name] = &api.CheckBundleMetric{
-				Name:   name,
-				Type:   "text",
-				Status: "active",
-			}
-		}
-		if send {
-			output[name] = Metric{Type: "s", Value: value}
-		}
-	}
-
-	m.lastMetrics.metricsmu.Lock()
-	defer m.lastMetrics.metricsmu.Unlock()
-	m.lastMetrics.metrics = &output
-	m.lastMetrics.ts = time.Now()
-
-	return newMetrics, output
-}
-
-// PromOutput returns lines of metrics in prom format
-func (m *CirconusMetrics) PromOutput() (*bytes.Buffer, error) {
-	m.lastMetrics.metricsmu.Lock()
-	defer m.lastMetrics.metricsmu.Unlock()
-
-	if m.lastMetrics.metrics == nil {
-		return nil, errors.New("no metrics available")
-	}
-
-	var b bytes.Buffer
-	w := bufio.NewWriter(&b)
-
-	ts := m.lastMetrics.ts.UnixNano() / int64(time.Millisecond)
-
-	for name, metric := range *m.lastMetrics.metrics {
-		switch metric.Type {
-		case "n":
-			if strings.HasPrefix(fmt.Sprintf("%v", metric.Value), "[H[") {
-				continue // circonus histogram != prom "histogram" (aka percentile)
-			}
-		case "h":
-			continue // circonus histogram != prom "histogram" (aka percentile)
-		case "s":
-			continue // text metrics unsupported
-		}
-		fmt.Fprintf(w, "%s %v %d\n", name, metric.Value, ts)
-	}
-
-	err := w.Flush()
-	if err != nil {
-		return nil, errors.Wrap(err, "flushing metric buffer")
-	}
-
-	return &b, err
-}
-
-// FlushMetrics flushes current metrics to a structure and returns it (does NOT send to Circonus)
-func (m *CirconusMetrics) FlushMetrics() *Metrics {
-	m.flushmu.Lock()
-	if m.flushing {
-		m.flushmu.Unlock()
-		return &Metrics{}
-	}
-
-	m.flushing = true
-	m.flushmu.Unlock()
-
-	_, output := m.packageMetrics()
-
-	m.flushmu.Lock()
-	m.flushing = false
-	m.flushmu.Unlock()
-
-	return &output
-}
-
-// Flush metrics kicks off the process of sending metrics to Circonus
-func (m *CirconusMetrics) Flush() {
-	m.flushmu.Lock()
-	if m.flushing {
-		m.flushmu.Unlock()
-		return
-	}
-
-	m.flushing = true
-	m.flushmu.Unlock()
-
-	newMetrics, output := m.packageMetrics()
-
-	if len(output) > 0 {
-		m.submit(output, newMetrics)
-	} else {
-		if m.Debug {
-			m.Log.Println("[DEBUG] No metrics to send, skipping")
-		}
-	}
-
-	m.flushmu.Lock()
-	m.flushing = false
-	m.flushmu.Unlock()
 }
