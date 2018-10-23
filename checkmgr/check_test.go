@@ -19,13 +19,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/circonus-labs/circonus-gometrics/api"
-	"github.com/circonus-labs/circonus-gometrics/api/config"
+	apiclient "github.com/circonus-labs/go-apiclient"
+	"github.com/circonus-labs/go-apiclient/config"
 )
 
 var (
 	cert      = "{\"contents\":\"-----BEGIN CERTIFICATE-----\\nMIID4zCCA0ygAwIBAgIJAMelf8skwVWPMA0GCSqGSIb3DQEBBQUAMIGoMQswCQYD\\nVQQGEwJVUzERMA8GA1UECBMITWFyeWxhbmQxETAPBgNVBAcTCENvbHVtYmlhMRcw\\nFQYDVQQKEw5DaXJjb251cywgSW5jLjERMA8GA1UECxMIQ2lyY29udXMxJzAlBgNV\\nBAMTHkNpcmNvbnVzIENlcnRpZmljYXRlIEF1dGhvcml0eTEeMBwGCSqGSIb3DQEJ\\nARYPY2FAY2lyY29udXMubmV0MB4XDTA5MTIyMzE5MTcwNloXDTE5MTIyMTE5MTcw\\nNlowgagxCzAJBgNVBAYTAlVTMREwDwYDVQQIEwhNYXJ5bGFuZDERMA8GA1UEBxMI\\nQ29sdW1iaWExFzAVBgNVBAoTDkNpcmNvbnVzLCBJbmMuMREwDwYDVQQLEwhDaXJj\\nb251czEnMCUGA1UEAxMeQ2lyY29udXMgQ2VydGlmaWNhdGUgQXV0aG9yaXR5MR4w\\nHAYJKoZIhvcNAQkBFg9jYUBjaXJjb251cy5uZXQwgZ8wDQYJKoZIhvcNAQEBBQAD\\ngY0AMIGJAoGBAKz2X0/0vJJ4ad1roehFyxUXHdkjJA9msEKwT2ojummdUB3kK5z6\\nPDzDL9/c65eFYWqrQWVWZSLQK1D+v9xJThCe93v6QkSJa7GZkCq9dxClXVtBmZH3\\nhNIZZKVC6JMA9dpRjBmlFgNuIdN7q5aJsv8VZHH+QrAyr9aQmhDJAmk1AgMBAAGj\\nggERMIIBDTAdBgNVHQ4EFgQUyNTsgZHSkhhDJ5i+6IFlPzKYxsUwgd0GA1UdIwSB\\n1TCB0oAUyNTsgZHSkhhDJ5i+6IFlPzKYxsWhga6kgaswgagxCzAJBgNVBAYTAlVT\\nMREwDwYDVQQIEwhNYXJ5bGFuZDERMA8GA1UEBxMIQ29sdW1iaWExFzAVBgNVBAoT\\nDkNpcmNvbnVzLCBJbmMuMREwDwYDVQQLEwhDaXJjb251czEnMCUGA1UEAxMeQ2ly\\nY29udXMgQ2VydGlmaWNhdGUgQXV0aG9yaXR5MR4wHAYJKoZIhvcNAQkBFg9jYUBj\\naXJjb251cy5uZXSCCQDHpX/LJMFVjzAMBgNVHRMEBTADAQH/MA0GCSqGSIb3DQEB\\nBQUAA4GBAAHBtl15BwbSyq0dMEBpEdQYhHianU/rvOMe57digBmox7ZkPEbB/baE\\nsYJysziA2raOtRxVRtcxuZSMij2RiJDsLxzIp1H60Xhr8lmf7qF6Y+sZl7V36KZb\\nn2ezaOoRtsQl9dhqEMe8zgL76p9YZ5E69Al0mgiifTteyNjjMuIW\\n-----END CERTIFICATE-----\\n\"}"
-	testCheck = api.Check{
+	testCheck = apiclient.Check{
 		CID:            "/check/1234",
 		Active:         true,
 		BrokerCID:      "/broker/1234",
@@ -34,7 +34,7 @@ var (
 		Details:        map[config.Key]string{config.SubmissionURL: "http://127.0.0.1:43191/module/httptrap/abc123-a1b2-c3d4-e5f6-123abc/blah"},
 	}
 
-	testCheckBundle = api.CheckBundle{
+	testCheckBundle = apiclient.CheckBundle{
 		CheckUUIDs:    []string{"abc123-a1b2-c3d4-e5f6-123abc"},
 		Checks:        []string{"/check/1234"},
 		CID:           "/check_bundle/1234",
@@ -50,7 +50,7 @@ var (
 			config.SubmissionURL:    "https://127.0.0.1:43191/module/httptrap/abc123-a1b2-c3d4-e5f6-123abc/blah",
 			config.ReverseSecretKey: "blah",
 		},
-		Metrics: []api.CheckBundleMetric{
+		Metrics: []apiclient.CheckBundleMetric{
 			{
 				Name:   "elmo",
 				Type:   "numeric",
@@ -67,11 +67,11 @@ var (
 		Tags:        []string{},
 	}
 
-	testBroker = api.Broker{
+	testBroker = apiclient.Broker{
 		CID:  "/broker/1234",
 		Name: "test broker",
 		Type: "enterprise",
-		Details: []api.BrokerDetail{
+		Details: []apiclient.BrokerDetail{
 			{
 				CN:           "testbroker.example.com",
 				ExternalHost: nil,
@@ -116,7 +116,7 @@ func testCheckServer() *httptest.Server {
 			case "GET": // search
 				//fmt.Println(r.URL.String())
 				if strings.HasPrefix(r.URL.String(), "/check_bundle?f_notes=") && strings.Contains(r.URL.String(), "found_notes") {
-					r := []api.CheckBundle{testCheckBundle}
+					r := []apiclient.CheckBundle{testCheckBundle}
 					ret, err := json.Marshal(r)
 					if err != nil {
 						panic(err)
@@ -125,7 +125,7 @@ func testCheckServer() *httptest.Server {
 					w.Header().Set("Content-Type", "application/json")
 					fmt.Fprintln(w, string(ret))
 				} else if strings.HasPrefix(r.URL.String(), "/check_bundle?search=") && strings.Contains(r.URL.String(), "found_target") {
-					r := []api.CheckBundle{testCheckBundle}
+					r := []apiclient.CheckBundle{testCheckBundle}
 					ret, err := json.Marshal(r)
 					if err != nil {
 						panic(err)
@@ -158,7 +158,7 @@ func testCheckServer() *httptest.Server {
 		case "/broker":
 			switch r.Method {
 			case "GET":
-				r := []api.Broker{testBroker}
+				r := []apiclient.Broker{testBroker}
 				ret, err := json.Marshal(r)
 				if err != nil {
 					panic(err)
@@ -187,7 +187,7 @@ func testCheckServer() *httptest.Server {
 		case "/check":
 			switch r.Method {
 			case "GET":
-				r := []api.Check{testCheck}
+				r := []apiclient.Check{testCheck}
 				ret, err := json.Marshal(r)
 				if err != nil {
 					panic(err)
@@ -234,18 +234,18 @@ func TestUpdateCheck(t *testing.T) {
 	cm := &CheckManager{
 		enabled: true,
 	}
-	ac := &api.Config{
+	ac := &apiclient.Config{
 		TokenApp: "abcd",
 		TokenKey: "1234",
 		URL:      server.URL,
 	}
-	apih, err := api.NewAPI(ac)
+	apih, err := apiclient.NewAPI(ac)
 	if err != nil {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 	cm.apih = apih
 
-	newMetrics := make(map[string]*api.CheckBundleMetric)
+	newMetrics := make(map[string]*apiclient.CheckBundleMetric)
 
 	t.Log("check manager disabled")
 	{
@@ -268,7 +268,7 @@ func TestUpdateCheck(t *testing.T) {
 		cm.UpdateCheck(newMetrics)
 	}
 
-	newMetrics["test`metric"] = &api.CheckBundleMetric{
+	newMetrics["test`metric"] = &apiclient.CheckBundleMetric{
 		Name:   "test`metric",
 		Type:   "numeric",
 		Status: "active",
@@ -329,18 +329,18 @@ func TestCreateNewCheck(t *testing.T) {
 		enabled:               true,
 		checkDisplayName:      "test_dn",
 		checkInstanceID:       "test_id",
-		checkSearchTag:        api.TagType([]string{"test:test"}),
+		checkSearchTag:        apiclient.TagType([]string{"test:test"}),
 		checkTarget:           "test",
 		brokerMaxResponseTime: time.Duration(time.Millisecond * 500),
 		checkType:             "httptrap",
 	}
 
-	ac := &api.Config{
+	ac := &apiclient.Config{
 		TokenApp: "abcd",
 		TokenKey: "1234",
 		URL:      server.URL,
 	}
-	apih, err := api.NewAPI(ac)
+	apih, err := apiclient.NewAPI(ac)
 	if err != nil {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
@@ -399,13 +399,13 @@ func TestInitializeTrapURL(t *testing.T) {
 		}
 	}
 
-	ac := &api.Config{
+	ac := &apiclient.Config{
 		TokenApp: "abcd",
 		TokenKey: "1234",
 		URL:      server.URL,
 	}
 
-	if apih, err := api.NewAPI(ac); err == nil {
+	if apih, err := apiclient.NewAPI(ac); err == nil {
 		cm.apih = apih
 	} else {
 		t.Errorf("Expected no error, got '%v'", err)
@@ -439,7 +439,7 @@ func TestInitializeTrapURL(t *testing.T) {
 	cm.checkID = 0
 	cm.checkTarget = "test_t"
 	cm.checkInstanceID = "test_id"
-	cm.checkSearchTag = api.TagType([]string{"s:found_target"})
+	cm.checkSearchTag = apiclient.TagType([]string{"s:found_target"})
 	cm.checkDisplayName = "test_dn"
 
 	t.Log("cm enabled, search [found by target]")
@@ -454,7 +454,7 @@ func TestInitializeTrapURL(t *testing.T) {
 	cm.checkID = 0
 	cm.checkTarget = "test_t"
 	cm.checkInstanceID = "test_id"
-	cm.checkSearchTag = api.TagType([]string{"s:found_notes"})
+	cm.checkSearchTag = apiclient.TagType([]string{"s:found_notes"})
 	cm.checkDisplayName = "test_dn"
 
 	t.Log("cm enabled, search [found by notes]")
@@ -469,7 +469,7 @@ func TestInitializeTrapURL(t *testing.T) {
 	cm.checkID = 0
 	cm.checkTarget = "foo_t"
 	cm.checkInstanceID = "foo_id"
-	cm.checkSearchTag = api.TagType([]string{"foo:bar"})
+	cm.checkSearchTag = apiclient.TagType([]string{"foo:bar"})
 	cm.checkDisplayName = "foo_dn"
 	cm.checkType = "httptrap"
 	cm.brokerMaxResponseTime = time.Duration(time.Millisecond * 50)
@@ -487,7 +487,7 @@ func TestInitializeTrapURL(t *testing.T) {
 	cm.checkID = 1234
 	cm.checkTarget = "foo_t"
 	cm.checkInstanceID = "foo_id"
-	cm.checkSearchTag = api.TagType([]string{"foo:bar"})
+	cm.checkSearchTag = apiclient.TagType([]string{"foo:bar"})
 	cm.checkDisplayName = "foo_dn"
 	cm.checkType = "httptrap"
 

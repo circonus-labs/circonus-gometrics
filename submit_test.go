@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/circonus-labs/circonus-gometrics/api"
+	apiclient "github.com/circonus-labs/go-apiclient"
 )
 
 func fakeBroker() *httptest.Server {
@@ -39,7 +39,7 @@ func TestSubmit(t *testing.T) {
 		t.Errorf("Expected no error, got '%v'", err)
 	}
 
-	newMetrics := make(map[string]*api.CheckBundleMetric)
+	newMetrics := make(map[string]*apiclient.CheckBundleMetric)
 	output := Metrics{"foo": Metric{Type: "n", Value: 1}}
 	// output["foo"] = map[string]interface{}{
 	// 	"_type":  "n",

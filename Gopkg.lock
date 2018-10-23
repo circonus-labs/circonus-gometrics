@@ -8,6 +8,15 @@
   revision = "5eb751da55c6d3091faf3861ec5062ae91fee9d0"
 
 [[projects]]
+  name = "github.com/circonus-labs/go-apiclient"
+  packages = [
+    ".",
+    "config"
+  ]
+  revision = "adb72bc548261c251e5ab341b695c3d678ed5c99"
+  version = "v0.5.0"
+
+[[projects]]
   branch = "master"
   name = "github.com/hashicorp/go-cleanhttp"
   packages = ["."]
@@ -34,6 +43,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "6db34ba31cd011426f28b5db0dbe259c4dc3787fb2074b2c06cb382385a90242"
+  inputs-digest = "10ad9a90f3e015e2bc2261955a36e754a9c3758b7cd4298d773c16d86441284b"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -14,7 +14,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/circonus-labs/circonus-gometrics/api"
+	apiclient "github.com/circonus-labs/go-apiclient"
 )
 
 func init() {
@@ -22,10 +22,10 @@ func init() {
 }
 
 // Get Broker to use when creating a check
-func (cm *CheckManager) getBroker() (*api.Broker, error) {
+func (cm *CheckManager) getBroker() (*apiclient.Broker, error) {
 	if cm.brokerID != 0 {
 		cid := fmt.Sprintf("/broker/%d", cm.brokerID)
-		broker, err := cm.apih.FetchBroker(api.CIDType(&cid))
+		broker, err := cm.apih.FetchBroker(apiclient.CIDType(&cid))
 		if err != nil {
 			return nil, err
 		}
@@ -45,7 +45,7 @@ func (cm *CheckManager) getBroker() (*api.Broker, error) {
 }
 
 // Get CN of Broker associated with submission_url to satisfy no IP SANS in certs
-func (cm *CheckManager) getBrokerCN(broker *api.Broker, submissionURL api.URLType) (string, error) {
+func (cm *CheckManager) getBrokerCN(broker *apiclient.Broker, submissionURL apiclient.URLType) (string, error) {
 	u, err := url.Parse(string(submissionURL))
 	if err != nil {
 		return "", err
@@ -77,13 +77,13 @@ func (cm *CheckManager) getBrokerCN(broker *api.Broker, submissionURL api.URLTyp
 
 // Select a broker for use when creating a check, if a specific broker
 // was not specified.
-func (cm *CheckManager) selectBroker() (*api.Broker, error) {
-	var brokerList *[]api.Broker
+func (cm *CheckManager) selectBroker() (*apiclient.Broker, error) {
+	var brokerList *[]apiclient.Broker
 	var err error
 	enterpriseType := "enterprise"
 
 	if len(cm.brokerSelectTag) > 0 {
-		filter := api.SearchFilterType{
+		filter := apiclient.SearchFilterType{
 			"f__tags_has": cm.brokerSelectTag,
 		}
 		brokerList, err = cm.apih.SearchBrokers(nil, &filter)
@@ -101,7 +101,7 @@ func (cm *CheckManager) selectBroker() (*api.Broker, error) {
 		return nil, fmt.Errorf("zero brokers found")
 	}
 
-	validBrokers := make(map[string]api.Broker)
+	validBrokers := make(map[string]apiclient.Broker)
 	haveEnterprise := false
 
 	for _, broker := range *brokerList {
@@ -138,7 +138,7 @@ func (cm *CheckManager) selectBroker() (*api.Broker, error) {
 }
 
 // Verify broker supports the check type to be used
-func (cm *CheckManager) brokerSupportsCheckType(checkType CheckTypeType, details *api.BrokerDetail) bool {
+func (cm *CheckManager) brokerSupportsCheckType(checkType CheckTypeType, details *apiclient.BrokerDetail) bool {
 
 	baseType := string(checkType)
 
@@ -163,7 +163,7 @@ func (cm *CheckManager) brokerSupportsCheckType(checkType CheckTypeType, details
 }
 
 // Is the broker valid (active, supports check type, and reachable)
-func (cm *CheckManager) isValidBroker(broker *api.Broker) bool {
+func (cm *CheckManager) isValidBroker(broker *apiclient.Broker) bool {
 	var brokerHost string
 	var brokerPort string
 

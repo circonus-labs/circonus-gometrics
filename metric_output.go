@@ -11,12 +11,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/circonus-labs/circonus-gometrics/api"
 	"github.com/circonus-labs/circonusllhist"
+	"github.com/circonus-labs/go-apiclient"
 	"github.com/pkg/errors"
 )
 
-func (m *CirconusMetrics) packageMetrics() (map[string]*api.CheckBundleMetric, Metrics) {
+func (m *CirconusMetrics) packageMetrics() (map[string]*apiclient.CheckBundleMetric, Metrics) {
 
 	m.packagingmu.Lock()
 	defer m.packagingmu.Unlock()
@@ -26,13 +26,13 @@ func (m *CirconusMetrics) packageMetrics() (map[string]*api.CheckBundleMetric, M
 	}
 
 	counters, gauges, histograms, text := m.snapshot()
-	newMetrics := make(map[string]*api.CheckBundleMetric)
+	newMetrics := make(map[string]*apiclient.CheckBundleMetric)
 	output := make(Metrics, len(counters)+len(gauges)+len(histograms)+len(text))
 	for name, value := range counters {
 		send := m.check.IsMetricActive(name)
 		if !send && m.check.ActivateMetric(name) {
 			send = true
-			newMetrics[name] = &api.CheckBundleMetric{
+			newMetrics[name] = &apiclient.CheckBundleMetric{
 				Name:   name,
 				Type:   "numeric",
 				Status: "active",
@@ -47,7 +47,7 @@ func (m *CirconusMetrics) packageMetrics() (map[string]*api.CheckBundleMetric, M
 		send := m.check.IsMetricActive(name)
 		if !send && m.check.ActivateMetric(name) {
 			send = true
-			newMetrics[name] = &api.CheckBundleMetric{
+			newMetrics[name] = &apiclient.CheckBundleMetric{
 				Name:   name,
 				Type:   "numeric",
 				Status: "active",
@@ -62,7 +62,7 @@ func (m *CirconusMetrics) packageMetrics() (map[string]*api.CheckBundleMetric, M
 		send := m.check.IsMetricActive(name)
 		if !send && m.check.ActivateMetric(name) {
 			send = true
-			newMetrics[name] = &api.CheckBundleMetric{
+			newMetrics[name] = &apiclient.CheckBundleMetric{
 				Name:   name,
 				Type:   "histogram",
 				Status: "active",
@@ -77,7 +77,7 @@ func (m *CirconusMetrics) packageMetrics() (map[string]*api.CheckBundleMetric, M
 		send := m.check.IsMetricActive(name)
 		if !send && m.check.ActivateMetric(name) {
 			send = true
-			newMetrics[name] = &api.CheckBundleMetric{
+			newMetrics[name] = &apiclient.CheckBundleMetric{
 				Name:   name,
 				Type:   "text",
 				Status: "active",

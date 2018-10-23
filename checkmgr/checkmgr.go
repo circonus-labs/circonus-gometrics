@@ -20,7 +20,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/circonus-labs/circonus-gometrics/api"
+	apiclient "github.com/circonus-labs/go-apiclient"
 	"github.com/pkg/errors"
 	"github.com/tv42/httpunix"
 )
@@ -113,7 +113,7 @@ type Config struct {
 	Debug bool
 
 	// Circonus API config
-	API api.Config
+	API apiclient.Config
 	// Check specific configuration options
 	Check CheckConfig
 	// Broker specific configuration options
@@ -146,21 +146,21 @@ type CheckManager struct {
 	enabled bool
 	Log     *log.Logger
 	Debug   bool
-	apih    *api.API
+	apih    *apiclient.API
 
 	initialized   bool
 	initializedmu sync.RWMutex
 
 	// check
 	checkType             CheckTypeType
-	checkID               api.IDType
+	checkID               apiclient.IDType
 	checkInstanceID       CheckInstanceIDType
 	checkTarget           CheckTargetType
-	checkSearchTag        api.TagType
+	checkSearchTag        apiclient.TagType
 	checkSecret           CheckSecretType
-	checkTags             api.TagType
+	checkTags             apiclient.TagType
 	customConfigFields    map[string]string
-	checkSubmissionURL    api.URLType
+	checkSubmissionURL    apiclient.URLType
 	checkDisplayName      CheckDisplayNameType
 	forceMetricActivation bool
 	forceCheckUpdate      bool
@@ -170,17 +170,17 @@ type CheckManager struct {
 	mtmu       sync.Mutex
 
 	// broker
-	brokerID              api.IDType
-	brokerSelectTag       api.TagType
+	brokerID              apiclient.IDType
+	brokerSelectTag       apiclient.TagType
 	brokerMaxResponseTime time.Duration
 	brokerTLS             *tls.Config
 
 	// state
-	checkBundle        *api.CheckBundle
+	checkBundle        *apiclient.CheckBundle
 	cbmu               sync.Mutex
 	availableMetrics   map[string]bool
 	availableMetricsmu sync.Mutex
-	trapURL            api.URLType
+	trapURL            apiclient.URLType
 	trapCN             BrokerCNType
 	trapLastUpdate     time.Time
 	trapMaxURLAge      time.Duration
@@ -230,7 +230,7 @@ func New(cfg *Config) (*CheckManager, error) {
 	}
 
 	if cfg.Check.SubmissionURL != "" {
-		cm.checkSubmissionURL = api.URLType(cfg.Check.SubmissionURL)
+		cm.checkSubmissionURL = apiclient.URLType(cfg.Check.SubmissionURL)
 	}
 
 	// Blank API Token *disables* check management
@@ -246,7 +246,7 @@ func New(cfg *Config) (*CheckManager, error) {
 		// initialize api handle
 		cfg.API.Debug = cm.Debug
 		cfg.API.Log = cm.Log
-		apih, err := api.New(&cfg.API)
+		apih, err := apiclient.New(&cfg.API)
 		if err != nil {
 			return nil, errors.Wrap(err, "initializing api client")
 		}
@@ -268,7 +268,7 @@ func New(cfg *Config) (*CheckManager, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "converting check id")
 	}
-	cm.checkID = api.IDType(id)
+	cm.checkID = apiclient.IDType(id)
 
 	cm.checkInstanceID = CheckInstanceIDType(cfg.Check.InstanceID)
 	cm.checkTarget = CheckTargetType(cfg.Check.TargetHost)
@@ -336,7 +336,7 @@ func New(cfg *Config) (*CheckManager, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "parsing broker id")
 	}
-	cm.brokerID = api.IDType(id)
+	cm.brokerID = apiclient.IDType(id)
 
 	if cfg.Broker.SelectTag != "" {
 		cm.brokerSelectTag = strings.Split(strings.Replace(cfg.Broker.SelectTag, " ", "", -1), ",")
@@ -458,10 +458,10 @@ func (cm *CheckManager) GetSubmissionURL() (*Trap, error) {
 			return trap, nil
 		}
 
-		// api.circonus.com uses a public CA signed certificate
+		// apiclient.circonus.com uses a public CA signed certificate
 		// trap.noit.circonus.net uses Circonus CA private certificate
 		// enterprise brokers use private CA certificate
-		if trap.URL.Hostname() == "api.circonus.com" {
+		if trap.URL.Hostname() == "apiclient.circonus.com" {
 			return trap, nil
 		}
 

@@ -21,8 +21,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/circonus-labs/circonus-gometrics/api"
-	"github.com/circonus-labs/circonus-gometrics/api/config"
+	apiclient "github.com/circonus-labs/go-apiclient"
+	"github.com/circonus-labs/go-apiclient/config"
 )
 
 func sslBroker() *httptest.Server {
@@ -36,7 +36,7 @@ func sslBroker() *httptest.Server {
 }
 
 var (
-	testCMCheck = api.Check{
+	testCMCheck = apiclient.Check{
 		CID:            "/check/1234",
 		Active:         true,
 		BrokerCID:      "/broker/1234",
@@ -45,7 +45,7 @@ var (
 		Details:        map[config.Key]string{config.SubmissionURL: "https://127.0.0.1:43191/module/httptrap/abc123-a1b2-c3d4-e5f6-123abc/blah"},
 	}
 
-	testCMCheckBundle = api.CheckBundle{
+	testCMCheckBundle = apiclient.CheckBundle{
 		CheckUUIDs:    []string{"abc123-a1b2-c3d4-e5f6-123abc"},
 		Checks:        []string{"/check/1234"},
 		CID:           "/check_bundle/1234",
@@ -60,11 +60,11 @@ var (
 		Config: map[config.Key]string{
 			config.SubmissionURL: "https://127.0.0.1:43191/module/httptrap/abc123-a1b2-c3d4-e5f6-123abc/blah",
 		},
-		// Config: api.CheckBundleConfig{
+		// Config: apiclient.CheckBundleConfig{
 		// 	SubmissionURL: "https://127.0.0.1:43191/module/httptrap/abc123-a1b2-c3d4-e5f6-123abc/blah",
 		// 	ReverseSecret: "blah",
 		// },
-		Metrics: []api.CheckBundleMetric{
+		Metrics: []apiclient.CheckBundleMetric{
 			{
 				Name:   "elmo",
 				Type:   "numeric",
@@ -81,11 +81,11 @@ var (
 		Tags:        []string{},
 	}
 
-	testCMBroker = api.Broker{
+	testCMBroker = apiclient.Broker{
 		CID:  "/broker/1234",
 		Name: "test broker",
 		Type: "enterprise",
-		Details: []api.BrokerDetail{
+		Details: []apiclient.BrokerDetail{
 			{
 				CN:           "testbroker.example.com",
 				ExternalHost: nil,
@@ -130,7 +130,7 @@ func testCMServer() *httptest.Server {
 			switch r.Method {
 			case "GET": // search
 				if strings.HasPrefix(r.URL.String(), "/check_bundle?search=") {
-					r := []api.CheckBundle{testCMCheckBundle}
+					r := []apiclient.CheckBundle{testCMCheckBundle}
 					ret, err := json.Marshal(r)
 					if err != nil {
 						panic(err)
@@ -163,7 +163,7 @@ func testCMServer() *httptest.Server {
 		case "/broker":
 			switch r.Method {
 			case "GET":
-				r := []api.Broker{testCMBroker}
+				r := []apiclient.Broker{testCMBroker}
 				ret, err := json.Marshal(r)
 				if err != nil {
 					panic(err)
@@ -192,7 +192,7 @@ func testCMServer() *httptest.Server {
 		case "/check":
 			switch r.Method {
 			case "GET":
-				r := []api.Check{testCMCheck}
+				r := []apiclient.Check{testCMCheck}
 				ret, err := json.Marshal(r)
 				if err != nil {
 					panic(err)
@@ -334,7 +334,7 @@ func TestNewCheckManager(t *testing.T) {
 		testCMBroker.Details[0].ExternalPort = uint16(hostPort)
 		cfg := &Config{
 			Log: log.New(os.Stderr, "", log.LstdFlags),
-			API: api.Config{
+			API: apiclient.Config{
 				TokenKey: "1234",
 				TokenApp: "abc",
 				URL:      server.URL,
