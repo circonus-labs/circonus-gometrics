@@ -69,6 +69,7 @@ func EncodeMetricTags(tags *Tags) []string {
 	for _, tag := range prepTags(tags) {
 		tagList = append(tagList, fmt.Sprintf(`%s:%s`, tag.Category, tag.Value))
 	}
+	sort.Strings(tagList)
 	return tagList
 }
 
