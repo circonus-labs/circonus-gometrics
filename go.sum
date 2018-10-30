@@ -1,5 +1,5 @@
-github.com/circonus-labs/circonusllhist v0.0.0-20180430145027-5eb751da55c6 h1:Rm//1hbNxCErrYx7+QSOvITlZtNpt3rW1Ov8lxifdsg=
-github.com/circonus-labs/circonusllhist v0.0.0-20180430145027-5eb751da55c6/go.mod h1:kMXHVDlOchFAehlya5ePtbp5jckzBHf4XRpQvBOLI+I=
+github.com/circonus-labs/circonusllhist v0.1.0 h1:3s0i9irZZhzwHAqAbx4BqbnOCVti+XiuoSiTpysNAuE=
+github.com/circonus-labs/circonusllhist v0.1.0/go.mod h1:kMXHVDlOchFAehlya5ePtbp5jckzBHf4XRpQvBOLI+I=
 github.com/circonus-labs/go-apiclient v0.5.0 h1:88sTJ4mW+XEKlKF2XYgTpIpxJXurXIzthost6kStg+k=
 github.com/circonus-labs/go-apiclient v0.5.0/go.mod h1:FEKOXTaR6ZQ3aXlDtrXxT5ehfECSuuOSuA3kfqeMv6c=
 github.com/hashicorp/go-cleanhttp v0.5.0 h1:wvCrVc9TjDls6+YGAF2hAifE1E5U1+b4tH6KdvN3Gig=
