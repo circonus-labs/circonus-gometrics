@@ -24,16 +24,22 @@ type Tag struct {
 type Tags []Tag
 
 // SetMetricTags sets the tags for the named metric and flags a check update is needed
+// Note: does not work with checks using metric_filters (the default) use metric
+// `*WithTags` helper methods or manual manage stream tags in metric names.
 func (m *CirconusMetrics) SetMetricTags(name string, tags []string) bool {
 	return m.check.AddMetricTags(name, tags, false)
 }
 
 // AddMetricTags appends tags to any existing tags for the named metric and flags a check update is needed
+// Note: does not work with checks using metric_filters (the default) use metric
+// `*WithTags` helper methods or manual manage stream tags in metric names.
 func (m *CirconusMetrics) AddMetricTags(name string, tags []string) bool {
 	return m.check.AddMetricTags(name, tags, true)
 }
 
-// MetricNameWithStreamTags will encode supplied stream tags into supplied metric name, if metric name *does not* already have stream tags
+// MetricNameWithStreamTags will encode tags as stream tags into supplied metric name.
+// Note: if metric name already has stream tags it is assumed the metric name and
+// embedded stream tags are being managed manually and calling this method will nave no effect.
 func MetricNameWithStreamTags(metric string, tags Tags) string {
 	if len(tags) == 0 {
 		return metric
