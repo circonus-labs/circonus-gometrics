@@ -13,7 +13,7 @@ import (
 // Use a counter to derive rates (e.g., record total number of requests, derive
 // requests per second).
 
-// Increment counter by 1, with tags
+// IncrementWithTags counter by 1, with tags
 func (m *CirconusMetrics) IncrementWithTags(metric string, tags Tags) {
 	m.AddWithTags(metric, tags, 1)
 }
