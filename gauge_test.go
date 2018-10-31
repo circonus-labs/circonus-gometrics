@@ -204,6 +204,28 @@ func TestGauge(t *testing.T) {
 	}
 }
 
+func TestGaugeWithTags(t *testing.T) {
+	t.Log("Testing gauge.GaugeWithTags")
+
+	cm := &CirconusMetrics{gauges: make(map[string]interface{})}
+
+	metricName := "foo"
+	tags := Tags{{"foo", "bar"}, {"baz", "qux"}}
+	streamTagMetricName := MetricNameWithStreamTags("foo", tags)
+
+	v := int(10)
+	cm.GaugeWithTags(metricName, tags, v)
+
+	val, ok := cm.gauges[streamTagMetricName]
+	if !ok {
+		t.Fatalf("%s with %v tags not found (%s) (%#v)", metricName, tags, streamTagMetricName, cm.gauges)
+	}
+
+	if val.(int) != v {
+		t.Fatalf("expected (%d) found (%v)", v, val)
+	}
+}
+
 func TestAddGauge(t *testing.T) {
 	t.Log("Testing gauge.AddGauge")
 
@@ -436,6 +458,47 @@ func TestAddGauge(t *testing.T) {
 	}
 }
 
+func TestAddGaugeWithTags(t *testing.T) {
+	t.Log("Testing gauge.AddGaugeWithTags")
+
+	cm := &CirconusMetrics{gauges: make(map[string]interface{})}
+
+	metricName := "foo"
+	tags := Tags{{"foo", "bar"}, {"baz", "qux"}}
+	streamTagMetricName := MetricNameWithStreamTags("foo", tags)
+	v1 := 10
+	v2 := 5
+
+	// initial
+	{
+		cm.GaugeWithTags(metricName, tags, v1)
+
+		val, ok := cm.gauges[streamTagMetricName]
+		if !ok {
+			t.Fatalf("%s with %v tags not found (%s) (%#v)", metricName, tags, streamTagMetricName, cm.gauges)
+		}
+
+		if val.(int) != v1 {
+			t.Fatalf("expected (%d) found (%v)", v1, val)
+		}
+	}
+
+	// add
+	{
+		cm.AddGaugeWithTags(metricName, tags, v2)
+
+		val, ok := cm.gauges[streamTagMetricName]
+		if !ok {
+			t.Fatalf("%s with %v tags not found (%s) (%#v)", metricName, tags, streamTagMetricName, cm.gauges)
+		}
+
+		if val.(int) != v1+v2 {
+			t.Fatalf("expected (%d) found (%v)", v1+v2, val)
+		}
+	}
+
+}
+
 func TestSetGauge(t *testing.T) {
 	t.Log("Testing gauge.SetGauge")
 
@@ -451,6 +514,28 @@ func TestSetGauge(t *testing.T) {
 
 	if val.(int) != v {
 		t.Errorf("Expected %d, found %v", v, val)
+	}
+}
+
+func TestSetGaugeWithTags(t *testing.T) {
+	t.Log("Testing gauge.SetGaugeWithTags")
+
+	cm := &CirconusMetrics{gauges: make(map[string]interface{})}
+
+	metricName := "foo"
+	tags := Tags{{"foo", "bar"}, {"baz", "qux"}}
+	streamTagMetricName := MetricNameWithStreamTags("foo", tags)
+
+	v := int(10)
+	cm.SetGaugeWithTags(metricName, tags, v)
+
+	val, ok := cm.gauges[streamTagMetricName]
+	if !ok {
+		t.Fatalf("%s with %v tags not found (%s) (%#v)", metricName, tags, streamTagMetricName, cm.gauges)
+	}
+
+	if val.(int) != v {
+		t.Fatalf("expected (%d) found (%v)", v, val)
 	}
 }
 
@@ -505,6 +590,38 @@ func TestRemoveGauge(t *testing.T) {
 	}
 }
 
+func TestRemoveGaugeWithTags(t *testing.T) {
+	t.Log("Testing gauge.RemoveGaugeWithTags")
+
+	cm := &CirconusMetrics{gauges: make(map[string]interface{})}
+
+	metricName := "foo"
+	tags := Tags{{"foo", "bar"}, {"baz", "qux"}}
+	streamTagMetricName := MetricNameWithStreamTags("foo", tags)
+
+	v := int(5)
+	cm.GaugeWithTags(metricName, tags, v)
+	val, ok := cm.gauges[streamTagMetricName]
+	if !ok {
+		t.Fatalf("%s with %v tags not found (%s) (%#v)", metricName, tags, streamTagMetricName, cm.gauges)
+	}
+
+	if val.(int) != v {
+		t.Fatalf("expected (%d) found (%v)", v, val)
+	}
+
+	cm.RemoveGaugeWithTags(metricName, tags)
+
+	val, ok = cm.gauges[streamTagMetricName]
+	if ok {
+		t.Fatalf("expected NOT to find (%s)", streamTagMetricName)
+	}
+
+	if val != nil {
+		t.Fatalf("expected nil, found '%v'", val)
+	}
+}
+
 func TestSetGaugeFunc(t *testing.T) {
 	t.Log("Testing gauge.SetGaugeFunc")
 
@@ -523,6 +640,31 @@ func TestSetGaugeFunc(t *testing.T) {
 
 	if val() != 1 {
 		t.Errorf("Expected 1, found %d", val())
+	}
+}
+
+func TestSetGaugeFuncWithTags(t *testing.T) {
+	t.Log("Testing gauge.SetGaugeFuncWithTags")
+
+	gf := func() int64 {
+		return 1
+	}
+
+	cm := &CirconusMetrics{gaugeFuncs: make(map[string]func() int64)}
+
+	metricName := "foo"
+	tags := Tags{{"foo", "bar"}, {"baz", "qux"}}
+	streamTagMetricName := MetricNameWithStreamTags("foo", tags)
+
+	cm.SetGaugeFuncWithTags(metricName, tags, gf)
+
+	val, ok := cm.gaugeFuncs[streamTagMetricName]
+	if !ok {
+		t.Fatalf("%s with %v tags not found (%s) (%#v)", metricName, tags, streamTagMetricName, cm.gauges)
+	}
+
+	if val() != 1 {
+		t.Fatalf("expected 1, found (%v)", val())
 	}
 }
 
@@ -555,6 +697,43 @@ func TestRemoveGaugeFunc(t *testing.T) {
 
 	if val != nil {
 		t.Errorf("Expected nil, found %v", val())
+	}
+
+}
+
+func TestRemoveGaugeFuncWithTags(t *testing.T) {
+	t.Log("Testing gauge.RemoveGaugeFuncWithTags")
+
+	gf := func() int64 {
+		return 1
+	}
+
+	cm := &CirconusMetrics{gaugeFuncs: make(map[string]func() int64)}
+
+	metricName := "foo"
+	tags := Tags{{"foo", "bar"}, {"baz", "qux"}}
+	streamTagMetricName := MetricNameWithStreamTags("foo", tags)
+
+	cm.SetGaugeFuncWithTags(metricName, tags, gf)
+
+	val, ok := cm.gaugeFuncs[streamTagMetricName]
+	if !ok {
+		t.Fatalf("%s with %v tags not found (%s) (%#v)", metricName, tags, streamTagMetricName, cm.gauges)
+	}
+
+	if val() != 1 {
+		t.Fatalf("expected 1 got (%v)", val())
+	}
+
+	cm.RemoveGaugeFuncWithTags(metricName, tags)
+
+	val, ok = cm.gaugeFuncs[streamTagMetricName]
+	if ok {
+		t.Fatalf("expected NOT to find (%s)", streamTagMetricName)
+	}
+
+	if val != nil {
+		t.Fatalf("expected nil got (%v)", val())
 	}
 
 }

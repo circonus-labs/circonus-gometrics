@@ -26,7 +26,7 @@ func TestEncodeMetricTags(t *testing.T) {
 		{"cat2", "val2"},
 	}
 
-	tl := EncodeMetricTags(&inputTags)
+	tl := EncodeMetricTags(inputTags)
 	if len(tl) != len(expectTags) {
 		t.Fatalf("expected %d tags, got %d", len(expectTags), len(tl))
 	}
@@ -55,7 +55,7 @@ func TestEncodeMetricStreamTags(t *testing.T) {
 	}
 
 	// expect ts to be in format b"b64cat":b"b64val",...
-	ts := EncodeMetricStreamTags(&inputTags)
+	ts := EncodeMetricStreamTags(inputTags)
 	tl := strings.Split(ts, ",")
 	if len(tl) != len(expectTags) {
 		t.Fatalf("expected %d tags, got %d", len(expectTags), len(tl))

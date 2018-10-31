@@ -36,6 +36,38 @@ func TestTiming(t *testing.T) {
 	}
 }
 
+func TestTimingWithTags(t *testing.T) {
+	t.Log("Testing histogram.TimingWithTags")
+
+	metricName := "foo"
+	tags := Tags{{"foo", "bar"}, {"baz", "qux"}}
+	streamTagMetricName := MetricNameWithStreamTags("foo", tags)
+
+	cm := &CirconusMetrics{histograms: make(map[string]*Histogram)}
+
+	cm.TimingWithTags(metricName, tags, 1)
+
+	hist, ok := cm.histograms[streamTagMetricName]
+	if !ok {
+		t.Fatalf("%s with %v tags not found (%s) (%#v)", metricName, tags, streamTagMetricName, cm.counters)
+	}
+
+	if hist == nil {
+		t.Errorf("Expected *Histogram, found %v", hist)
+	}
+
+	val := hist.hist.DecStrings()
+	if len(val) != 1 {
+		t.Errorf("Expected 1, found '%v'", val)
+	}
+
+	expectedVal := "H[1.0e+00]=1"
+	if val[0] != expectedVal {
+		t.Errorf("Expected '%s', found '%s'", expectedVal, val[0])
+	}
+
+}
+
 func TestRecordValue(t *testing.T) {
 	t.Log("Testing histogram.RecordValue")
 
@@ -46,6 +78,37 @@ func TestRecordValue(t *testing.T) {
 	hist, ok := cm.histograms["foo"]
 	if !ok {
 		t.Errorf("Expected to find foo")
+	}
+
+	if hist == nil {
+		t.Errorf("Expected *Histogram, found %v", hist)
+	}
+
+	val := hist.hist.DecStrings()
+	if len(val) != 1 {
+		t.Errorf("Expected 1, found '%v'", val)
+	}
+
+	expectedVal := "H[1.0e+00]=1"
+	if val[0] != expectedVal {
+		t.Errorf("Expected '%s', found '%s'", expectedVal, val[0])
+	}
+}
+
+func TestRecordValueWithTags(t *testing.T) {
+	t.Log("Testing histogram.RecordValueWithTags")
+
+	metricName := "foo"
+	tags := Tags{{"foo", "bar"}, {"baz", "qux"}}
+	streamTagMetricName := MetricNameWithStreamTags("foo", tags)
+
+	cm := &CirconusMetrics{histograms: make(map[string]*Histogram)}
+
+	cm.RecordValueWithTags(metricName, tags, 1)
+
+	hist, ok := cm.histograms[streamTagMetricName]
+	if !ok {
+		t.Fatalf("%s with %v tags not found (%s) (%#v)", metricName, tags, streamTagMetricName, cm.counters)
 	}
 
 	if hist == nil {
@@ -90,6 +153,37 @@ func TestRecordCountForValue(t *testing.T) {
 	}
 }
 
+func TestRecordCountForValueWithTags(t *testing.T) {
+	t.Log("Testing histogram.RecordCountForValueWithTags")
+
+	metricName := "foo"
+	tags := Tags{{"foo", "bar"}, {"baz", "qux"}}
+	streamTagMetricName := MetricNameWithStreamTags("foo", tags)
+
+	cm := &CirconusMetrics{histograms: make(map[string]*Histogram)}
+
+	cm.RecordCountForValueWithTags(metricName, tags, 1.2, 5)
+
+	hist, ok := cm.histograms[streamTagMetricName]
+	if !ok {
+		t.Fatalf("%s with %v tags not found (%s) (%#v)", metricName, tags, streamTagMetricName, cm.counters)
+	}
+
+	if hist == nil {
+		t.Errorf("Expected *Histogram, found %v", hist)
+	}
+
+	val := hist.hist.DecStrings()
+	if len(val) != 1 {
+		t.Errorf("Expected 1, found '%v'", val)
+	}
+
+	expectedVal := "H[1.2e+00]=5"
+	if val[0] != expectedVal {
+		t.Errorf("Expected '%s', found '%s'", expectedVal, val[0])
+	}
+}
+
 func TestSetHistogramValue(t *testing.T) {
 	t.Log("Testing histogram.SetHistogramValue")
 
@@ -100,6 +194,37 @@ func TestSetHistogramValue(t *testing.T) {
 	hist, ok := cm.histograms["foo"]
 	if !ok {
 		t.Errorf("Expected to find foo")
+	}
+
+	if hist == nil {
+		t.Errorf("Expected *Histogram, found %v", hist)
+	}
+
+	val := hist.hist.DecStrings()
+	if len(val) != 1 {
+		t.Errorf("Expected 1, found '%v'", val)
+	}
+
+	expectedVal := "H[1.0e+00]=1"
+	if val[0] != expectedVal {
+		t.Errorf("Expected '%s', found '%s'", expectedVal, val[0])
+	}
+}
+
+func TestSetHistogramValueWithTags(t *testing.T) {
+	t.Log("Testing histogram.SetHistogramValueWithTags")
+
+	cm := &CirconusMetrics{histograms: make(map[string]*Histogram)}
+
+	metricName := "foo"
+	tags := Tags{{"foo", "bar"}, {"baz", "qux"}}
+	streamTagMetricName := MetricNameWithStreamTags("foo", tags)
+
+	cm.SetHistogramValueWithTags(metricName, tags, 1)
+
+	hist, ok := cm.histograms[streamTagMetricName]
+	if !ok {
+		t.Fatalf("%s with %v tags not found (%s) (%#v)", metricName, tags, streamTagMetricName, cm.counters)
 	}
 
 	if hist == nil {
@@ -181,12 +306,75 @@ func TestRemoveHistogram(t *testing.T) {
 	}
 }
 
+func TestRemoveHistogramWithTags(t *testing.T) {
+	t.Log("Testing histogram.RemoveHistogramWithTags")
+
+	cm := &CirconusMetrics{histograms: make(map[string]*Histogram)}
+
+	metricName := "foo"
+	tags := Tags{{"foo", "bar"}, {"baz", "qux"}}
+	streamTagMetricName := MetricNameWithStreamTags("foo", tags)
+
+	cm.SetHistogramValueWithTags(metricName, tags, 1)
+
+	hist, ok := cm.histograms[streamTagMetricName]
+	if !ok {
+		t.Fatalf("%s with %v tags not found (%s) (%#v)", metricName, tags, streamTagMetricName, cm.counters)
+	}
+
+	val := hist.hist.DecStrings()
+	if len(val) != 1 {
+		t.Fatalf("Expected 1, found '%v'", val)
+	}
+
+	expectedVal := "H[1.0e+00]=1"
+	if val[0] != expectedVal {
+		t.Fatalf("Expected '%s', found '%s'", expectedVal, val[0])
+	}
+
+	cm.RemoveHistogramWithTags(metricName, tags)
+
+	hist, ok = cm.histograms[streamTagMetricName]
+	if ok {
+		t.Fatalf("expected NOT to find (%s)", streamTagMetricName)
+	}
+
+	if hist != nil {
+		t.Fatalf("Expected nil, found %v", hist)
+	}
+}
+
 func TestNewHistogram(t *testing.T) {
 	t.Log("Testing histogram.NewHistogram")
 
 	cm := &CirconusMetrics{histograms: make(map[string]*Histogram)}
 
 	hist := cm.NewHistogram("foo")
+
+	actualType := reflect.TypeOf(hist)
+	expectedType := "*circonusgometrics.Histogram"
+	if actualType.String() != expectedType {
+		t.Errorf("Expected %s, got %s", expectedType, actualType.String())
+	}
+}
+
+func TestNewHistogramWithTags(t *testing.T) {
+	t.Log("Testing histogram.NewHistogram")
+
+	cm := &CirconusMetrics{histograms: make(map[string]*Histogram)}
+
+	metricName := "foo"
+	tags := Tags{{"foo", "bar"}, {"baz", "qux"}}
+	streamTagMetricName := MetricNameWithStreamTags("foo", tags)
+
+	hist := cm.NewHistogramWithTags(metricName, tags)
+
+	if hist == nil {
+		t.Fatal("expected not nil")
+	}
+	if hist.name != streamTagMetricName {
+		t.Fatalf("expected name (%s) got (%s)", streamTagMetricName, hist.name)
+	}
 
 	actualType := reflect.TypeOf(hist)
 	expectedType := "*circonusgometrics.Histogram"
