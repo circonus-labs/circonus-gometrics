@@ -152,7 +152,7 @@ func TestInventoryMetrics(t *testing.T) {
 }
 
 func TestAddMetricTags(t *testing.T) {
-	cm := &CheckManager{}
+	cm := &CheckManager{enabled: true}
 	cm.checkBundle = &apiclient.CheckBundle{}
 	cm.metricTags = make(map[string][]string)
 
