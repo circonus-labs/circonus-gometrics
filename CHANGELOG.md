@@ -1,4 +1,9 @@
-# v3.0.0
+# v3.0.0-alpha.1
+
+* fix: enable check management for add tags test
+* fix: api.circonus.com hostname (accidentally changed during switch to apiclient)
+
+# v3.0.0-alpha
 
 * add: helper functions for metrics `*WithTags` e.g. `TimingWithTags(metricName,tagList,val)`
 * upd: default new checks to use metric_filters
