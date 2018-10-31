@@ -37,7 +37,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/circonus-labs/circonus-gometrics/checkmgr"
+	"github.com/circonus-labs/circonus-gometrics/v3/checkmgr"
 	"github.com/pkg/errors"
 )
 
