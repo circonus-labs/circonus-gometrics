@@ -8,12 +8,12 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/circonus-labs/circonus-gometrics/api"
+	apiclient "github.com/circonus-labs/go-apiclient"
 )
 
 func TestIsMetricActive(t *testing.T) {
 
-	cm := &CheckManager{}
+	cm := &CheckManager{enabled: true}
 
 	cm.availableMetrics = map[string]bool{
 		"foo": true,
@@ -43,9 +43,9 @@ func TestIsMetricActive(t *testing.T) {
 }
 
 func TestActivateMetric(t *testing.T) {
-	cm := &CheckManager{}
-	cm.checkBundle = &api.CheckBundle{}
-	cm.checkBundle.Metrics = []api.CheckBundleMetric{
+	cm := &CheckManager{enabled: true}
+	cm.checkBundle = &apiclient.CheckBundle{}
+	cm.checkBundle.Metrics = []apiclient.CheckBundleMetric{
 		{
 			Name:   "foo",
 			Type:   "numeric",
@@ -96,8 +96,8 @@ func TestActivateMetric(t *testing.T) {
 
 func TestInventoryMetrics(t *testing.T) {
 	cm := &CheckManager{}
-	cm.checkBundle = &api.CheckBundle{}
-	cm.checkBundle.Metrics = []api.CheckBundleMetric{
+	cm.checkBundle = &apiclient.CheckBundle{}
+	cm.checkBundle.Metrics = []apiclient.CheckBundleMetric{
 		{
 			Name:   "foo",
 			Type:   "numeric",
@@ -153,7 +153,7 @@ func TestInventoryMetrics(t *testing.T) {
 
 func TestAddMetricTags(t *testing.T) {
 	cm := &CheckManager{}
-	cm.checkBundle = &api.CheckBundle{}
+	cm.checkBundle = &apiclient.CheckBundle{}
 	cm.metricTags = make(map[string][]string)
 
 	t.Log("no tags")
@@ -170,7 +170,7 @@ func TestAddMetricTags(t *testing.T) {
 		}
 	}
 
-	cm.checkBundle.Metrics = []api.CheckBundleMetric{
+	cm.checkBundle.Metrics = []apiclient.CheckBundleMetric{
 		{
 			Name:   "bar",
 			Type:   "numeric",
@@ -317,9 +317,9 @@ func TestAddMetricTags(t *testing.T) {
 func TestAddNewMetrics(t *testing.T) {
 	cm := &CheckManager{}
 
-	newMetrics := make(map[string]*api.CheckBundleMetric)
+	newMetrics := make(map[string]*apiclient.CheckBundleMetric)
 
-	newMetrics["foo"] = &api.CheckBundleMetric{
+	newMetrics["foo"] = &apiclient.CheckBundleMetric{
 		Name:   "foo",
 		Type:   "numeric",
 		Status: "active",
@@ -332,7 +332,7 @@ func TestAddNewMetrics(t *testing.T) {
 		}
 	}
 
-	cm.checkBundle = &api.CheckBundle{}
+	cm.checkBundle = &apiclient.CheckBundle{}
 	t.Log("no check bundle metrics")
 	{
 		if !cm.addNewMetrics(newMetrics) {

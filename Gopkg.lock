@@ -2,16 +2,25 @@
 
 
 [[projects]]
-  branch = "master"
   name = "github.com/circonus-labs/circonusllhist"
   packages = ["."]
   revision = "5eb751da55c6d3091faf3861ec5062ae91fee9d0"
+  version = "v0.1.0"
 
 [[projects]]
-  branch = "master"
+  name = "github.com/circonus-labs/go-apiclient"
+  packages = [
+    ".",
+    "config"
+  ]
+  revision = "adb72bc548261c251e5ab341b695c3d678ed5c99"
+  version = "v0.5.0"
+
+[[projects]]
   name = "github.com/hashicorp/go-cleanhttp"
   packages = ["."]
-  revision = "d5fe4b57a186c716b0e00b8c301cbd9b4182694d"
+  revision = "e8ab9daed8d1ddd2d3c4efba338fe2eeae2e4f18"
+  version = "v0.5.0"
 
 [[projects]]
   branch = "master"
@@ -34,6 +43,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "6db34ba31cd011426f28b5db0dbe259c4dc3787fb2074b2c06cb382385a90242"
+  inputs-digest = "fdca12d2c0bbc1d3ab46ef0c7e00795efd0bf74bd1f03c66f53f61b99a27f12c"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -13,9 +13,19 @@ import (
 	"fmt"
 )
 
+// GaugeWithTags sets a gauge metric with tags to a value
+func (m *CirconusMetrics) GaugeWithTags(metric string, tags Tags, val interface{}) {
+	m.SetGaugeWithTags(metric, tags, val)
+}
+
 // Gauge sets a gauge to a value
 func (m *CirconusMetrics) Gauge(metric string, val interface{}) {
 	m.SetGauge(metric, val)
+}
+
+// SetGaugeWithTags sets a gauge metric with tags to a value
+func (m *CirconusMetrics) SetGaugeWithTags(metric string, tags Tags, val interface{}) {
+	m.SetGauge(MetricNameWithStreamTags(metric, tags), val)
 }
 
 // SetGauge sets a gauge to a value
@@ -23,6 +33,11 @@ func (m *CirconusMetrics) SetGauge(metric string, val interface{}) {
 	m.gm.Lock()
 	defer m.gm.Unlock()
 	m.gauges[metric] = val
+}
+
+// AddGaugeWithTags adds value to existing gauge metric with tags
+func (m *CirconusMetrics) AddGaugeWithTags(metric string, tags Tags, val interface{}) {
+	m.AddGauge(MetricNameWithStreamTags(metric, tags), val)
 }
 
 // AddGauge adds value to existing gauge
@@ -66,6 +81,11 @@ func (m *CirconusMetrics) AddGauge(metric string, val interface{}) {
 	}
 }
 
+// RemoveGaugeWithTags removes a gauge metric with tags
+func (m *CirconusMetrics) RemoveGaugeWithTags(metric string, tags Tags) {
+	m.RemoveGauge(MetricNameWithStreamTags(metric, tags))
+}
+
 // RemoveGauge removes a gauge
 func (m *CirconusMetrics) RemoveGauge(metric string) {
 	m.gm.Lock()
@@ -85,11 +105,21 @@ func (m *CirconusMetrics) GetGaugeTest(metric string) (interface{}, error) {
 	return nil, fmt.Errorf("Gauge metric '%s' not found", metric)
 }
 
+// SetGaugeFuncWithTags sets a gauge metric with tags to a function [called at flush interval]
+func (m *CirconusMetrics) SetGaugeFuncWithTags(metric string, tags Tags, fn func() int64) {
+	m.SetGaugeFunc(MetricNameWithStreamTags(metric, tags), fn)
+}
+
 // SetGaugeFunc sets a gauge to a function [called at flush interval]
 func (m *CirconusMetrics) SetGaugeFunc(metric string, fn func() int64) {
 	m.gfm.Lock()
 	defer m.gfm.Unlock()
 	m.gaugeFuncs[metric] = fn
+}
+
+// RemoveGaugeFuncWithTags removes a gauge metric with tags function
+func (m *CirconusMetrics) RemoveGaugeFuncWithTags(metric string, tags Tags) {
+	m.RemoveGaugeFunc(MetricNameWithStreamTags(metric, tags))
 }
 
 // RemoveGaugeFunc removes a gauge function

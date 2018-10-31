@@ -11,7 +11,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/circonus-labs/circonus-gometrics/api"
+	apiclient "github.com/circonus-labs/go-apiclient"
 )
 
 var (
@@ -66,12 +66,12 @@ func TestFetchCert(t *testing.T) {
 	cm := &CheckManager{
 		enabled: true,
 	}
-	ac := &api.Config{
+	ac := &apiclient.Config{
 		TokenApp: "abcd",
 		TokenKey: "1234",
 		URL:      server.URL,
 	}
-	apih, err := api.NewAPI(ac)
+	apih, err := apiclient.NewAPI(ac)
 	if err != nil {
 		t.Errorf("Expected no error, got '%v'", err)
 	}

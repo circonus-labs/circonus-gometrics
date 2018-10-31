@@ -4,12 +4,14 @@
 
 package checkmgr
 
-import (
-	"github.com/circonus-labs/circonus-gometrics/api"
-)
+import apiclient "github.com/circonus-labs/go-apiclient"
 
 // IsMetricActive checks whether a given metric name is currently active(enabled)
 func (cm *CheckManager) IsMetricActive(name string) bool {
+	if !cm.enabled { // short circuit for metric filters
+		return true
+	}
+
 	cm.availableMetricsmu.Lock()
 	defer cm.availableMetricsmu.Unlock()
 
@@ -18,6 +20,10 @@ func (cm *CheckManager) IsMetricActive(name string) bool {
 
 // ActivateMetric determines if a given metric should be activated
 func (cm *CheckManager) ActivateMetric(name string) bool {
+	if !cm.enabled { // short circuit for metric filters
+		return false
+	}
+
 	cm.availableMetricsmu.Lock()
 	defer cm.availableMetricsmu.Unlock()
 
@@ -37,6 +43,10 @@ func (cm *CheckManager) ActivateMetric(name string) bool {
 // AddMetricTags updates check bundle metrics with tags
 func (cm *CheckManager) AddMetricTags(metricName string, tags []string, appendTags bool) bool {
 	tagsUpdated := false
+
+	if !cm.enabled {
+		return tagsUpdated
+	}
 
 	if appendTags && len(tags) == 0 {
 		return tagsUpdated
@@ -96,10 +106,14 @@ func (cm *CheckManager) AddMetricTags(metricName string, tags []string, appendTa
 }
 
 // addNewMetrics updates a check bundle with new metrics
-func (cm *CheckManager) addNewMetrics(newMetrics map[string]*api.CheckBundleMetric) bool {
+func (cm *CheckManager) addNewMetrics(newMetrics map[string]*apiclient.CheckBundleMetric) bool {
 	updatedCheckBundle := false
 
-	if cm.checkBundle == nil || len(newMetrics) == 0 {
+	if len(newMetrics) == 0 {
+		return updatedCheckBundle
+	}
+
+	if cm.checkBundle == nil {
 		return updatedCheckBundle
 	}
 
@@ -110,7 +124,7 @@ func (cm *CheckManager) addNewMetrics(newMetrics map[string]*api.CheckBundleMetr
 	numNewMetrics := len(newMetrics)
 
 	if numCurrMetrics+numNewMetrics >= cap(cm.checkBundle.Metrics) {
-		nm := make([]api.CheckBundleMetric, numCurrMetrics+numNewMetrics)
+		nm := make([]apiclient.CheckBundleMetric, numCurrMetrics+numNewMetrics)
 		copy(nm, cm.checkBundle.Metrics)
 		cm.checkBundle.Metrics = nm
 	}

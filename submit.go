@@ -16,12 +16,12 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/circonus-labs/circonus-gometrics/api"
+	"github.com/circonus-labs/go-apiclient"
 	"github.com/hashicorp/go-retryablehttp"
 	"github.com/pkg/errors"
 )
 
-func (m *CirconusMetrics) submit(output Metrics, newMetrics map[string]*api.CheckBundleMetric) {
+func (m *CirconusMetrics) submit(output Metrics, newMetrics map[string]*apiclient.CheckBundleMetric) {
 
 	// if there is nowhere to send metrics to, just return.
 	if !m.check.IsReady() {
