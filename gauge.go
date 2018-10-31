@@ -105,7 +105,7 @@ func (m *CirconusMetrics) GetGaugeTest(metric string) (interface{}, error) {
 	return nil, fmt.Errorf("Gauge metric '%s' not found", metric)
 }
 
-// SetGaugeFuncWithTags sets a gauge metric wiht tags to a function [called at flush interval]
+// SetGaugeFuncWithTags sets a gauge metric with tags to a function [called at flush interval]
 func (m *CirconusMetrics) SetGaugeFuncWithTags(metric string, tags Tags, fn func() int64) {
 	m.SetGaugeFunc(MetricNameWithStreamTags(metric, tags), fn)
 }

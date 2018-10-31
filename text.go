@@ -41,7 +41,7 @@ func (m *CirconusMetrics) RemoveText(metric string) {
 	delete(m.text, metric)
 }
 
-// SetTextFuncWithTags sets a text metric wiht tags to a function [called at flush interval]
+// SetTextFuncWithTags sets a text metric with tags to a function [called at flush interval]
 func (m *CirconusMetrics) SetTextFuncWithTags(metric string, tags Tags, fn func() string) {
 	m.SetTextFunc(MetricNameWithStreamTags(metric, tags), fn)
 }
