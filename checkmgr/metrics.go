@@ -44,6 +44,10 @@ func (cm *CheckManager) ActivateMetric(name string) bool {
 func (cm *CheckManager) AddMetricTags(metricName string, tags []string, appendTags bool) bool {
 	tagsUpdated := false
 
+	if !cm.enabled {
+		return tagsUpdated
+	}
+
 	if appendTags && len(tags) == 0 {
 		return tagsUpdated
 	}
