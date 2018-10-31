@@ -49,7 +49,7 @@ func TestTimingWithTags(t *testing.T) {
 
 	hist, ok := cm.histograms[streamTagMetricName]
 	if !ok {
-		t.Fatalf("%s with %v tags not found (%s) (%#v)", metricName, tags, streamTagMetricName, cm.counters)
+		t.Fatalf("%s with %v tags not found (%s) (%#v)", metricName, tags, streamTagMetricName, cm.histograms)
 	}
 
 	if hist == nil {
@@ -108,7 +108,7 @@ func TestRecordValueWithTags(t *testing.T) {
 
 	hist, ok := cm.histograms[streamTagMetricName]
 	if !ok {
-		t.Fatalf("%s with %v tags not found (%s) (%#v)", metricName, tags, streamTagMetricName, cm.counters)
+		t.Fatalf("%s with %v tags not found (%s) (%#v)", metricName, tags, streamTagMetricName, cm.histograms)
 	}
 
 	if hist == nil {
@@ -166,7 +166,7 @@ func TestRecordCountForValueWithTags(t *testing.T) {
 
 	hist, ok := cm.histograms[streamTagMetricName]
 	if !ok {
-		t.Fatalf("%s with %v tags not found (%s) (%#v)", metricName, tags, streamTagMetricName, cm.counters)
+		t.Fatalf("%s with %v tags not found (%s) (%#v)", metricName, tags, streamTagMetricName, cm.histograms)
 	}
 
 	if hist == nil {
@@ -224,7 +224,7 @@ func TestSetHistogramValueWithTags(t *testing.T) {
 
 	hist, ok := cm.histograms[streamTagMetricName]
 	if !ok {
-		t.Fatalf("%s with %v tags not found (%s) (%#v)", metricName, tags, streamTagMetricName, cm.counters)
+		t.Fatalf("%s with %v tags not found (%s) (%#v)", metricName, tags, streamTagMetricName, cm.histograms)
 	}
 
 	if hist == nil {
@@ -319,7 +319,7 @@ func TestRemoveHistogramWithTags(t *testing.T) {
 
 	hist, ok := cm.histograms[streamTagMetricName]
 	if !ok {
-		t.Fatalf("%s with %v tags not found (%s) (%#v)", metricName, tags, streamTagMetricName, cm.counters)
+		t.Fatalf("%s with %v tags not found (%s) (%#v)", metricName, tags, streamTagMetricName, cm.histograms)
 	}
 
 	val := hist.hist.DecStrings()
