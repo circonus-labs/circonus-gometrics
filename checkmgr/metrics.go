@@ -8,6 +8,10 @@ import apiclient "github.com/circonus-labs/go-apiclient"
 
 // IsMetricActive checks whether a given metric name is currently active(enabled)
 func (cm *CheckManager) IsMetricActive(name string) bool {
+	if !cm.enabled { // short circuit for metric filters
+		return true
+	}
+
 	cm.availableMetricsmu.Lock()
 	defer cm.availableMetricsmu.Unlock()
 
@@ -16,6 +20,10 @@ func (cm *CheckManager) IsMetricActive(name string) bool {
 
 // ActivateMetric determines if a given metric should be activated
 func (cm *CheckManager) ActivateMetric(name string) bool {
+	if !cm.enabled { // short circuit for metric filters
+		return false
+	}
+
 	cm.availableMetricsmu.Lock()
 	defer cm.availableMetricsmu.Unlock()
 
@@ -97,7 +105,11 @@ func (cm *CheckManager) AddMetricTags(metricName string, tags []string, appendTa
 func (cm *CheckManager) addNewMetrics(newMetrics map[string]*apiclient.CheckBundleMetric) bool {
 	updatedCheckBundle := false
 
-	if cm.checkBundle == nil || len(newMetrics) == 0 {
+	if len(newMetrics) == 0 {
+		return updatedCheckBundle
+	}
+
+	if cm.checkBundle == nil {
 		return updatedCheckBundle
 	}
 

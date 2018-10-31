@@ -205,7 +205,13 @@ func (cm *CheckManager) initializeTrapURL() error {
 
 	// retain to facilitate metric management (adding new metrics specifically)
 	cm.checkBundle = checkBundle
-	cm.inventoryMetrics()
+	// check is using metric filters, disable check management
+	if len(cm.checkBundle.MetricFilters) > 0 {
+		cm.enabled = false
+	}
+	if cm.enabled {
+		cm.inventoryMetrics()
+	}
 
 	// determine the trap url to which metrics should be PUT
 	if checkBundle.Type == "httptrap" {
@@ -308,18 +314,18 @@ func (cm *CheckManager) createNewCheck() (*apiclient.CheckBundle, *apiclient.Bro
 	}
 
 	chkcfg := &apiclient.CheckBundle{
-		Brokers:     []string{broker.CID},
-		Config:      make(map[config.Key]string),
-		DisplayName: string(cm.checkDisplayName),
-		Metrics:     []apiclient.CheckBundleMetric{},
-		MetricLimit: config.DefaultCheckBundleMetricLimit,
-		Notes:       cm.getNotes(),
-		Period:      60,
-		Status:      statusActive,
-		Tags:        append(cm.checkSearchTag, cm.checkTags...),
-		Target:      string(cm.checkTarget),
-		Timeout:     10,
-		Type:        string(cm.checkType),
+		Brokers:       []string{broker.CID},
+		Config:        make(map[config.Key]string),
+		DisplayName:   string(cm.checkDisplayName),
+		MetricFilters: [][]string{{"deny", "^$", ""}, {"allow", "^.+$", ""}},
+		MetricLimit:   config.DefaultCheckBundleMetricLimit,
+		Notes:         cm.getNotes(),
+		Period:        60,
+		Status:        statusActive,
+		Tags:          append(cm.checkSearchTag, cm.checkTags...),
+		Target:        string(cm.checkTarget),
+		Timeout:       10,
+		Type:          string(cm.checkType),
 	}
 
 	if len(cm.customConfigFields) > 0 {
@@ -337,6 +343,15 @@ func (cm *CheckManager) createNewCheck() (*apiclient.CheckBundle, *apiclient.Bro
 
 	if val, ok := chkcfg.Config[config.Secret]; !ok || val == "" {
 		chkcfg.Config[config.Secret] = checkSecret
+	}
+
+	// set metric filters if provided
+	if len(cm.checkMetricFilters) > 0 {
+		mf := make([][]string, len(cm.checkMetricFilters))
+		for idx, rule := range cm.checkMetricFilters {
+			mf[idx] = []string{rule.Type, rule.Filter, rule.Comment}
+		}
+		chkcfg.MetricFilters = mf
 	}
 
 	checkBundle, err := cm.apih.CreateCheckBundle(chkcfg)

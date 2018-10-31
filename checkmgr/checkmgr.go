@@ -51,6 +51,15 @@ const (
 	statusActive                 = "active"
 )
 
+type MetricFilter struct {
+	// Type of rule 'allow' or 'deny'
+	Type string
+	// Filter is a valid PCRE regular expression matching 1-n metrics
+	Filter string
+	// Comment for the rule
+	Comment string
+}
+
 // CheckConfig options for check
 type CheckConfig struct {
 	// a specific submission url
@@ -86,7 +95,12 @@ type CheckConfig struct {
 	// the default behavior is to *not* re-activate the metric; this setting
 	// overrides the behavior and will re-activate the metric when it is
 	// encountered. "(true|false)", default "false"
+	// NOTE: ONLY applies to checks without metric_filters
 	ForceMetricActivation string
+	// MetricFilters list of regular expression filters defining what metrics
+	// will be automatically enabled. These are evaluated in order and the first
+	// match stops evaluation. Default []MetricFilter{{"deny","^$",""},{"allow","^.+$",""}}
+	MetricFilters []MetricFilter
 	// Type of check to use (default: httptrap)
 	Type string
 	// Custom check config fields (default: none)
@@ -159,6 +173,7 @@ type CheckManager struct {
 	checkSearchTag        apiclient.TagType
 	checkSecret           CheckSecretType
 	checkTags             apiclient.TagType
+	checkMetricFilters    []MetricFilter
 	customConfigFields    map[string]string
 	checkSubmissionURL    apiclient.URLType
 	checkDisplayName      CheckDisplayNameType
@@ -308,6 +323,10 @@ func New(cfg *Config) (*CheckManager, error) {
 
 	if cfg.Check.Tags != "" {
 		cm.checkTags = strings.Split(strings.Replace(cfg.Check.Tags, " ", "", -1), ",")
+	}
+
+	if len(cfg.Check.MetricFilters) > 0 {
+		cm.checkMetricFilters = cfg.Check.MetricFilters
 	}
 
 	cm.customConfigFields = make(map[string]string)

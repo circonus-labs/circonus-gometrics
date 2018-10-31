@@ -140,11 +140,21 @@ func testCheckServer() *httptest.Server {
 				}
 			case "POST": // create
 				defer r.Body.Close()
-				_, err := ioutil.ReadAll(r.Body)
+				cfg, err := ioutil.ReadAll(r.Body)
 				if err != nil {
 					panic(err)
 				}
-				ret, err := json.Marshal(testCheckBundle)
+
+				var bundle apiclient.CheckBundle
+				if err := json.Unmarshal(cfg, &bundle); err != nil {
+					panic(err)
+				}
+				bundle.CID = testCheckBundle.CID
+				bundle.Checks = testCheckBundle.Checks
+				bundle.CheckUUIDs = testCheckBundle.CheckUUIDs
+				bundle.ReverseConnectURLs = testCheckBundle.ReverseConnectURLs
+				bundle.Config[config.SubmissionURL] = testCheckBundle.Config[config.SubmissionURL]
+				ret, err := json.Marshal(bundle)
 				if err != nil {
 					panic(err)
 				}
@@ -480,8 +490,42 @@ func TestInitializeTrapURL(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Expected no error, got %v", err)
 		}
+		if len(cm.checkBundle.MetricFilters) == 0 {
+			t.Fatalf("expected metric_filters (%#v)", cm.checkBundle)
+		}
+		if cm.enabled {
+			t.Fatalf("expected check management to be disabled after check created with metric_filters")
+		}
 	}
 
+	cm.enabled = true
+	cm.trapURL = ""
+	cm.checkSubmissionURL = ""
+	cm.checkID = 0
+	cm.checkTarget = "foo_t"
+	cm.checkInstanceID = "foo_id"
+	cm.checkSearchTag = apiclient.TagType([]string{"foo:bar"})
+	cm.checkDisplayName = "foo_dn"
+	cm.checkType = "httptrap"
+	cm.brokerMaxResponseTime = time.Duration(time.Millisecond * 50)
+	metricFilterRx := "^foo.*$"
+	cm.checkMetricFilters = []MetricFilter{{"allow", metricFilterRx, ""}}
+
+	t.Log("cm enabled, search [not found, create check]")
+	{
+		err := cm.initializeTrapURL()
+		if err != nil {
+			t.Fatalf("Expected no error, got %v", err)
+		}
+		if len(cm.checkBundle.MetricFilters) != 1 || cm.checkBundle.MetricFilters[0][1] != metricFilterRx {
+			t.Fatalf("expected custom metric_filters (%s) (%#v)", metricFilterRx, cm.checkBundle.MetricFilters)
+		}
+		if cm.enabled {
+			t.Fatalf("expected check management to be disabled after check created with metric_filters")
+		}
+	}
+
+	cm.enabled = true
 	cm.trapURL = ""
 	cm.checkSubmissionURL = ""
 	cm.checkID = 1234
@@ -489,8 +533,7 @@ func TestInitializeTrapURL(t *testing.T) {
 	cm.checkInstanceID = "foo_id"
 	cm.checkSearchTag = apiclient.TagType([]string{"foo:bar"})
 	cm.checkDisplayName = "foo_dn"
-	cm.checkType = "httptrap"
-
+	cm.checkType = "json:nad"
 	testCheckBundle.Type = "json:nad"
 
 	t.Log("cm enabled, id, non-httptrap check")

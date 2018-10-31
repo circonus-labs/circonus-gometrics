@@ -58,7 +58,8 @@ var (
 		Brokers:     []string{"/broker/1234"},
 		DisplayName: "test check",
 		Config: map[config.Key]string{
-			config.SubmissionURL: "https://127.0.0.1:43191/module/httptrap/abc123-a1b2-c3d4-e5f6-123abc/blah",
+			config.SubmissionURL:    "https://127.0.0.1:43191/module/httptrap/abc123-a1b2-c3d4-e5f6-123abc",
+			config.ReverseSecretKey: "blah",
 		},
 		// Config: apiclient.CheckBundleConfig{
 		// 	SubmissionURL: "https://127.0.0.1:43191/module/httptrap/abc123-a1b2-c3d4-e5f6-123abc/blah",
@@ -144,12 +145,22 @@ func testCMServer() *httptest.Server {
 					fmt.Fprintln(w, "[]")
 				}
 			case "POST": // create
-				defer r.Body.Close()
-				_, err := ioutil.ReadAll(r.Body)
+				cfg, err := ioutil.ReadAll(r.Body)
 				if err != nil {
 					panic(err)
 				}
-				ret, err := json.Marshal(testCheckBundle)
+
+				var bundle apiclient.CheckBundle
+				if err := json.Unmarshal(cfg, &bundle); err != nil {
+					panic(err)
+				}
+				bundle.CID = testCheckBundle.CID
+				bundle.Checks = testCheckBundle.Checks
+				bundle.CheckUUIDs = testCheckBundle.CheckUUIDs
+				bundle.ReverseConnectURLs = testCheckBundle.ReverseConnectURLs
+				bundle.Config[config.SubmissionURL] = testCheckBundle.Config[config.SubmissionURL]
+				bundle.Config[config.ReverseSecretKey] = testCheckBundle.Config[config.ReverseSecretKey]
+				ret, err := json.Marshal(bundle)
 				if err != nil {
 					panic(err)
 				}
