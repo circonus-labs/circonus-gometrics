@@ -1,5 +1,7 @@
-github.com/circonus-labs/circonusllhist v0.1.0 h1:3s0i9irZZhzwHAqAbx4BqbnOCVti+XiuoSiTpysNAuE=
-github.com/circonus-labs/circonusllhist v0.1.0/go.mod h1:kMXHVDlOchFAehlya5ePtbp5jckzBHf4XRpQvBOLI+I=
+github.com/circonus-labs/circonus-gometrics v2.2.4+incompatible h1:+ZwGzyJGsOwSxIEDDOXzPagR167tQak/1P5wBwH+/dM=
+github.com/circonus-labs/circonus-gometrics v2.2.4+incompatible/go.mod h1:nmEj6Dob7S7YxXgwXpfOuvO54S+tGdZdw9fuRZt25Ag=
+github.com/circonus-labs/circonusllhist v0.1.1 h1:MNPpugofgAFpPY/hTULMZIRfN18c5EQc8B8+4oFBx+4=
+github.com/circonus-labs/circonusllhist v0.1.1/go.mod h1:kMXHVDlOchFAehlya5ePtbp5jckzBHf4XRpQvBOLI+I=
 github.com/circonus-labs/go-apiclient v0.5.0 h1:88sTJ4mW+XEKlKF2XYgTpIpxJXurXIzthost6kStg+k=
 github.com/circonus-labs/go-apiclient v0.5.0/go.mod h1:FEKOXTaR6ZQ3aXlDtrXxT5ehfECSuuOSuA3kfqeMv6c=
 github.com/hashicorp/go-cleanhttp v0.5.0 h1:wvCrVc9TjDls6+YGAF2hAifE1E5U1+b4tH6KdvN3Gig=
