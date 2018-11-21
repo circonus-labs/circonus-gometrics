@@ -7,6 +7,7 @@ package circonusgometrics
 import (
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/circonus-labs/circonusllhist"
 )
@@ -28,6 +29,12 @@ func (m *CirconusMetrics) RecordValue(metric string, val float64) {
 	m.SetHistogramValue(metric, val)
 }
 
+// RecordDuration adds a time.Duration to a histogram (values normalized to
+// time.Second, but supports nanosecond granularity).
+func (m *CirconusMetrics) RecordDuration(metric string, val time.Duration) {
+	m.SetHistogramDuration(metric, val)
+}
+
 // RecordCountForValue adds count n for value to a histogram
 func (m *CirconusMetrics) RecordCountForValue(metric string, val float64, n int64) {
 	hist := m.NewHistogram(metric)
@@ -46,6 +53,17 @@ func (m *CirconusMetrics) SetHistogramValue(metric string, val float64) {
 	m.hm.Lock()
 	hist.rw.Lock()
 	hist.hist.RecordValue(val)
+	hist.rw.Unlock()
+	m.hm.Unlock()
+}
+
+// SetHistogramDuration adds a value to a histogram
+func (m *CirconusMetrics) SetHistogramDuration(metric string, val time.Duration) {
+	hist := m.NewHistogram(metric)
+
+	m.hm.Lock()
+	hist.rw.Lock()
+	hist.hist.RecordDuration(val)
 	hist.rw.Unlock()
 	m.hm.Unlock()
 }
@@ -97,5 +115,13 @@ func (h *Histogram) Name() string {
 func (h *Histogram) RecordValue(v float64) {
 	h.rw.Lock()
 	h.hist.RecordValue(v)
+	h.rw.Unlock()
+}
+
+// RecordDuration records the given time.Duration to a histogram instance.
+// RecordDuration normalizes the value to seconds.
+func (h *Histogram) RecordDuration(v time.Duration) {
+	h.rw.Lock()
+	h.hist.RecordDuration(v)
 	h.rw.Unlock()
 }
