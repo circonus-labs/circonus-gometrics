@@ -2,7 +2,7 @@ module github.com/circonus-labs/circonus-gometrics/v3
 
 require (
 	github.com/circonus-labs/circonus-gometrics v2.2.4+incompatible
-	github.com/circonus-labs/circonusllhist v0.1.1
+	github.com/circonus-labs/circonusllhist v0.1.2
 	github.com/circonus-labs/go-apiclient v0.5.0
 	github.com/hashicorp/go-retryablehttp v0.0.0-20180718195005-e651d75abec6
 	github.com/pkg/errors v0.8.0
