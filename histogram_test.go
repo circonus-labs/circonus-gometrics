@@ -5,8 +5,10 @@
 package circonusgometrics
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
+	"time"
 )
 
 func TestTiming(t *testing.T) {
@@ -123,6 +125,67 @@ func TestRecordValueWithTags(t *testing.T) {
 	expectedVal := "H[1.0e+00]=1"
 	if val[0] != expectedVal {
 		t.Errorf("Expected '%s', found '%s'", expectedVal, val[0])
+	}
+}
+
+func TestRecordDuration(t *testing.T) {
+	t.Log("Testing histogram.RecordDuration")
+
+	tests := []struct {
+		metricName string
+		durs       []time.Duration
+		out        string
+		tags       Tags
+	}{
+		{
+			metricName: "foo",
+			durs:       []time.Duration{1 * time.Second},
+			out:        "H[1.0e+00]=1",
+		},
+		{
+			metricName: "foo",
+			durs:       []time.Duration{1 * time.Millisecond},
+			out:        "H[1.0e-03]=1",
+		},
+		{
+			metricName: "foo",
+			durs:       []time.Duration{1 * time.Millisecond},
+			tags:       Tags{Tag{"unit", "ms"}},
+			out:        "H[1.0e-03]=1",
+		},
+	}
+
+	for n, test := range tests {
+		test := test
+		t.Run(fmt.Sprintf("%d", n), func(t *testing.T) {
+			cm := &CirconusMetrics{histograms: make(map[string]*Histogram)}
+
+			for _, dur := range test.durs {
+				if len(test.tags) > 0 {
+					cm.RecordDuration(test.metricName, dur)
+				} else {
+					cm.RecordDurationWithTags(test.metricName, test.tags, dur)
+				}
+			}
+
+			hist, ok := cm.histograms[test.metricName]
+			if !ok {
+				t.Errorf("Expected to find %q", test.metricName)
+			}
+
+			if hist == nil {
+				t.Errorf("Expected *Histogram, found %v", hist)
+			}
+
+			val := hist.hist.DecStrings()
+			if len(val) != 1 {
+				t.Errorf("Expected 1, found '%v'", val)
+			}
+
+			if val[0] != test.out {
+				t.Errorf("Expected '%s', found '%s'", test.out, val[0])
+			}
+		})
 	}
 }
 
