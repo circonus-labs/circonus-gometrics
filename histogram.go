@@ -44,10 +44,16 @@ func (m *CirconusMetrics) RecordCountForValueWithTags(metric string, tags Tags, 
 	m.RecordCountForValue(MetricNameWithStreamTags(metric, tags), val, n)
 }
 
-// RecordDuration adds a time.Duration to a histogram (values normalized to
-// time.Second, but supports nanosecond granularity).
+// RecordDuration adds a time.Duration to a histogram metric (duration is
+// normalized to time.Second, but supports nanosecond granularity).
 func (m *CirconusMetrics) RecordDuration(metric string, val time.Duration) {
 	m.SetHistogramDuration(metric, val)
+}
+
+// RecordDurationWithTags adds a time.Duration to a histogram metric with tags
+// (duration is normalized to time.Second, but supports nanosecond granularity).
+func (m *CirconusMetrics) RecordDurationWithTags(metric string, tags Tags, val time.Duration) {
+	m.SetHistogramDuration(MetricNameWithStreamTags(metric, tags), val)
 }
 
 // RecordCountForValue adds count n for value to a histogram

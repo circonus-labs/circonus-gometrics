@@ -135,6 +135,7 @@ func TestRecordDuration(t *testing.T) {
 		metricName string
 		durs       []time.Duration
 		out        string
+		tags       Tags
 	}{
 		{
 			metricName: "foo",
@@ -146,6 +147,12 @@ func TestRecordDuration(t *testing.T) {
 			durs:       []time.Duration{1 * time.Millisecond},
 			out:        "H[1.0e-03]=1",
 		},
+		{
+			metricName: "foo",
+			durs:       []time.Duration{1 * time.Millisecond},
+			tags:       Tags{Tag{"unit", "ms"}},
+			out:        "H[1.0e-03]=1",
+		},
 	}
 
 	for n, test := range tests {
@@ -154,7 +161,11 @@ func TestRecordDuration(t *testing.T) {
 			cm := &CirconusMetrics{histograms: make(map[string]*Histogram)}
 
 			for _, dur := range test.durs {
-				cm.RecordDuration(test.metricName, dur)
+				if len(test.tags) > 0 {
+					cm.RecordDuration(test.metricName, dur)
+				} else {
+					cm.RecordDurationWithTags(test.metricName, test.tags, dur)
+				}
 			}
 
 			hist, ok := cm.histograms[test.metricName]
