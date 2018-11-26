@@ -39,9 +39,10 @@ func (m *CirconusMetrics) RecordValue(metric string, val float64) {
 	m.SetHistogramValue(metric, val)
 }
 
-// RecordCountForValueWithTags adds count n for value to a histogram metric with tags
-func (m *CirconusMetrics) RecordCountForValueWithTags(metric string, tags Tags, val float64, n int64) {
-	m.RecordCountForValue(MetricNameWithStreamTags(metric, tags), val, n)
+// RecordDurationWithTags adds a time.Duration to a histogram metric with tags
+// (duration is normalized to time.Second, but supports nanosecond granularity).
+func (m *CirconusMetrics) RecordDurationWithTags(metric string, tags Tags, val time.Duration) {
+	m.SetHistogramDurationWithTags(metric, tags, val)
 }
 
 // RecordDuration adds a time.Duration to a histogram metric (duration is
@@ -50,10 +51,9 @@ func (m *CirconusMetrics) RecordDuration(metric string, val time.Duration) {
 	m.SetHistogramDuration(metric, val)
 }
 
-// RecordDurationWithTags adds a time.Duration to a histogram metric with tags
-// (duration is normalized to time.Second, but supports nanosecond granularity).
-func (m *CirconusMetrics) RecordDurationWithTags(metric string, tags Tags, val time.Duration) {
-	m.SetHistogramDuration(MetricNameWithStreamTags(metric, tags), val)
+// RecordCountForValueWithTags adds count n for value to a histogram metric with tags
+func (m *CirconusMetrics) RecordCountForValueWithTags(metric string, tags Tags, val float64, n int64) {
+	m.RecordCountForValue(MetricNameWithStreamTags(metric, tags), val, n)
 }
 
 // RecordCountForValue adds count n for value to a histogram
@@ -83,6 +83,11 @@ func (m *CirconusMetrics) SetHistogramValue(metric string, val float64) {
 	m.hm.Unlock()
 }
 
+// SetHistogramDurationWithTags adds a value to a histogram with tags
+func (m *CirconusMetrics) SetHistogramDurationWithTags(metric string, tags Tags, val time.Duration) {
+	m.SetHistogramDuration(MetricNameWithStreamTags(metric, tags), val)
+}
+
 // SetHistogramDuration adds a value to a histogram
 func (m *CirconusMetrics) SetHistogramDuration(metric string, val time.Duration) {
 	hist := m.NewHistogram(metric)
@@ -92,20 +97,6 @@ func (m *CirconusMetrics) SetHistogramDuration(metric string, val time.Duration)
 	hist.hist.RecordDuration(val)
 	hist.rw.Unlock()
 	m.hm.Unlock()
-}
-
-// GetHistogramTest returns the current value for a gauge. (note: it is a function specifically for "testing", disable automatic submission during testing.)
-func (m *CirconusMetrics) GetHistogramTest(metric string) ([]string, error) {
-	m.hm.Lock()
-	defer m.hm.Unlock()
-
-	if hist, ok := m.histograms[metric]; ok {
-		hist.rw.Lock()
-		defer hist.rw.Unlock()
-		return hist.hist.DecStrings(), nil
-	}
-
-	return []string{""}, fmt.Errorf("Histogram metric '%s' not found", metric)
 }
 
 // RemoveHistogramWithTags removes a histogram metric with tags
@@ -142,6 +133,20 @@ func (m *CirconusMetrics) NewHistogram(metric string) *Histogram {
 	m.histograms[metric] = hist
 
 	return hist
+}
+
+// GetHistogramTest returns the current value for a histogram. (note: it is a function specifically for "testing", disable automatic submission during testing.)
+func (m *CirconusMetrics) GetHistogramTest(metric string) ([]string, error) {
+	m.hm.Lock()
+	defer m.hm.Unlock()
+
+	if hist, ok := m.histograms[metric]; ok {
+		hist.rw.Lock()
+		defer hist.rw.Unlock()
+		return hist.hist.DecStrings(), nil
+	}
+
+	return []string{""}, fmt.Errorf("Histogram metric '%s' not found", metric)
 }
 
 // Name returns the name from a histogram instance
