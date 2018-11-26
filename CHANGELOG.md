@@ -1,3 +1,7 @@
+# v2.2.6
+
+* fix: function signature for retryablehttp request log hook...
+
 # v2.2.5
 
 * upd: switch from tracking master to versions for retryablehttp and circonusllhist now that both repositories are doing releases
