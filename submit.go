@@ -141,7 +141,7 @@ func (m *CirconusMetrics) trapCall(payload []byte) (int, error) {
 	client.CheckRetry = retryPolicy
 
 	attempts := -1
-	client.RequestLogHook = func(logger *log.Logger, req *http.Request, retryNumber int) {
+	client.RequestLogHook = func(_ retryablehttp.Logger, _ *http.Request, retryNumber int) {
 		attempts = retryNumber
 	}
 

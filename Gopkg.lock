@@ -2,22 +2,22 @@
 
 
 [[projects]]
-  branch = "master"
   name = "github.com/circonus-labs/circonusllhist"
   packages = ["."]
-  revision = "5eb751da55c6d3091faf3861ec5062ae91fee9d0"
+  revision = "15a405ff8a5115071928817fea151c3a420c5246"
+  version = "v0.1.2"
 
 [[projects]]
-  branch = "master"
   name = "github.com/hashicorp/go-cleanhttp"
   packages = ["."]
-  revision = "d5fe4b57a186c716b0e00b8c301cbd9b4182694d"
+  revision = "e8ab9daed8d1ddd2d3c4efba338fe2eeae2e4f18"
+  version = "v0.5.0"
 
 [[projects]]
   branch = "master"
   name = "github.com/hashicorp/go-retryablehttp"
   packages = ["."]
-  revision = "e651d75abec6fbd4f2c09508f72ae7af8a8b7171"
+  revision = "dfbae6744eb4c188d26ef53f1d39444c0c68b60c"
 
 [[projects]]
   name = "github.com/pkg/errors"
