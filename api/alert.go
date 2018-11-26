@@ -13,7 +13,7 @@ import (
 	"net/url"
 	"regexp"
 
-	"github.com/circonus-labs/circonus-gometrics/api/config"
+	"github.com/circonus-labs/go-apiclient/config"
 )
 
 // Alert defines a alert. See https://login.circonus.com/resources/api/calls/alert for more information.
