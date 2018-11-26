@@ -14,7 +14,7 @@ import (
 	"net/url"
 	"regexp"
 
-	"github.com/circonus-labs/circonus-gometrics/api/config"
+	"github.com/circonus-labs/go-apiclient/config"
 )
 
 // Acknowledgement defines a acknowledgement. See https://login.circonus.com/resources/api/calls/acknowledgement for more information.

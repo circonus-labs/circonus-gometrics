@@ -1,3 +1,18 @@
+# v3.0.0-alpha.4
+
+* add: missing SetHistogramDurationWithTags
+* upd: go-apiclient v0.5.1
+* fix: remove cgm v2 dependency from DEPRECATED api package
+* upd: retryablehttp v0.5.0
+
+# v3.0.0-alpha.3
+
+* add: RecordDuration, RecordDurationWithTags, SetHistogramDuration
+
+# v3.0.0-alpha.2
+
+* upd: circllhist v0.1.2
+
 # v3.0.0-alpha.1
 
 * fix: enable check management for add tags test
