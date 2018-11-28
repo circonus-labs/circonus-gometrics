@@ -7,8 +7,8 @@ package checkmgr
 import (
 	"crypto/x509"
 	"encoding/json"
-	"errors"
-	"fmt"
+
+	"github.com/pkg/errors"
 )
 
 // Default Circonus CA certificate
@@ -87,7 +87,7 @@ func (cm *CheckManager) fetchCert() ([]byte, error) {
 	}
 
 	if cadata.Contents == "" {
-		return nil, fmt.Errorf("[ERROR] Unable to find ca cert %+v", cadata)
+		return nil, errors.Errorf("error, unable to find ca cert %+v", cadata)
 	}
 
 	return []byte(cadata.Contents), nil

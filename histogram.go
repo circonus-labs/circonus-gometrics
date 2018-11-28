@@ -5,11 +5,11 @@
 package circonusgometrics
 
 import (
-	"fmt"
 	"sync"
 	"time"
 
 	"github.com/circonus-labs/circonusllhist"
+	"github.com/pkg/errors"
 )
 
 // Histogram measures the distribution of a stream of values.
@@ -146,7 +146,7 @@ func (m *CirconusMetrics) GetHistogramTest(metric string) ([]string, error) {
 		return hist.hist.DecStrings(), nil
 	}
 
-	return []string{""}, fmt.Errorf("Histogram metric '%s' not found", metric)
+	return []string{""}, errors.Errorf("Histogram metric '%s' not found", metric)
 }
 
 // Name returns the name from a histogram instance

@@ -15,6 +15,7 @@ import (
 	"time"
 
 	apiclient "github.com/circonus-labs/go-apiclient"
+	"github.com/pkg/errors"
 )
 
 func init() {
@@ -30,8 +31,8 @@ func (cm *CheckManager) getBroker() (*apiclient.Broker, error) {
 			return nil, err
 		}
 		if !cm.isValidBroker(broker) {
-			return nil, fmt.Errorf(
-				"[ERROR] designated broker %d [%s] is invalid (not active, does not support required check type, or connectivity issue)",
+			return nil, errors.Errorf(
+				"error, designated broker %d [%s] is invalid (not active, does not support required check type, or connectivity issue)",
 				cm.brokerID,
 				broker.Name)
 		}
@@ -39,7 +40,7 @@ func (cm *CheckManager) getBroker() (*apiclient.Broker, error) {
 	}
 	broker, err := cm.selectBroker()
 	if err != nil {
-		return nil, fmt.Errorf("[ERROR] Unable to fetch suitable broker %s", err)
+		return nil, errors.Errorf("error, unable to fetch suitable broker %s", err)
 	}
 	return broker, nil
 }
@@ -68,7 +69,7 @@ func (cm *CheckManager) getBrokerCN(broker *apiclient.Broker, submissionURL apic
 	}
 
 	if cn == "" {
-		return "", fmt.Errorf("[ERROR] Unable to match URL host (%s) to Broker", u.Host)
+		return "", errors.Errorf("error, unable to match URL host (%s) to Broker", u.Host)
 	}
 
 	return cn, nil
@@ -98,7 +99,7 @@ func (cm *CheckManager) selectBroker() (*apiclient.Broker, error) {
 	}
 
 	if len(*brokerList) == 0 {
-		return nil, fmt.Errorf("zero brokers found")
+		return nil, errors.New("zero brokers found")
 	}
 
 	validBrokers := make(map[string]apiclient.Broker)
@@ -123,14 +124,14 @@ func (cm *CheckManager) selectBroker() (*apiclient.Broker, error) {
 	}
 
 	if len(validBrokers) == 0 {
-		return nil, fmt.Errorf("found %d broker(s), zero are valid", len(*brokerList))
+		return nil, errors.Errorf("found %d broker(s), zero are valid", len(*brokerList))
 	}
 
 	validBrokerKeys := reflect.ValueOf(validBrokers).MapKeys()
 	selectedBroker := validBrokers[validBrokerKeys[rand.Intn(len(validBrokerKeys))].String()]
 
 	if cm.Debug {
-		cm.Log.Printf("[DEBUG] Selected broker '%s'\n", selectedBroker.Name)
+		cm.Log.Printf("selected broker '%s'\n", selectedBroker.Name)
 	}
 
 	return &selectedBroker, nil
@@ -179,7 +180,7 @@ func (cm *CheckManager) isValidBroker(broker *apiclient.Broker) bool {
 		// broker must be active
 		if detail.Status != statusActive {
 			if cm.Debug {
-				cm.Log.Printf("[DEBUG] Broker '%s' is not active.\n", broker.Name)
+				cm.Log.Printf("broker '%s' is not active\n", broker.Name)
 			}
 			continue
 		}
@@ -187,7 +188,7 @@ func (cm *CheckManager) isValidBroker(broker *apiclient.Broker) bool {
 		// broker must have module loaded for the check type to be used
 		if !cm.brokerSupportsCheckType(cm.checkType, &detail) {
 			if cm.Debug {
-				cm.Log.Printf("[DEBUG] Broker '%s' does not support '%s' checks.\n", broker.Name, cm.checkType)
+				cm.Log.Printf("broker '%s' does not support '%s' checks\n", broker.Name, cm.checkType)
 			}
 			continue
 		}
@@ -209,7 +210,7 @@ func (cm *CheckManager) isValidBroker(broker *apiclient.Broker) bool {
 		}
 
 		if brokerHost == "" {
-			cm.Log.Printf("[WARN] Broker '%s' instance %s has no IP or external host set", broker.Name, detail.CN)
+			cm.Log.Printf("broker '%s' instance %s has no IP or external host set", broker.Name, detail.CN)
 			continue
 		}
 
@@ -227,13 +228,13 @@ func (cm *CheckManager) isValidBroker(broker *apiclient.Broker) bool {
 				break
 			}
 
-			cm.Log.Printf("[WARN] Broker '%s' unable to connect, %v. Retrying in 2 seconds, attempt %d of %d.", broker.Name, err, attempt, retries)
+			cm.Log.Printf("broker '%s' unable to connect, %v. Retrying in 2 seconds, attempt %d of %d\n", broker.Name, err, attempt, retries)
 			time.Sleep(2 * time.Second)
 		}
 
 		if valid {
 			if cm.Debug {
-				cm.Log.Printf("[DEBUG] Broker '%s' is valid\n", broker.Name)
+				cm.Log.Printf("broker '%s' is valid\n", broker.Name)
 			}
 			break
 		}

@@ -99,7 +99,7 @@ func (cm *CheckManager) AddMetricTags(metricName string, tags []string, appendTa
 	}
 
 	if cm.Debug && action != "" {
-		cm.Log.Printf("[DEBUG] %s metric tag(s) %s %v\n", action, metricName, tags)
+		cm.Log.Printf("%s metric tag(s) %s %v\n", action, metricName, tags)
 	}
 
 	return tagsUpdated

@@ -51,6 +51,12 @@ const (
 	statusActive                 = "active"
 )
 
+// Logger facilitates use of any logger supporting the required methods
+// rather than just standard log package log.Logger
+type Logger interface {
+	Printf(string, ...interface{})
+}
+
 type MetricFilter struct {
 	// Type of rule 'allow' or 'deny'
 	Type string
@@ -123,7 +129,7 @@ type BrokerConfig struct {
 
 // Config options
 type Config struct {
-	Log   *log.Logger
+	Log   Logger
 	Debug bool
 
 	// Circonus API config
@@ -158,7 +164,7 @@ type BrokerCNType string
 // CheckManager settings
 type CheckManager struct {
 	enabled bool
-	Log     *log.Logger
+	Log     Logger
 	Debug   bool
 	apih    *apiclient.API
 
@@ -392,7 +398,7 @@ func (cm *CheckManager) Initialize() {
 			cm.initialized = true
 			cm.initializedmu.Unlock()
 		} else {
-			cm.Log.Printf("[WARN] error initializing trap %s", err.Error())
+			cm.Log.Printf("error initializing trap %s", err.Error())
 		}
 		return
 	}
@@ -406,7 +412,7 @@ func (cm *CheckManager) Initialize() {
 			cm.initialized = true
 			cm.initializedmu.Unlock()
 		} else {
-			cm.Log.Printf("[WARN] error initializing trap %s", err.Error())
+			cm.Log.Printf("error initializing trap %s", err.Error())
 		}
 		cm.apih.DisableExponentialBackoff()
 	}()
