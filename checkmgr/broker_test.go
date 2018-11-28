@@ -230,14 +230,12 @@ func TestGetBrokerCN(t *testing.T) {
 		submissionURL := apiclient.URLType("http://127.0.0.2:43191/blah/blah/blah")
 		cm := CheckManager{}
 
-		expectedError := errors.New("[ERROR] Unable to match URL host (127.0.0.2:43191) to Broker")
-
 		_, err := cm.getBrokerCN(&validBroker, submissionURL)
 		if err == nil {
-			t.Fatal("Expected error")
+			t.Fatal("expected error")
 		}
-		if err.Error() != expectedError.Error() {
-			t.Fatalf("Expected %v got '%v'", expectedError, err)
+		if err.Error() != "error, unable to match URL host (127.0.0.2:43191) to Broker" {
+			t.Fatalf("unexpected error (%s)", err)
 		}
 	}
 }
@@ -490,16 +488,14 @@ func TestGetBroker(t *testing.T) {
 		}
 		apih, err := apiclient.NewAPI(ac)
 		if err != nil {
-			t.Errorf("Expected no error, got '%v'", err)
+			t.Fatalf("unexpected error (%s)", err)
 		}
 		cm.apih = apih
 		cm.brokerID = 1
 
-		expectedError := errors.New("[ERROR] designated broker 1 [test broker] is invalid (not active, does not support required check type, or connectivity issue)")
-
 		_, err = cm.getBroker()
-		if err == nil || err.Error() != expectedError.Error() {
-			t.Errorf("Expected an '%#v' error, got '%#v'", expectedError, err)
+		if err == nil || err.Error() != "error, designated broker 1 [test broker] is invalid (not active, does not support required check type, or connectivity issue)" {
+			t.Fatalf("unexpected error (%s)", err)
 		}
 	}
 
@@ -518,14 +514,14 @@ func TestGetBroker(t *testing.T) {
 
 		apih, err := apiclient.NewAPI(ac)
 		if err != nil {
-			t.Errorf("Expected no error, got '%v'", err)
+			t.Fatalf("unexpected error (%s)", err)
 		}
 		cm.apih = apih
 		cm.brokerID = 2
 
 		_, err = cm.getBroker()
 		if err != nil {
-			t.Errorf("Expected no error, got '%v'", err)
+			t.Fatalf("unexpected error (%s)", err)
 		}
 	}
 

@@ -22,7 +22,7 @@ func (m *CirconusMetrics) packageMetrics() (map[string]*apiclient.CheckBundleMet
 	defer m.packagingmu.Unlock()
 
 	if m.Debug {
-		m.Log.Println("[DEBUG] Packaging metrics")
+		m.Log.Printf("packaging metrics\n")
 	}
 
 	counters, gauges, histograms, text := m.snapshot()
@@ -169,7 +169,7 @@ func (m *CirconusMetrics) Flush() {
 		m.submit(output, newMetrics)
 	} else {
 		if m.Debug {
-			m.Log.Println("[DEBUG] No metrics to send, skipping")
+			m.Log.Printf("no metrics to send, skipping\n")
 		}
 	}
 

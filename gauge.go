@@ -4,14 +4,12 @@
 
 package circonusgometrics
 
+import "github.com/pkg/errors"
+
 // A Gauge is an instantaneous measurement of a value.
 //
 // Use a gauge to track metrics which increase and decrease (e.g., amount of
 // free memory).
-
-import (
-	"fmt"
-)
 
 // GaugeWithTags sets a gauge metric with tags to a value
 func (m *CirconusMetrics) GaugeWithTags(metric string, tags Tags, val interface{}) {
@@ -102,7 +100,7 @@ func (m *CirconusMetrics) GetGaugeTest(metric string) (interface{}, error) {
 		return val, nil
 	}
 
-	return nil, fmt.Errorf("Gauge metric '%s' not found", metric)
+	return nil, errors.Errorf("Gauge metric '%s' not found", metric)
 }
 
 // SetGaugeFuncWithTags sets a gauge metric with tags to a function [called at flush interval]

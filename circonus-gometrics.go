@@ -45,6 +45,12 @@ const (
 	defaultFlushInterval = "10s" // 10 * time.Second
 )
 
+// Logger facilitates use of any logger supporting the required methods
+// rather than just standard log package log.Logger
+type Logger interface {
+	Printf(string, ...interface{})
+}
+
 // Metric defines an individual metric
 type Metric struct {
 	Type  string      `json:"_type"`
@@ -56,7 +62,7 @@ type Metrics map[string]Metric
 
 // Config options for circonus-gometrics
 type Config struct {
-	Log             *log.Logger
+	Log             Logger
 	Debug           bool
 	ResetCounters   string // reset/delete counters on flush (default true)
 	ResetGauges     string // reset/delete gauges on flush (default true)
@@ -79,7 +85,7 @@ type prevMetrics struct {
 
 // CirconusMetrics state
 type CirconusMetrics struct {
-	Log   *log.Logger
+	Log   Logger
 	Debug bool
 
 	resetCounters   bool

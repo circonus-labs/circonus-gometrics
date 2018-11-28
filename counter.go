@@ -4,9 +4,7 @@
 
 package circonusgometrics
 
-import (
-	"fmt"
-)
+import "github.com/pkg/errors"
 
 // A Counter is a monotonically increasing unsigned integer.
 //
@@ -78,7 +76,7 @@ func (m *CirconusMetrics) GetCounterTest(metric string) (uint64, error) {
 		return val, nil
 	}
 
-	return 0, fmt.Errorf("Counter metric '%s' not found", metric)
+	return 0, errors.Errorf("counter metric '%s' not found", metric)
 
 }
 
