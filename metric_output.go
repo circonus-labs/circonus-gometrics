@@ -272,9 +272,15 @@ func (m *CirconusMetrics) snapHistograms() map[string]*circonusllhist.Histogram 
 
 	for n, hist := range m.histograms {
 		hist.rw.Lock()
-		h[n] = hist.hist.CopyAndReset()
+		if m.resetHistograms {
+			h[n] = hist.hist.CopyAndReset()
+		} else {
+			h[n] = hist.hist.Copy()
+		}
+
 		hist.rw.Unlock()
 	}
+
 	if m.resetHistograms && len(h) > 0 {
 		m.histograms = make(map[string]*Histogram)
 	}

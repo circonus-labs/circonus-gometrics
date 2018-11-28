@@ -525,3 +525,31 @@ func TestSnapshot(t *testing.T) {
 		t.Errorf("Expected 1, found %d", len(text))
 	}
 }
+
+func TestSnapshotWithoutHistogramReset(t *testing.T) {
+	t.Log("Testing util.snapshot with no histogram reset")
+
+	cm := &CirconusMetrics{}
+
+	cm.resetHistograms = false
+	cm.histograms = make(map[string]*Histogram)
+	cm.Timing("foo", 1)
+
+	if len(cm.histograms) != 1 {
+		t.Errorf("Expected 1, found %d", len(cm.histograms))
+	}
+
+	_, _, histograms, _ := cm.snapshot()
+
+	if len(histograms) != 1 {
+		t.Errorf("Expected 1, found %d", len(histograms))
+	}
+
+	if len(cm.histograms) != 1 {
+		t.Errorf("Expected 1, found %d", len(cm.histograms))
+	}
+
+	if len(cm.histograms["foo"].hist.DecStrings()) != 1 {
+		t.Errorf("Expected 1, found %d", len(cm.histograms))
+	}
+}
