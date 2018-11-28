@@ -1,3 +1,9 @@
+# v3.0.0-beta
+
+* add: log deprecation notice on api calls
+* upd: dependency circonusllhist v0.1.2, go-apiclient v0.5.3
+* upd: `snapHistograms()` method to use the histogram `Copy()` if `resetHistograms` is false, otherwise uses `CopyAndReset()`
+
 # v3.0.0-alpha.5
 
 * add: allow any log package with a `Printf` to be used
