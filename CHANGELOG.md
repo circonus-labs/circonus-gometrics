@@ -1,3 +1,12 @@
+# v3.0.0-alpha.5
+
+* add: allow any log package with a `Printf` to be used
+* upd: circonus-labs/go-apiclient v0.5.2 (for generic log support)
+* upd: ensure only `Printf` is used for logging
+* upd: migrate to errors package (`errors.Wrap` et al.)
+* upd: error and log messages, remove explicit log level classifications from logging messages
+* upd: OBSOLETE github.com/circonus-labs/v3/circonus-gometrics/api will be REMOVED --- USE **github.com/circonus-labs/go-apiclient**
+
 # v3.0.0-alpha.4
 
 * add: missing SetHistogramDurationWithTags
@@ -25,7 +34,7 @@
 * add: metric_filters support
 * upd: dependencies (circonusllhist v0.1.0)
 * upd: change histograms from type 'n' to type 'h' in submissions
-* upd: DEPRECATED github.com/circonus-labs/circonus-gometrics/api
+* upd: DEPRECATED github.com/circonus-labs/v3/circonus-gometrics/api
 * upd: switch to using github.com/circonus-labs/go-apiclient
 * upd: merge other metric tag functions into tags
 * add: helper methods for handling tags (for new stream tags syntax and old check_bundle.metrics.metric.tags)
