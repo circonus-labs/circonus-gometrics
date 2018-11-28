@@ -1,7 +1,7 @@
 github.com/circonus-labs/circonusllhist v0.1.3 h1:TJH+oke8D16535+jHExHj4nQvzlZrj7ug5D7I/orNUA=
 github.com/circonus-labs/circonusllhist v0.1.3/go.mod h1:kMXHVDlOchFAehlya5ePtbp5jckzBHf4XRpQvBOLI+I=
-github.com/circonus-labs/go-apiclient v0.5.2 h1:80zezxpOYzfQWJPQViqoCyv3mmMIHwE9MrxTHNxnNDc=
-github.com/circonus-labs/go-apiclient v0.5.2/go.mod h1:624vxzSv6v6YnbEJ5o3xB2mjrqiPbSvyuo+s+nVabVo=
+github.com/circonus-labs/go-apiclient v0.5.3 h1:xe0eJICrWwgjS2xz/nR1exS7DLbrGNLuvdvQFp2vcXA=
+github.com/circonus-labs/go-apiclient v0.5.3/go.mod h1:624vxzSv6v6YnbEJ5o3xB2mjrqiPbSvyuo+s+nVabVo=
 github.com/hashicorp/go-cleanhttp v0.5.0 h1:wvCrVc9TjDls6+YGAF2hAifE1E5U1+b4tH6KdvN3Gig=
 github.com/hashicorp/go-cleanhttp v0.5.0/go.mod h1:JpRdi6/HCYpAwUzNwuwqhbovhLtngrth3wmdIIUrZ80=
 github.com/hashicorp/go-retryablehttp v0.5.0 h1:aVN0FYnPwAgZI/hVzqwfMiM86ttcHTlQKbBVeVmXPIs=
