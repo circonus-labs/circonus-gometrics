@@ -157,14 +157,14 @@ func New(ac *Config) (*API, error) {
 	}
 
 	a := &API{
-		apiURL:    apiURL,
-		key:       key,
-		app:       app,
-		accountID: acctID,
-		caCert:    ac.CACert,
-		tlsConfig: ac.TLSConfig,
-		Debug:     ac.Debug,
-		Log:       ac.Log,
+		apiURL:                apiURL,
+		key:                   key,
+		app:                   app,
+		accountID:             acctID,
+		caCert:                ac.CACert,
+		tlsConfig:             ac.TLSConfig,
+		Debug:                 ac.Debug,
+		Log:                   ac.Log,
 		useExponentialBackoff: false,
 	}
 
@@ -176,6 +176,8 @@ func New(ac *Config) (*API, error) {
 	if a.Log == nil {
 		a.Log = log.New(ioutil.Discard, "", log.LstdFlags)
 	}
+
+	a.Log.Printf("circonus-gometrics/api is DEPRECATED and will be removed - switch to github.com/circonus-labs/go-apiclient")
 
 	return a, nil
 }
@@ -223,6 +225,8 @@ func backoff(interval uint) float64 {
 
 // apiRequest manages retry strategy for exponential backoffs
 func (a *API) apiRequest(reqMethod string, reqPath string, data []byte) ([]byte, error) {
+	a.Log.Printf("circonus-gometrics/api is DEPRECATED and will be removed - switch to github.com/circonus-labs/go-apiclient")
+
 	backoffs := []uint{2, 4, 8, 16, 32}
 	attempts := 0
 	success := false
