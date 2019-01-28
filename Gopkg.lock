@@ -4,8 +4,8 @@
 [[projects]]
   name = "github.com/circonus-labs/circonusllhist"
   packages = ["."]
-  revision = "15a405ff8a5115071928817fea151c3a420c5246"
-  version = "v0.1.2"
+  revision = "87d4d00b35adeefe4911ece727838749e0fab113"
+  version = "v0.1.3"
 
 [[projects]]
   name = "github.com/hashicorp/go-cleanhttp"
@@ -16,14 +16,14 @@
 [[projects]]
   name = "github.com/hashicorp/go-retryablehttp"
   packages = ["."]
-  revision = "4502c0ecdaf0b50d857611af23831260f99be6bf"
-  version = "v0.5.0"
+  revision = "73489d0a1476f0c9e6fb03f9c39241523a496dfd"
+  version = "v0.5.2"
 
 [[projects]]
   name = "github.com/pkg/errors"
   packages = ["."]
-  revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
-  version = "v0.8.0"
+  revision = "ba968bfe8b2f7e042a574c888954fccecfa385b4"
+  version = "v0.8.1"
 
 [[projects]]
   branch = "master"
@@ -34,6 +34,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "0067a8daf91f9a5bdcfa288b6d4c35ec0264322414ccb60582d34eb579e46b85"
+  inputs-digest = "ff81639f2f1513555846304ee903af4d13a0f0f181e140e1ebb1d71aa18fb5fb"
   solver-name = "gps-cdcl"
   solver-version = 1
