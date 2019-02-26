@@ -72,14 +72,21 @@ func EncodeMetricStreamTags(tags Tags) string {
 
 	tagList := make([]string, len(tmpTags))
 	for i, tag := range tmpTags {
-		tagParts := strings.Split(tag, ":")
+		tagParts := strings.SplitN(tag, ":", 2)
 		if len(tagParts) != 2 {
 			continue // invalid tag, skip it
 		}
-		tagList[i] = fmt.Sprintf(
-			`b"%s":b"%s"`,
-			base64.StdEncoding.EncodeToString([]byte(tagParts[0])),
-			base64.StdEncoding.EncodeToString([]byte(tagParts[1])))
+		encodeFmt := `b"%s"`
+		encodedSig := `b"` // has cat or val been previously (or manually) base64 encoded and formatted
+		tc := tagParts[0]
+		tv := tagParts[1]
+		if !strings.HasPrefix(tc, encodedSig) {
+			tc = fmt.Sprintf(encodeFmt, base64.StdEncoding.EncodeToString([]byte(tc)))
+		}
+		if !strings.HasPrefix(tv, encodedSig) {
+			tv = fmt.Sprintf(encodeFmt, base64.StdEncoding.EncodeToString([]byte(tv)))
+		}
+		tagList[i] = tc + ":" + tv
 	}
 
 	return strings.Join(tagList, ",")

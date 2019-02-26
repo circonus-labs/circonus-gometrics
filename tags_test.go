@@ -19,11 +19,13 @@ func TestEncodeMetricTags(t *testing.T) {
 		{"cat1", "val1"},
 		{"cat2", "val2"},
 		{"cat2", "val1"},
+		{"cat3", "compound:val"},
 	}
 	expectTags := Tags{
 		{"cat1", "val1"},
 		{"cat2", "val1"},
 		{"cat2", "val2"},
+		{"cat3", "compound:val"},
 	}
 
 	tl := EncodeMetricTags(inputTags)
@@ -46,14 +48,19 @@ func TestEncodeMetricStreamTags(t *testing.T) {
 		{"cat2", "val2"},
 		{"cat2", "val1"}, // should be sorted above previous one
 		{"cat2", "val1"}, // duplicate should be omitted
+		{"cat3", "compound:val"},
+		{"cat3", fmt.Sprintf(`b"%s"`, base64.StdEncoding.EncodeToString([]byte("bar")))}, // manually base64 encoded and formatted (e.g. `b"base64encodedstr"`), do not double encode
 	}
 	expectTags := Tags{
 		{"cat1", "val1"},
 		{"cat1", "val2"},
 		{"cat2", "val1"},
 		{"cat2", "val2"},
+		{"cat3", "compound:val"},
+		{"cat3", "foo"},
 	}
 
+	t.Logf("tags: %v\n", inputTags)
 	// expect ts to be in format b"b64cat":b"b64val",...
 	ts := EncodeMetricStreamTags(inputTags)
 	tl := strings.Split(ts, ",")
