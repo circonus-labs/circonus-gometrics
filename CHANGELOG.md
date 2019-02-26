@@ -1,3 +1,8 @@
+# v3.0.0-beta.1
+
+* upd: allow manually formatted and base64 encoded tags
+* upd: allow tag values to have embedded colons
+
 # v3.0.0-beta
 
 * add: log deprecation notice on api calls
