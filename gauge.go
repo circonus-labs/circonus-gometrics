@@ -23,7 +23,7 @@ func (m *CirconusMetrics) Gauge(metric string, val interface{}) {
 
 // SetGaugeWithTags sets a gauge metric with tags to a value
 func (m *CirconusMetrics) SetGaugeWithTags(metric string, tags Tags, val interface{}) {
-	m.SetGauge(MetricNameWithStreamTags(metric, tags), val)
+	m.SetGauge(m.MetricNameWithStreamTags(metric, tags), val)
 }
 
 // SetGauge sets a gauge to a value
@@ -35,7 +35,7 @@ func (m *CirconusMetrics) SetGauge(metric string, val interface{}) {
 
 // AddGaugeWithTags adds value to existing gauge metric with tags
 func (m *CirconusMetrics) AddGaugeWithTags(metric string, tags Tags, val interface{}) {
-	m.AddGauge(MetricNameWithStreamTags(metric, tags), val)
+	m.AddGauge(m.MetricNameWithStreamTags(metric, tags), val)
 }
 
 // AddGauge adds value to existing gauge
@@ -81,7 +81,7 @@ func (m *CirconusMetrics) AddGauge(metric string, val interface{}) {
 
 // RemoveGaugeWithTags removes a gauge metric with tags
 func (m *CirconusMetrics) RemoveGaugeWithTags(metric string, tags Tags) {
-	m.RemoveGauge(MetricNameWithStreamTags(metric, tags))
+	m.RemoveGauge(m.MetricNameWithStreamTags(metric, tags))
 }
 
 // RemoveGauge removes a gauge
@@ -105,7 +105,7 @@ func (m *CirconusMetrics) GetGaugeTest(metric string) (interface{}, error) {
 
 // SetGaugeFuncWithTags sets a gauge metric with tags to a function [called at flush interval]
 func (m *CirconusMetrics) SetGaugeFuncWithTags(metric string, tags Tags, fn func() int64) {
-	m.SetGaugeFunc(MetricNameWithStreamTags(metric, tags), fn)
+	m.SetGaugeFunc(m.MetricNameWithStreamTags(metric, tags), fn)
 }
 
 // SetGaugeFunc sets a gauge to a function [called at flush interval]
@@ -117,7 +117,7 @@ func (m *CirconusMetrics) SetGaugeFunc(metric string, fn func() int64) {
 
 // RemoveGaugeFuncWithTags removes a gauge metric with tags function
 func (m *CirconusMetrics) RemoveGaugeFuncWithTags(metric string, tags Tags) {
-	m.RemoveGaugeFunc(MetricNameWithStreamTags(metric, tags))
+	m.RemoveGaugeFunc(m.MetricNameWithStreamTags(metric, tags))
 }
 
 // RemoveGaugeFunc removes a gauge function

@@ -53,7 +53,7 @@ func (m *CirconusMetrics) RecordDuration(metric string, val time.Duration) {
 
 // RecordCountForValueWithTags adds count n for value to a histogram metric with tags
 func (m *CirconusMetrics) RecordCountForValueWithTags(metric string, tags Tags, val float64, n int64) {
-	m.RecordCountForValue(MetricNameWithStreamTags(metric, tags), val, n)
+	m.RecordCountForValue(m.MetricNameWithStreamTags(metric, tags), val, n)
 }
 
 // RecordCountForValue adds count n for value to a histogram
@@ -69,7 +69,7 @@ func (m *CirconusMetrics) RecordCountForValue(metric string, val float64, n int6
 
 // SetHistogramValueWithTags adds a value to a histogram metric with tags
 func (m *CirconusMetrics) SetHistogramValueWithTags(metric string, tags Tags, val float64) {
-	m.SetHistogramValue(MetricNameWithStreamTags(metric, tags), val)
+	m.SetHistogramValue(m.MetricNameWithStreamTags(metric, tags), val)
 }
 
 // SetHistogramValue adds a value to a histogram
@@ -85,7 +85,7 @@ func (m *CirconusMetrics) SetHistogramValue(metric string, val float64) {
 
 // SetHistogramDurationWithTags adds a value to a histogram with tags
 func (m *CirconusMetrics) SetHistogramDurationWithTags(metric string, tags Tags, val time.Duration) {
-	m.SetHistogramDuration(MetricNameWithStreamTags(metric, tags), val)
+	m.SetHistogramDuration(m.MetricNameWithStreamTags(metric, tags), val)
 }
 
 // SetHistogramDuration adds a value to a histogram
@@ -101,7 +101,7 @@ func (m *CirconusMetrics) SetHistogramDuration(metric string, val time.Duration)
 
 // RemoveHistogramWithTags removes a histogram metric with tags
 func (m *CirconusMetrics) RemoveHistogramWithTags(metric string, tags Tags) {
-	m.RemoveHistogram(MetricNameWithStreamTags(metric, tags))
+	m.RemoveHistogram(m.MetricNameWithStreamTags(metric, tags))
 }
 
 // RemoveHistogram removes a histogram
@@ -113,7 +113,7 @@ func (m *CirconusMetrics) RemoveHistogram(metric string) {
 
 // NewHistogramWithTags returns a histogram metric with tags instance
 func (m *CirconusMetrics) NewHistogramWithTags(metric string, tags Tags) *Histogram {
-	return m.NewHistogram(MetricNameWithStreamTags(metric, tags))
+	return m.NewHistogram(m.MetricNameWithStreamTags(metric, tags))
 }
 
 // NewHistogram returns a histogram instance.

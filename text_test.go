@@ -32,7 +32,7 @@ func TestSetTextWithTags(t *testing.T) {
 
 	metricName := "foo"
 	tags := Tags{{"foo", "bar"}, {"baz", "qux"}}
-	streamTagMetricName := MetricNameWithStreamTags("foo", tags)
+	streamTagMetricName := cm.MetricNameWithStreamTags("foo", tags)
 
 	cm.SetTextWithTags(metricName, tags, "bar")
 
@@ -70,7 +70,7 @@ func TestSetTextValueWithTags(t *testing.T) {
 
 	metricName := "foo"
 	tags := Tags{{"foo", "bar"}, {"baz", "qux"}}
-	streamTagMetricName := MetricNameWithStreamTags("foo", tags)
+	streamTagMetricName := cm.MetricNameWithStreamTags("foo", tags)
 
 	cm.SetTextValueWithTags(metricName, tags, "bar")
 
@@ -119,7 +119,7 @@ func TestRemoveTextWithTags(t *testing.T) {
 
 	metricName := "foo"
 	tags := Tags{{"foo", "bar"}, {"baz", "qux"}}
-	streamTagMetricName := MetricNameWithStreamTags("foo", tags)
+	streamTagMetricName := cm.MetricNameWithStreamTags("foo", tags)
 
 	cm.SetTextWithTags(metricName, tags, "bar")
 
@@ -175,7 +175,7 @@ func TestSetTextFuncWithTags(t *testing.T) {
 
 	metricName := "foo"
 	tags := Tags{{"foo", "bar"}, {"baz", "qux"}}
-	streamTagMetricName := MetricNameWithStreamTags("foo", tags)
+	streamTagMetricName := cm.MetricNameWithStreamTags("foo", tags)
 
 	cm.SetTextFuncWithTags(metricName, tags, tf)
 
@@ -233,7 +233,7 @@ func TestRemoveTextFuncWithTags(t *testing.T) {
 
 	metricName := "foo"
 	tags := Tags{{"foo", "bar"}, {"baz", "qux"}}
-	streamTagMetricName := MetricNameWithStreamTags("foo", tags)
+	streamTagMetricName := cm.MetricNameWithStreamTags("foo", tags)
 
 	cm.SetTextFuncWithTags(metricName, tags, tf)
 
