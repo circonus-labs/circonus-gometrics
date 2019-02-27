@@ -19,7 +19,7 @@ func (m *CirconusMetrics) SetText(metric string, val string) {
 
 // SetTextValueWithTags sets a text metric with tags
 func (m *CirconusMetrics) SetTextValueWithTags(metric string, tags Tags, val string) {
-	m.SetTextValue(MetricNameWithStreamTags(metric, tags), val)
+	m.SetTextValue(m.MetricNameWithStreamTags(metric, tags), val)
 }
 
 // SetTextValue sets a text metric
@@ -31,7 +31,7 @@ func (m *CirconusMetrics) SetTextValue(metric string, val string) {
 
 // RemoveTextWithTags removes a text metric with tags
 func (m *CirconusMetrics) RemoveTextWithTags(metric string, tags Tags) {
-	m.RemoveText(MetricNameWithStreamTags(metric, tags))
+	m.RemoveText(m.MetricNameWithStreamTags(metric, tags))
 }
 
 // RemoveText removes a text metric
@@ -43,7 +43,7 @@ func (m *CirconusMetrics) RemoveText(metric string) {
 
 // SetTextFuncWithTags sets a text metric with tags to a function [called at flush interval]
 func (m *CirconusMetrics) SetTextFuncWithTags(metric string, tags Tags, fn func() string) {
-	m.SetTextFunc(MetricNameWithStreamTags(metric, tags), fn)
+	m.SetTextFunc(m.MetricNameWithStreamTags(metric, tags), fn)
 }
 
 // SetTextFunc sets a text metric to a function [called at flush interval]
@@ -55,7 +55,7 @@ func (m *CirconusMetrics) SetTextFunc(metric string, fn func() string) {
 
 // RemoveTextFuncWithTags removes a text metric with tags function
 func (m *CirconusMetrics) RemoveTextFuncWithTags(metric string, tags Tags) {
-	m.RemoveTextFunc(MetricNameWithStreamTags(metric, tags))
+	m.RemoveTextFunc(m.MetricNameWithStreamTags(metric, tags))
 }
 
 // RemoveTextFunc a text metric function

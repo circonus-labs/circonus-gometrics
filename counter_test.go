@@ -43,7 +43,7 @@ func TestSetWithTags(t *testing.T) {
 
 	metricName := "foo"
 	tags := Tags{{"foo", "bar"}, {"baz", "qux"}}
-	streamTagMetricName := MetricNameWithStreamTags("foo", tags)
+	streamTagMetricName := cm.MetricNameWithStreamTags("foo", tags)
 
 	cm.SetWithTags(metricName, tags, 30)
 
@@ -92,7 +92,7 @@ func TestIncrementWithTags(t *testing.T) {
 
 	metricName := "foo"
 	tags := Tags{{"foo", "bar"}, {"baz", "qux"}}
-	streamTagMetricName := MetricNameWithStreamTags("foo", tags)
+	streamTagMetricName := cm.MetricNameWithStreamTags("foo", tags)
 
 	cm.IncrementWithTags(metricName, tags)
 
@@ -130,7 +130,7 @@ func TestIncrementByValueWithTags(t *testing.T) {
 
 	metricName := "foo"
 	tags := Tags{{"foo", "bar"}, {"baz", "qux"}}
-	streamTagMetricName := MetricNameWithStreamTags("foo", tags)
+	streamTagMetricName := cm.MetricNameWithStreamTags("foo", tags)
 
 	cm.IncrementByValueWithTags(metricName, tags, 10)
 
@@ -169,7 +169,7 @@ func TestAddWithTags(t *testing.T) {
 
 	metricName := "foo"
 	tags := Tags{{"foo", "bar"}, {"baz", "qux"}}
-	streamTagMetricName := MetricNameWithStreamTags("foo", tags)
+	streamTagMetricName := cm.MetricNameWithStreamTags("foo", tags)
 
 	cm.SetWithTags(metricName, tags, 30)
 
@@ -229,7 +229,7 @@ func TestRemoveCounterWithTags(t *testing.T) {
 
 	metricName := "foo"
 	tags := Tags{{"foo", "bar"}, {"baz", "qux"}}
-	streamTagMetricName := MetricNameWithStreamTags("foo", tags)
+	streamTagMetricName := cm.MetricNameWithStreamTags("foo", tags)
 
 	cm.IncrementWithTags(metricName, tags)
 
@@ -286,7 +286,7 @@ func TestSetCounterFuncWithTags(t *testing.T) {
 
 	metricName := "foo"
 	tags := Tags{{"foo", "bar"}, {"baz", "qux"}}
-	streamTagMetricName := MetricNameWithStreamTags("foo", tags)
+	streamTagMetricName := cm.MetricNameWithStreamTags("foo", tags)
 
 	cm.SetCounterFuncWithTags(metricName, tags, cf)
 
@@ -344,7 +344,7 @@ func TestRemoveCounterFuncWithTags(t *testing.T) {
 
 	metricName := "foo"
 	tags := Tags{{"foo", "bar"}, {"baz", "qux"}}
-	streamTagMetricName := MetricNameWithStreamTags("foo", tags)
+	streamTagMetricName := cm.MetricNameWithStreamTags("foo", tags)
 
 	cm.SetCounterFuncWithTags(metricName, tags, cf)
 

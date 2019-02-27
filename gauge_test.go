@@ -211,7 +211,7 @@ func TestGaugeWithTags(t *testing.T) {
 
 	metricName := "foo"
 	tags := Tags{{"foo", "bar"}, {"baz", "qux"}}
-	streamTagMetricName := MetricNameWithStreamTags("foo", tags)
+	streamTagMetricName := cm.MetricNameWithStreamTags("foo", tags)
 
 	v := int(10)
 	cm.GaugeWithTags(metricName, tags, v)
@@ -465,7 +465,7 @@ func TestAddGaugeWithTags(t *testing.T) {
 
 	metricName := "foo"
 	tags := Tags{{"foo", "bar"}, {"baz", "qux"}}
-	streamTagMetricName := MetricNameWithStreamTags("foo", tags)
+	streamTagMetricName := cm.MetricNameWithStreamTags("foo", tags)
 	v1 := 10
 	v2 := 5
 
@@ -524,7 +524,7 @@ func TestSetGaugeWithTags(t *testing.T) {
 
 	metricName := "foo"
 	tags := Tags{{"foo", "bar"}, {"baz", "qux"}}
-	streamTagMetricName := MetricNameWithStreamTags("foo", tags)
+	streamTagMetricName := cm.MetricNameWithStreamTags("foo", tags)
 
 	v := int(10)
 	cm.SetGaugeWithTags(metricName, tags, v)
@@ -597,7 +597,7 @@ func TestRemoveGaugeWithTags(t *testing.T) {
 
 	metricName := "foo"
 	tags := Tags{{"foo", "bar"}, {"baz", "qux"}}
-	streamTagMetricName := MetricNameWithStreamTags("foo", tags)
+	streamTagMetricName := cm.MetricNameWithStreamTags("foo", tags)
 
 	v := int(5)
 	cm.GaugeWithTags(metricName, tags, v)
@@ -654,7 +654,7 @@ func TestSetGaugeFuncWithTags(t *testing.T) {
 
 	metricName := "foo"
 	tags := Tags{{"foo", "bar"}, {"baz", "qux"}}
-	streamTagMetricName := MetricNameWithStreamTags("foo", tags)
+	streamTagMetricName := cm.MetricNameWithStreamTags("foo", tags)
 
 	cm.SetGaugeFuncWithTags(metricName, tags, gf)
 
@@ -712,7 +712,7 @@ func TestRemoveGaugeFuncWithTags(t *testing.T) {
 
 	metricName := "foo"
 	tags := Tags{{"foo", "bar"}, {"baz", "qux"}}
-	streamTagMetricName := MetricNameWithStreamTags("foo", tags)
+	streamTagMetricName := cm.MetricNameWithStreamTags("foo", tags)
 
 	cm.SetGaugeFuncWithTags(metricName, tags, gf)
 

@@ -40,7 +40,7 @@ func (m *CirconusMetrics) AddMetricTags(name string, tags []string) bool {
 // MetricNameWithStreamTags will encode tags as stream tags into supplied metric name.
 // Note: if metric name already has stream tags it is assumed the metric name and
 // embedded stream tags are being managed manually and calling this method will nave no effect.
-func MetricNameWithStreamTags(metric string, tags Tags) string {
+func (m *CirconusMetrics) MetricNameWithStreamTags(metric string, tags Tags) string {
 	if len(tags) == 0 {
 		return metric
 	}
@@ -49,7 +49,7 @@ func MetricNameWithStreamTags(metric string, tags Tags) string {
 		return metric
 	}
 
-	taglist := EncodeMetricStreamTags(tags)
+	taglist := m.EncodeMetricStreamTags(tags)
 	if taglist != "" {
 		return metric + "|ST[" + taglist + "]"
 	}
@@ -60,12 +60,12 @@ func MetricNameWithStreamTags(metric string, tags Tags) string {
 // EncodeMetricStreamTags encodes Tags into a string suitable for use with
 // stream tags. Tags directly embedded into metric names using the
 // `metric_name|ST[<tags>]` syntax.
-func EncodeMetricStreamTags(tags Tags) string {
+func (m *CirconusMetrics) EncodeMetricStreamTags(tags Tags) string {
 	if len(tags) == 0 {
 		return ""
 	}
 
-	tmpTags := EncodeMetricTags(tags)
+	tmpTags := m.EncodeMetricTags(tags)
 	if len(tmpTags) == 0 {
 		return ""
 	}
@@ -74,6 +74,7 @@ func EncodeMetricStreamTags(tags Tags) string {
 	for i, tag := range tmpTags {
 		tagParts := strings.SplitN(tag, ":", 2)
 		if len(tagParts) != 2 {
+			m.Log.Printf("invalid tag (%s)", tag)
 			continue // invalid tag, skip it
 		}
 		encodeFmt := `b"%s"`
@@ -96,7 +97,7 @@ func EncodeMetricStreamTags(tags Tags) string {
 // check_bundle.metircs.metric.tags needs. This helper is intended to work
 // with legacy check bundle metrics. Tags directly on named metrics are being
 // deprecated in favor of stream tags.
-func EncodeMetricTags(tags Tags) []string {
+func (m *CirconusMetrics) EncodeMetricTags(tags Tags) []string {
 	if len(tags) == 0 {
 		return []string{}
 	}
@@ -106,6 +107,7 @@ func EncodeMetricTags(tags Tags) []string {
 		tc := strings.Map(removeSpaces, strings.ToLower(t.Category))
 		tv := strings.Map(removeSpaces, strings.ToLower(t.Value))
 		if tc == "" || tv == "" {
+			m.Log.Printf("invalid tag (%s)", t)
 			continue // invalid tag, skip it
 		}
 		tag := tc + ":" + tv

@@ -28,7 +28,8 @@ func TestEncodeMetricTags(t *testing.T) {
 		{"cat3", "compound:val"},
 	}
 
-	tl := EncodeMetricTags(inputTags)
+	cm := CirconusMetrics{}
+	tl := cm.EncodeMetricTags(inputTags)
 	if len(tl) != len(expectTags) {
 		t.Fatalf("expected %d tags, got %d", len(expectTags), len(tl))
 	}
@@ -62,7 +63,8 @@ func TestEncodeMetricStreamTags(t *testing.T) {
 
 	t.Logf("tags: %v\n", inputTags)
 	// expect ts to be in format b"b64cat":b"b64val",...
-	ts := EncodeMetricStreamTags(inputTags)
+	cm := CirconusMetrics{}
+	ts := cm.EncodeMetricStreamTags(inputTags)
 	tl := strings.Split(ts, ",")
 	if len(tl) != len(expectTags) {
 		t.Fatalf("expected %d tags, got %d", len(expectTags), len(tl))

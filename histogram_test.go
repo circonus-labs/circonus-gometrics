@@ -43,9 +43,10 @@ func TestTimingWithTags(t *testing.T) {
 
 	metricName := "foo"
 	tags := Tags{{"foo", "bar"}, {"baz", "qux"}}
-	streamTagMetricName := MetricNameWithStreamTags("foo", tags)
 
 	cm := &CirconusMetrics{histograms: make(map[string]*Histogram)}
+
+	streamTagMetricName := cm.MetricNameWithStreamTags("foo", tags)
 
 	cm.TimingWithTags(metricName, tags, 1)
 
@@ -102,9 +103,9 @@ func TestRecordValueWithTags(t *testing.T) {
 
 	metricName := "foo"
 	tags := Tags{{"foo", "bar"}, {"baz", "qux"}}
-	streamTagMetricName := MetricNameWithStreamTags("foo", tags)
 
 	cm := &CirconusMetrics{histograms: make(map[string]*Histogram)}
+	streamTagMetricName := cm.MetricNameWithStreamTags("foo", tags)
 
 	cm.RecordValueWithTags(metricName, tags, 1)
 
@@ -221,9 +222,9 @@ func TestRecordCountForValueWithTags(t *testing.T) {
 
 	metricName := "foo"
 	tags := Tags{{"foo", "bar"}, {"baz", "qux"}}
-	streamTagMetricName := MetricNameWithStreamTags("foo", tags)
 
 	cm := &CirconusMetrics{histograms: make(map[string]*Histogram)}
+	streamTagMetricName := cm.MetricNameWithStreamTags("foo", tags)
 
 	cm.RecordCountForValueWithTags(metricName, tags, 1.2, 5)
 
@@ -281,9 +282,9 @@ func TestSetHistogramValueWithTags(t *testing.T) {
 
 	metricName := "foo"
 	tags := Tags{{"foo", "bar"}, {"baz", "qux"}}
-	streamTagMetricName := MetricNameWithStreamTags("foo", tags)
 
 	cm.SetHistogramValueWithTags(metricName, tags, 1)
+	streamTagMetricName := cm.MetricNameWithStreamTags("foo", tags)
 
 	hist, ok := cm.histograms[streamTagMetricName]
 	if !ok {
@@ -376,9 +377,9 @@ func TestRemoveHistogramWithTags(t *testing.T) {
 
 	metricName := "foo"
 	tags := Tags{{"foo", "bar"}, {"baz", "qux"}}
-	streamTagMetricName := MetricNameWithStreamTags("foo", tags)
 
 	cm.SetHistogramValueWithTags(metricName, tags, 1)
+	streamTagMetricName := cm.MetricNameWithStreamTags("foo", tags)
 
 	hist, ok := cm.histograms[streamTagMetricName]
 	if !ok {
@@ -428,9 +429,9 @@ func TestNewHistogramWithTags(t *testing.T) {
 
 	metricName := "foo"
 	tags := Tags{{"foo", "bar"}, {"baz", "qux"}}
-	streamTagMetricName := MetricNameWithStreamTags("foo", tags)
 
 	hist := cm.NewHistogramWithTags(metricName, tags)
+	streamTagMetricName := cm.MetricNameWithStreamTags("foo", tags)
 
 	if hist == nil {
 		t.Fatal("expected not nil")
