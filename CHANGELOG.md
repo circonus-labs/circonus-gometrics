@@ -1,5 +1,6 @@
 # v3.0.0-beta.1
 
+* upd: merge tag helper methods, support logging invalid tags
 * upd: allow manually formatted and base64 encoded tags
 * upd: allow tag values to have embedded colons
 
