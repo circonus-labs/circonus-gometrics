@@ -544,3 +544,28 @@ func TestSearchGraphs(t *testing.T) {
 		}
 	}
 }
+
+func TestGraphOverlaySet(t *testing.T) {
+	t.Log("testing graph overlay set struct")
+
+	testJSON, err := ioutil.ReadFile("testdata/graph_overlayset.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var g Graph
+	if err := json.Unmarshal(testJSON, &g); err != nil {
+		t.Fatal(err)
+	}
+
+	data, err := json.Marshal(g)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var g2 Graph
+	if err := json.Unmarshal(data, &g2); err != nil {
+		t.Fatal(err)
+	}
+
+}
