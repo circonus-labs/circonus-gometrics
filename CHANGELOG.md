@@ -1,3 +1,8 @@
+# v3.0.0-beta.2
+
+* fix: submit for breaking change in dependency patch release
+* upd: dependencies
+
 # v3.0.0-beta.1
 
 * upd: merge tag helper methods, support logging invalid tags
