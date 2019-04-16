@@ -1,3 +1,7 @@
+# v2.3.1
+
+* fix: incorrect attribute types in graph overlays (docs vs what api actually returns)
+
 # v2.3.0
 
 * fix: graph structures incorrectly represented nesting of overlay sets
