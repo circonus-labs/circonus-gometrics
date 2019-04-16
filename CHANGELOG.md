@@ -1,3 +1,7 @@
+# v3.0.0-beta.3
+
+* upd: go-apiclient for graph overlay attribute type fixes
+
 # v3.0.0-beta.2
 
 * fix: submit for breaking change in dependency patch release
