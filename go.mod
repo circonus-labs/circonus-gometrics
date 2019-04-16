@@ -2,7 +2,7 @@ module github.com/circonus-labs/circonus-gometrics/v3
 
 require (
 	github.com/circonus-labs/circonusllhist v0.1.3
-	github.com/circonus-labs/go-apiclient v0.6.0
+	github.com/circonus-labs/go-apiclient v0.6.1
 	github.com/hashicorp/go-cleanhttp v0.5.1 // indirect
 	github.com/hashicorp/go-retryablehttp v0.5.3
 	github.com/pkg/errors v0.8.1
