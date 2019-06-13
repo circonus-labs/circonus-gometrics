@@ -62,7 +62,15 @@ func (cm *CheckManager) getBrokerCN(broker *apiclient.Broker, submissionURL apic
 	cn := ""
 
 	for _, detail := range broker.Details {
-		if *detail.IP == host {
+		// certs are generated against the CN (in theory)
+		// 1. find the right broker instance with matching IP or external hostname
+		// 2. set the tls.Config.ServerName to whatever that instance's CN is currently
+		// 3. cert will be valid for TLS conns (in theory)
+		if detail.IP != nil && *detail.IP == host {
+			cn = detail.CN
+			break
+		}
+		if detail.ExternalHost != nil && *detail.ExternalHost == host {
 			cn = detail.CN
 			break
 		}
