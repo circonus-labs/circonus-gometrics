@@ -1,3 +1,8 @@
+# v3.0.0-beta.4
+
+* fix: verify at least one active check found when searching for checks
+* upd: broker test IP and external host for match against submission url host
+
 # v3.0.0-beta.3
 
 * upd: go-apiclient for graph overlay attribute type fixes

@@ -419,8 +419,14 @@ func (cm *CheckManager) fetchCheckBySubmissionURL(submissionURL apiclient.URLTyp
 	for idx, check := range *checks {
 		if check.Active {
 			numActive++
-			checkID = idx
+			if checkID == -1 {
+				checkID = idx
+			}
 		}
+	}
+
+	if checkID == -1 {
+		return nil, errors.Errorf("error, no active checks found %v", *checks)
 	}
 
 	if numActive > 1 {
