@@ -49,33 +49,33 @@ func (m *CirconusMetrics) AddGauge(metric string, val interface{}) {
 		return
 	}
 
-	switch val.(type) {
+	switch vnew := val.(type) {
 	default:
 		// ignore it, unsupported type
 	case int:
-		m.gauges[metric] = v.(int) + val.(int)
+		m.gauges[metric] = v.(int) + vnew
 	case int8:
-		m.gauges[metric] = v.(int8) + val.(int8)
+		m.gauges[metric] = v.(int8) + vnew
 	case int16:
-		m.gauges[metric] = v.(int16) + val.(int16)
+		m.gauges[metric] = v.(int16) + vnew
 	case int32:
-		m.gauges[metric] = v.(int32) + val.(int32)
+		m.gauges[metric] = v.(int32) + vnew
 	case int64:
-		m.gauges[metric] = v.(int64) + val.(int64)
+		m.gauges[metric] = v.(int64) + vnew
 	case uint:
-		m.gauges[metric] = v.(uint) + val.(uint)
+		m.gauges[metric] = v.(uint) + vnew
 	case uint8:
-		m.gauges[metric] = v.(uint8) + val.(uint8)
+		m.gauges[metric] = v.(uint8) + vnew
 	case uint16:
-		m.gauges[metric] = v.(uint16) + val.(uint16)
+		m.gauges[metric] = v.(uint16) + vnew
 	case uint32:
-		m.gauges[metric] = v.(uint32) + val.(uint32)
+		m.gauges[metric] = v.(uint32) + vnew
 	case uint64:
-		m.gauges[metric] = v.(uint64) + val.(uint64)
+		m.gauges[metric] = v.(uint64) + vnew
 	case float32:
-		m.gauges[metric] = v.(float32) + val.(float32)
+		m.gauges[metric] = v.(float32) + vnew
 	case float64:
-		m.gauges[metric] = v.(float64) + val.(float64)
+		m.gauges[metric] = v.(float64) + vnew
 	}
 }
 

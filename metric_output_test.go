@@ -143,11 +143,14 @@ func TestFlushMetrics(t *testing.T) {
 			t.Fatal("expected 1 metric")
 		}
 
-		if m, mok := (*metrics)["foo"]; !mok {
+		m, mok := (*metrics)["foo"]
+		if !mok {
 			t.Fatalf("'foo' not found in %v", metrics)
-		} else if m.Type != "L" {
+		}
+		if m.Type != "L" {
 			t.Fatalf("'Type' not correct %v", m)
-		} else if m.Value.(uint64) != 30 {
+		}
+		if m.Value.(uint64) != 30 {
 			t.Fatalf("'Value' not correct %v", m)
 		}
 
@@ -168,11 +171,14 @@ func TestFlushMetrics(t *testing.T) {
 			t.Fatal("expected 1 metric")
 		}
 
-		if m, mok := (*metrics)["foo"]; !mok {
+		m, mok := (*metrics)["foo"]
+		if !mok {
 			t.Fatalf("'foo' not found in %v", metrics)
-		} else if m.Type != "l" {
+		}
+		if m.Type != "l" {
 			t.Fatalf("'Type' not correct %v", m)
-		} else if m.Value.(int64) != v {
+		}
+		if m.Value.(int64) != v {
 			t.Fatalf("'Value' not correct, expected %v got %v", v, m.Value)
 		}
 	}
@@ -191,13 +197,17 @@ func TestFlushMetrics(t *testing.T) {
 			t.Fatal("expected 1 metric")
 		}
 
-		if m, mok := (*metrics)["foo"]; !mok {
+		m, mok := (*metrics)["foo"]
+		if !mok {
 			t.Fatalf("'foo' not found in %v", metrics)
-		} else if m.Type != "h" {
+		}
+		if m.Type != "h" {
 			t.Fatalf("'Type' not correct %v", m)
-		} else if len(m.Value.([]string)) != 1 {
+		}
+		if len(m.Value.([]string)) != 1 {
 			t.Fatal("expected 1 value")
-		} else if m.Value.([]string)[0] != "H[3.0e+01]=1" {
+		}
+		if m.Value.([]string)[0] != "H[3.0e+01]=1" {
 			t.Fatalf("'Value' not correct %v", m)
 		}
 	}
@@ -216,11 +226,14 @@ func TestFlushMetrics(t *testing.T) {
 			t.Fatal("expected 1 metric")
 		}
 
-		if m, mok := (*metrics)["foo"]; !mok {
+		m, mok := (*metrics)["foo"]
+		if !mok {
 			t.Fatalf("'foo' not found in %v", metrics)
-		} else if m.Type != "s" {
+		}
+		if m.Type != "s" {
 			t.Fatalf("'Type' not correct %v", m)
-		} else if m.Value != "bar" {
+		}
+		if m.Value != "bar" {
 			t.Fatalf("'Value' not correct %v", m)
 		}
 	}
@@ -261,11 +274,14 @@ func TestPromOutput(t *testing.T) {
 			t.Fatal("expected 1 metric")
 		}
 
-		if m, mok := (*metrics)["foo"]; !mok {
+		m, mok := (*metrics)["foo"]
+		if !mok {
 			t.Fatalf("'foo' not found in %v", metrics)
-		} else if m.Type != "L" {
+		}
+		if m.Type != "L" {
 			t.Fatalf("'Type' not correct %v", m)
-		} else if m.Value.(uint64) != 30 {
+		}
+		if m.Value.(uint64) != 30 {
 			t.Fatalf("'Value' not correct %v", m)
 		}
 
@@ -297,11 +313,14 @@ func TestPromOutput(t *testing.T) {
 			t.Fatal("expected 1 metric")
 		}
 
-		if m, mok := (*metrics)["foo"]; !mok {
+		m, mok := (*metrics)["foo"]
+		if !mok {
 			t.Fatalf("'foo' not found in %v", metrics)
-		} else if m.Type != "i" {
+		}
+		if m.Type != "i" {
 			t.Fatalf("'Type' not correct %v", m)
-		} else if m.Value.(int) != v {
+		}
+		if m.Value.(int) != v {
 			t.Fatalf("'Value' not correct, expected %v got %v", v, m.Value)
 		}
 
@@ -332,13 +351,17 @@ func TestPromOutput(t *testing.T) {
 			t.Fatal("expected 1 metric")
 		}
 
-		if m, mok := (*metrics)["foo"]; !mok {
+		m, mok := (*metrics)["foo"]
+		if !mok {
 			t.Fatalf("'foo' not found in %v", metrics)
-		} else if m.Type != "h" {
+		}
+		if m.Type != "h" {
 			t.Fatalf("'Type' not correct %v", m)
-		} else if len(m.Value.([]string)) != 1 {
+		}
+		if len(m.Value.([]string)) != 1 {
 			t.Fatal("expected 1 value")
-		} else if m.Value.([]string)[0] != "H[3.0e+01]=1" {
+		}
+		if m.Value.([]string)[0] != "H[3.0e+01]=1" {
 			t.Fatalf("'Value' not correct %v", m)
 		}
 
@@ -369,11 +392,14 @@ func TestPromOutput(t *testing.T) {
 			t.Fatal("expected 1 metric")
 		}
 
-		if m, mok := (*metrics)["foo"]; !mok {
+		m, mok := (*metrics)["foo"]
+		if !mok {
 			t.Fatalf("'foo' not found in %v", metrics)
-		} else if m.Type != "s" {
+		}
+		if m.Type != "s" {
 			t.Fatalf("'Type' not correct %v", m)
-		} else if m.Value != "bar" {
+		}
+		if m.Value != "bar" {
 			t.Fatalf("'Value' not correct %v", m)
 		}
 

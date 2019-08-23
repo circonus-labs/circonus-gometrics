@@ -437,7 +437,9 @@ func TestNewCheckManager(t *testing.T) {
 		t.Log("test RefreshTrap")
 		{
 			cm.trapLastUpdate = time.Now().Add(-(cm.trapMaxURLAge + 2*time.Second))
-			cm.RefreshTrap()
+			if err := cm.RefreshTrap(); err != nil {
+				t.Fatalf("expected no error got (%v)", err)
+			}
 			trap, err := cm.GetSubmissionURL()
 			if err != nil {
 				t.Fatalf("Expected no error, got '%v'", err)

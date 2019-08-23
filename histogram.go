@@ -62,7 +62,10 @@ func (m *CirconusMetrics) RecordCountForValue(metric string, val float64, n int6
 
 	m.hm.Lock()
 	hist.rw.Lock()
-	hist.hist.RecordValues(val, n)
+	err := hist.hist.RecordValues(val, n)
+	if err != nil {
+		m.Log.Printf("error recording histogram values (%v)\n", err)
+	}
 	hist.rw.Unlock()
 	m.hm.Unlock()
 }
@@ -78,7 +81,10 @@ func (m *CirconusMetrics) SetHistogramValue(metric string, val float64) {
 
 	m.hm.Lock()
 	hist.rw.Lock()
-	hist.hist.RecordValue(val)
+	err := hist.hist.RecordValue(val)
+	if err != nil {
+		m.Log.Printf("error recording histogram value (%v)\n", err)
+	}
 	hist.rw.Unlock()
 	m.hm.Unlock()
 }
@@ -94,7 +100,10 @@ func (m *CirconusMetrics) SetHistogramDuration(metric string, val time.Duration)
 
 	m.hm.Lock()
 	hist.rw.Lock()
-	hist.hist.RecordDuration(val)
+	err := hist.hist.RecordDuration(val)
+	if err != nil {
+		m.Log.Printf("error recording histogram duration (%v)\n", err)
+	}
 	hist.rw.Unlock()
 	m.hm.Unlock()
 }
@@ -160,13 +169,13 @@ func (h *Histogram) Name() string {
 func (h *Histogram) RecordValue(v float64) {
 	h.rw.Lock()
 	defer h.rw.Unlock()
-	h.hist.RecordValue(v)
+	_ = h.hist.RecordValue(v)
 }
 
 // RecordDuration records the given time.Duration to a histogram instance.
 // RecordDuration normalizes the value to seconds.
 func (h *Histogram) RecordDuration(v time.Duration) {
 	h.rw.Lock()
-	h.hist.RecordDuration(v)
-	h.rw.Unlock()
+	defer h.rw.Unlock()
+	_ = h.hist.RecordDuration(v)
 }

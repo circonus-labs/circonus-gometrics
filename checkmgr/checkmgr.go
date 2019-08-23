@@ -243,10 +243,7 @@ func New(cfg *Config) (*CheckManager, error) {
 	}
 
 	{
-		rx, err := regexp.Compile(`^http\+unix://(?P<sockfile>.+)/write/(?P<id>.+)$`)
-		if err != nil {
-			return nil, errors.Wrap(err, "compiling socket regex")
-		}
+		rx := regexp.MustCompile(`^http\+unix://(?P<sockfile>.+)/write/(?P<id>.+)$`)
 		cm.sockRx = rx
 	}
 
