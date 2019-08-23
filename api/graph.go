@@ -140,7 +140,7 @@ type Graph struct {
 	AccessKeys     []GraphAccessKey            `json:"access_keys,omitempty"`                // [] len >= 0
 	CID            string                      `json:"_cid,omitempty"`                       // string
 	Composites     []GraphComposite            `json:"composites,omitempty"`                 // [] len >= 0
-	Datapoints     []GraphDatapoint            `json:"datapoints,omitempt"`                  // [] len >= 0
+	Datapoints     []GraphDatapoint            `json:"datapoints,omitempty"`                  // [] len >= 0
 	Description    string                      `json:"description,omitempty"`                // string
 	Guides         []GraphGuide                `json:"guides,omitempty"`                     // [] len >= 0
 	LineStyle      *string                     `json:"line_style"`                           // string or null
