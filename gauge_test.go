@@ -426,7 +426,7 @@ func TestAddGauge(t *testing.T) {
 		v := float32(3.12)
 		cm.Gauge("foo", v)
 		cm.AddGauge("foo", v)
-		v = v + v
+		v += v
 
 		val, ok := cm.gauges["foo"]
 		if !ok {
@@ -445,7 +445,7 @@ func TestAddGauge(t *testing.T) {
 		v := float64(3.12)
 		cm.Gauge("foo", v)
 		cm.AddGauge("foo", v)
-		v = v + v
+		v += v
 
 		val, ok := cm.gauges["foo"]
 		if !ok {

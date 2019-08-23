@@ -47,7 +47,9 @@ func TestLoadCACert(t *testing.T) {
 		enabled: false,
 	}
 
-	cm.loadCACert()
+	if err := cm.loadCACert(); err != nil {
+		t.Fatalf("expected no error got (%v)", err)
+	}
 
 	if cm.certPool == nil {
 		t.Errorf("Expected cert pool to be initialized, still nil.")
@@ -84,7 +86,9 @@ func TestFetchCert(t *testing.T) {
 
 	t.Log("load cert w/fetch")
 
-	cm.loadCACert()
+	if err := cm.loadCACert(); err != nil {
+		t.Fatalf("expexted no error, got (%v)", err)
+	}
 
 	if cm.certPool == nil {
 		t.Errorf("Expected cert pool to be initialized, still nil.")

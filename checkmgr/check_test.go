@@ -115,7 +115,8 @@ func testCheckServer() *httptest.Server {
 			switch r.Method {
 			case "GET": // search
 				//fmt.Println(r.URL.String())
-				if strings.HasPrefix(r.URL.String(), "/check_bundle?f_notes=") && strings.Contains(r.URL.String(), "found_notes") {
+				switch {
+				case strings.HasPrefix(r.URL.String(), "/check_bundle?f_notes=") && strings.Contains(r.URL.String(), "found_notes"):
 					r := []apiclient.CheckBundle{testCheckBundle}
 					ret, err := json.Marshal(r)
 					if err != nil {
@@ -124,7 +125,7 @@ func testCheckServer() *httptest.Server {
 					w.WriteHeader(200)
 					w.Header().Set("Content-Type", "application/json")
 					fmt.Fprintln(w, string(ret))
-				} else if strings.HasPrefix(r.URL.String(), "/check_bundle?search=") && strings.Contains(r.URL.String(), "found_target") {
+				case strings.HasPrefix(r.URL.String(), "/check_bundle?search=") && strings.Contains(r.URL.String(), "found_target"):
 					r := []apiclient.CheckBundle{testCheckBundle}
 					ret, err := json.Marshal(r)
 					if err != nil {
@@ -133,7 +134,7 @@ func testCheckServer() *httptest.Server {
 					w.WriteHeader(200)
 					w.Header().Set("Content-Type", "application/json")
 					fmt.Fprintln(w, string(ret))
-				} else {
+				default:
 					w.WriteHeader(200)
 					w.Header().Set("Content-Type", "application/json")
 					fmt.Fprintln(w, "[]")

@@ -150,11 +150,12 @@ func testBrokerServer() *httptest.Server {
 			switch r.Method {
 			case "GET": // search or filter
 				var c []apiclient.Broker
-				if strings.Contains(r.URL.String(), "f__tags_has=no%3Abroker") {
+				switch {
+				case strings.Contains(r.URL.String(), "f__tags_has=no%3Abroker"):
 					c = []apiclient.Broker{}
-				} else if strings.Contains(r.URL.String(), "f__tags_has=multi%3Abroker") {
+				case strings.Contains(r.URL.String(), "f__tags_has=multi%3Abroker"):
 					c = []apiclient.Broker{invalidBroker, invalidBroker}
-				} else {
+				default:
 					c = []apiclient.Broker{validBroker, validBrokerNonEnterprise}
 				}
 				ret, err := json.Marshal(c)

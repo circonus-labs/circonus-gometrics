@@ -5,8 +5,9 @@
 package checkmgr
 
 import (
+	"crypto/rand"
 	"fmt"
-	"math/rand"
+	"math/big"
 	"net"
 	"net/url"
 	"reflect"
@@ -17,10 +18,6 @@ import (
 	apiclient "github.com/circonus-labs/go-apiclient"
 	"github.com/pkg/errors"
 )
-
-func init() {
-	rand.Seed(time.Now().UnixNano())
-}
 
 // Get Broker to use when creating a check
 func (cm *CheckManager) getBroker() (*apiclient.Broker, error) {
@@ -136,7 +133,12 @@ func (cm *CheckManager) selectBroker() (*apiclient.Broker, error) {
 	}
 
 	validBrokerKeys := reflect.ValueOf(validBrokers).MapKeys()
-	selectedBroker := validBrokers[validBrokerKeys[rand.Intn(len(validBrokerKeys))].String()]
+	maxBrokers := big.NewInt(int64(len(validBrokerKeys)))
+	bidx, err := rand.Int(rand.Reader, maxBrokers)
+	if err != nil {
+		return nil, err
+	}
+	selectedBroker := validBrokers[validBrokerKeys[bidx.Uint64()].String()]
 
 	if cm.Debug {
 		cm.Log.Printf("selected broker '%s'\n", selectedBroker.Name)

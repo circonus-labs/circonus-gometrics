@@ -118,7 +118,8 @@ func (cm *CheckManager) initializeTrapURL() error {
 	var checkBundle *apiclient.CheckBundle
 	var broker *apiclient.Broker
 
-	if cm.checkSubmissionURL != "" {
+	switch {
+	case cm.checkSubmissionURL != "":
 		check, err = cm.fetchCheckBySubmissionURL(cm.checkSubmissionURL)
 		if err != nil {
 			return err
@@ -140,7 +141,7 @@ func (cm *CheckManager) initializeTrapURL() error {
 		} else {
 			cm.Log.Printf("SubmissionUrl check CID to Check ID: unable to convert %s to int %q\n", check.CID, err)
 		}
-	} else if cm.checkID > 0 {
+	case cm.checkID > 0:
 		cid := fmt.Sprintf("/check/%d", cm.checkID)
 		check, err = cm.apih.FetchCheck(apiclient.CIDType(&cid))
 		if err != nil {
@@ -149,23 +150,21 @@ func (cm *CheckManager) initializeTrapURL() error {
 		if !check.Active {
 			return errors.Errorf("error, check %v is not active", check.CID)
 		}
-	} else {
+	default:
+		// new search (check.target != instanceid, instanceid encoded in notes field)
+		searchCriteria := fmt.Sprintf(
+			"(active:1)(type:\"%s\")(tags:%s)", cm.checkType, strings.Join(cm.checkSearchTag, ","))
+		filterCriteria := map[string][]string{"f_notes": {*cm.getNotes()}}
+		checkBundle, err = cm.checkBundleSearch(searchCriteria, filterCriteria)
+		if err != nil {
+			return err
+		}
+
 		if checkBundle == nil {
 			// old search (instanceid as check.target)
 			searchCriteria := fmt.Sprintf(
 				"(active:1)(type:\"%s\")(host:\"%s\")(tags:%s)", cm.checkType, cm.checkTarget, strings.Join(cm.checkSearchTag, ","))
 			checkBundle, err = cm.checkBundleSearch(searchCriteria, map[string][]string{})
-			if err != nil {
-				return err
-			}
-		}
-
-		if checkBundle == nil {
-			// new search (check.target != instanceid, instanceid encoded in notes field)
-			searchCriteria := fmt.Sprintf(
-				"(active:1)(type:\"%s\")(tags:%s)", cm.checkType, strings.Join(cm.checkSearchTag, ","))
-			filterCriteria := map[string][]string{"f_notes": {*cm.getNotes()}}
-			checkBundle, err = cm.checkBundleSearch(searchCriteria, filterCriteria)
 			if err != nil {
 				return err
 			}
@@ -368,7 +367,9 @@ func (cm *CheckManager) makeSecret() (string, error) {
 	if _, err := rand.Read(x); err != nil {
 		return "", err
 	}
-	hash.Write(x)
+	if _, err := hash.Write(x); err != nil {
+		return "", err
+	}
 	return hex.EncodeToString(hash.Sum(nil))[0:16], nil
 }
 

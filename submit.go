@@ -98,7 +98,8 @@ func (m *CirconusMetrics) trapCall(payload []byte) (int, error) {
 	}
 
 	client := retryablehttp.NewClient()
-	if trap.URL.Scheme == "https" {
+	switch {
+	case trap.URL.Scheme == "https":
 		client.HTTPClient.Transport = &http.Transport{
 			Proxy: http.ProxyFromEnvironment,
 			Dial: (&net.Dialer{
@@ -111,7 +112,7 @@ func (m *CirconusMetrics) trapCall(payload []byte) (int, error) {
 			MaxIdleConnsPerHost: -1,
 			DisableCompression:  false,
 		}
-	} else if trap.URL.Scheme == "http" {
+	case trap.URL.Scheme == "http":
 		client.HTTPClient.Transport = &http.Transport{
 			Proxy: http.ProxyFromEnvironment,
 			Dial: (&net.Dialer{
@@ -122,10 +123,10 @@ func (m *CirconusMetrics) trapCall(payload []byte) (int, error) {
 			MaxIdleConnsPerHost: -1,
 			DisableCompression:  false,
 		}
-	} else if trap.IsSocket {
+	case trap.IsSocket:
 		m.Log.Printf("using socket transport\n")
 		client.HTTPClient.Transport = trap.SockTransport
-	} else {
+	default:
 		return 0, errors.Errorf("unknown scheme (%s), skipping submission", trap.URL.Scheme)
 	}
 	client.RetryWaitMin = 1 * time.Second
@@ -151,7 +152,9 @@ func (m *CirconusMetrics) trapCall(payload []byte) (int, error) {
 			return 0, fmt.Errorf("submitting: %+v %+v", err, lastHTTPError)
 		}
 		if attempts == client.RetryMax {
-			m.check.RefreshTrap()
+			if err := m.check.RefreshTrap(); err != nil {
+				return 0, errors.Wrap(err, "refreshing trap")
+			}
 		}
 		return 0, errors.Wrap(err, "trap call")
 	}
