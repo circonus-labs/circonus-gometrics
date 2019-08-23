@@ -1,3 +1,9 @@
+# v3.0.0
+
+* upd: stricter linting
+* upd: dependencies
+* upd: api submodule is deprecated (use github.com/circonus-labs/go-apiclient or older v2 branch of circonus-gometrics)
+
 # v3.0.0-beta.4
 
 * fix: verify at least one active check found when searching for checks
