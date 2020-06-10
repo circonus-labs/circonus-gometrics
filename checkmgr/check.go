@@ -317,6 +317,7 @@ func (cm *CheckManager) createNewCheck() (*apiclient.CheckBundle, *apiclient.Bro
 		DisplayName:   string(cm.checkDisplayName),
 		MetricFilters: [][]string{{"deny", "^$", ""}, {"allow", "^.+$", ""}},
 		MetricLimit:   config.DefaultCheckBundleMetricLimit,
+		Metrics:       []apiclient.CheckBundleMetric{},
 		Notes:         cm.getNotes(),
 		Period:        60,
 		Status:        statusActive,
