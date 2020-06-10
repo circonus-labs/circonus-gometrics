@@ -1,3 +1,8 @@
+# v3.0.1
+
+* upd: dependencies
+* fix: send empty array for `check_bundle.metrics`, api errors on null now
+
 # v3.0.0
 
 * upd: stricter linting
