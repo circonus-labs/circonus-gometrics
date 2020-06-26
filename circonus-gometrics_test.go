@@ -531,6 +531,188 @@ func TestFlushMetrics(t *testing.T) {
 	}
 }
 
+func TestFlushMetricsNoReset(t *testing.T) {
+	cfg := &Config{}
+	cfg.CheckManager.Check.SubmissionURL = "none"
+	cfg.Interval = "0"
+
+	t.Log("Already flushing")
+	{
+		cm, err := NewCirconusMetrics(cfg)
+		if err != nil {
+			t.Errorf("Expected no error, got '%v'", err)
+		}
+
+		cm.flushing = true
+		metrics := cm.FlushMetricsNoReset()
+		if len(*metrics) != 0 {
+			t.Fatal("expected 0 metrics")
+		}
+	}
+
+	t.Log("No metrics")
+	{
+		cm, err := NewCirconusMetrics(cfg)
+		if err != nil {
+			t.Errorf("Expected no error, got '%v'", err)
+		}
+
+		metrics := cm.FlushMetricsNoReset()
+		if len(*metrics) != 0 {
+			t.Fatal("expected 0 metrics")
+		}
+	}
+
+	t.Log("counter")
+	{
+		cm, err := NewCirconusMetrics(cfg)
+		if err != nil {
+			t.Errorf("Expected no error, got '%v'", err)
+		}
+
+		cm.Set("foo", 30)
+
+		metrics := cm.FlushMetricsNoReset()
+		if len(*metrics) == 0 {
+			t.Fatal("expected 1 metric")
+		}
+
+		if m, mok := (*metrics)["foo"]; !mok {
+			t.Fatalf("'foo' not found in %v", metrics)
+		} else if m.Type != "L" {
+			t.Fatalf("'Type' not correct %v", m)
+		} else if m.Value.(uint64) != 30 {
+			t.Fatalf("'Value' not correct %v", m)
+		}
+
+		metrics = cm.FlushMetricsNoReset()
+		if len(*metrics) == 0 {
+			t.Fatal("expected 1 metric")
+		}
+
+		if m, mok := (*metrics)["foo"]; !mok {
+			t.Fatalf("'foo' not found in %v", metrics)
+		} else if m.Type != "L" {
+			t.Fatalf("'Type' not correct %v", m)
+		} else if m.Value.(uint64) != 30 {
+			t.Fatalf("'Value' not correct %v", m)
+		}
+	}
+
+	t.Log("gauge")
+	{
+		cm, err := NewCirconusMetrics(cfg)
+		if err != nil {
+			t.Errorf("Expected no error, got '%v'", err)
+		}
+
+		v := int64(30)
+		cm.SetGauge("foo", v)
+
+		metrics := cm.FlushMetricsNoReset()
+		if len(*metrics) == 0 {
+			t.Fatal("expected 1 metric")
+		}
+
+		if m, mok := (*metrics)["foo"]; !mok {
+			t.Fatalf("'foo' not found in %v", metrics)
+		} else if m.Type != "l" {
+			t.Fatalf("'Type' not correct %v", m)
+		} else if m.Value.(int64) != v {
+			t.Fatalf("'Value' not correct, expected %v got %v", v, m.Value)
+		}
+
+		metrics = cm.FlushMetricsNoReset()
+		if len(*metrics) == 0 {
+			t.Fatal("expected 1 metric")
+		}
+
+		if m, mok := (*metrics)["foo"]; !mok {
+			t.Fatalf("'foo' not found in %v", metrics)
+		} else if m.Type != "l" {
+			t.Fatalf("'Type' not correct %v", m)
+		} else if m.Value.(int64) != v {
+			t.Fatalf("'Value' not correct, expected %v got %v", v, m.Value)
+		}
+	}
+
+	t.Log("histogram")
+	{
+		cm, err := NewCirconusMetrics(cfg)
+		if err != nil {
+			t.Errorf("Expected no error, got '%v'", err)
+		}
+
+		cm.Timing("foo", 30.28)
+
+		metrics := cm.FlushMetricsNoReset()
+		if len(*metrics) == 0 {
+			t.Fatal("expected 1 metric")
+		}
+
+		if m, mok := (*metrics)["foo"]; !mok {
+			t.Fatalf("'foo' not found in %v", metrics)
+		} else if m.Type != "n" {
+			t.Fatalf("'Type' not correct %v", m)
+		} else if len(m.Value.([]string)) != 1 {
+			t.Fatal("expected 1 value")
+		} else if m.Value.([]string)[0] != "H[3.0e+01]=1" {
+			t.Fatalf("'Value' not correct %v", m)
+		}
+
+		metrics = cm.FlushMetricsNoReset()
+		if len(*metrics) == 0 {
+			t.Fatal("expected 1 metric")
+		}
+
+		if m, mok := (*metrics)["foo"]; !mok {
+			t.Fatalf("'foo' not found in %v", metrics)
+		} else if m.Type != "n" {
+			t.Fatalf("'Type' not correct %v", m)
+		} else if len(m.Value.([]string)) != 1 {
+			t.Fatalf("expected 1 value, got %d", len(m.Value.([]string)))
+		} else if m.Value.([]string)[0] != "H[3.0e+01]=1" {
+			t.Fatalf("'Value' not correct %v", m)
+		}
+	}
+
+	t.Log("text")
+	{
+		cm, err := NewCirconusMetrics(cfg)
+		if err != nil {
+			t.Errorf("Expected no error, got '%v'", err)
+		}
+
+		cm.SetText("foo", "bar")
+
+		metrics := cm.FlushMetricsNoReset()
+		if len(*metrics) == 0 {
+			t.Fatal("expected 1 metric")
+		}
+
+		if m, mok := (*metrics)["foo"]; !mok {
+			t.Fatalf("'foo' not found in %v", metrics)
+		} else if m.Type != "s" {
+			t.Fatalf("'Type' not correct %v", m)
+		} else if m.Value != "bar" {
+			t.Fatalf("'Value' not correct %v", m)
+		}
+
+		metrics = cm.FlushMetricsNoReset()
+		if len(*metrics) == 0 {
+			t.Fatal("expected 1 metric")
+		}
+
+		if m, mok := (*metrics)["foo"]; !mok {
+			t.Fatalf("'foo' not found in %v", metrics)
+		} else if m.Type != "s" {
+			t.Fatalf("'Type' not correct %v", m)
+		} else if m.Value != "bar" {
+			t.Fatalf("'Value' not correct %v", m)
+		}
+	}
+}
+
 func TestPromOutput(t *testing.T) {
 	cfg := &Config{}
 	cfg.CheckManager.Check.SubmissionURL = "none"
