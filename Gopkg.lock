@@ -5,7 +5,7 @@
   branch = "master"
   name = "github.com/circonus-labs/circonusllhist"
   packages = ["."]
-  revision = "5eb751da55c6d3091faf3861ec5062ae91fee9d0"
+  revision = "ec08cde75a2939392fe7ef109066ae2078ca6b1e"
 
 [[projects]]
   branch = "master"
