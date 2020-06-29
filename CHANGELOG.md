@@ -1,3 +1,7 @@
+# v3.0.2
+
+* add: method to flush metrics without resetting  (`FlushMetricsNoReset()`)
+
 # v3.0.1
 
 * upd: dependencies
