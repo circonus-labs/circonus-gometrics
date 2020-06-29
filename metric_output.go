@@ -132,6 +132,43 @@ func (m *CirconusMetrics) PromOutput() (*bytes.Buffer, error) {
 	return &b, err
 }
 
+// FlushMetricsNoReset flushes current metrics to a structure and returns it (does NOT send to Circonus).
+func (m *CirconusMetrics) FlushMetricsNoReset() *Metrics {
+	m.flushmu.Lock()
+	if m.flushing {
+		m.flushmu.Unlock()
+		return &Metrics{}
+	}
+
+	m.flushing = true
+	m.flushmu.Unlock()
+
+	// save values configured at startup
+	resetC := m.resetCounters
+	resetG := m.resetGauges
+	resetH := m.resetHistograms
+	resetT := m.resetText
+	// override Reset* to false for this call
+	m.resetCounters = false
+	m.resetGauges = false
+	m.resetHistograms = false
+	m.resetText = false
+
+	_, output := m.packageMetrics()
+
+	// restore previous values
+	m.resetCounters = resetC
+	m.resetGauges = resetG
+	m.resetHistograms = resetH
+	m.resetText = resetT
+
+	m.flushmu.Lock()
+	m.flushing = false
+	m.flushmu.Unlock()
+
+	return &output
+}
+
 // FlushMetrics flushes current metrics to a structure and returns it (does NOT send to Circonus)
 func (m *CirconusMetrics) FlushMetrics() *Metrics {
 	m.flushmu.Lock()
