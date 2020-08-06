@@ -1,3 +1,7 @@
+# v3.1.0
+
+* upd: do not force tag values to lowercase
+
 # v3.0.2
 
 * add: method to flush metrics without resetting  (`FlushMetricsNoReset()`)
