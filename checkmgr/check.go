@@ -8,19 +8,19 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"net/url"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/circonus-labs/circonus-gometrics/api"
-	"github.com/circonus-labs/circonus-gometrics/api/config"
+	"github.com/circonus-labs/go-apiclient"
+	"github.com/circonus-labs/go-apiclient/config"
+	"github.com/pkg/errors"
 )
 
 // UpdateCheck determines if the check needs to be updated (new metrics, tags, etc.)
-func (cm *CheckManager) UpdateCheck(newMetrics map[string]*api.CheckBundleMetric) {
+func (cm *CheckManager) UpdateCheck(newMetrics map[string]*apiclient.CheckBundleMetric) {
 	// only if check manager is enabled
 	if !cm.enabled {
 		return
@@ -38,9 +38,9 @@ func (cm *CheckManager) UpdateCheck(newMetrics map[string]*api.CheckBundleMetric
 
 	// refresh check bundle (in case there were changes made by other apps or in UI)
 	cid := cm.checkBundle.CID
-	checkBundle, err := cm.apih.FetchCheckBundle(api.CIDType(&cid))
+	checkBundle, err := cm.apih.FetchCheckBundle(apiclient.CIDType(&cid))
 	if err != nil {
-		cm.Log.Printf("[ERROR] unable to fetch up-to-date check bundle %v", err)
+		cm.Log.Printf("error fetching up-to-date check bundle %v", err)
 		return
 	}
 	cm.cbmu.Lock()
@@ -71,7 +71,7 @@ func (cm *CheckManager) UpdateCheck(newMetrics map[string]*api.CheckBundleMetric
 	if cm.forceCheckUpdate {
 		newCheckBundle, err := cm.apih.UpdateCheckBundle(cm.checkBundle)
 		if err != nil {
-			cm.Log.Printf("[ERROR] updating check bundle %v", err)
+			cm.Log.Printf("error updating check bundle %v", err)
 			return
 		}
 
@@ -114,17 +114,18 @@ func (cm *CheckManager) initializeTrapURL() error {
 	}
 
 	var err error
-	var check *api.Check
-	var checkBundle *api.CheckBundle
-	var broker *api.Broker
+	var check *apiclient.Check
+	var checkBundle *apiclient.CheckBundle
+	var broker *apiclient.Broker
 
-	if cm.checkSubmissionURL != "" {
+	switch {
+	case cm.checkSubmissionURL != "":
 		check, err = cm.fetchCheckBySubmissionURL(cm.checkSubmissionURL)
 		if err != nil {
 			return err
 		}
 		if !check.Active {
-			return fmt.Errorf("[ERROR] Check ID %v is not active", check.CID)
+			return errors.Errorf("error, check %v is not active", check.CID)
 		}
 		// extract check id from check object returned from looking up using submission url
 		// set m.CheckId to the id
@@ -135,39 +136,35 @@ func (cm *CheckManager) initializeTrapURL() error {
 		var id int
 		id, err = strconv.Atoi(strings.Replace(check.CID, "/check/", "", -1))
 		if err == nil {
-			cm.checkID = api.IDType(id)
+			cm.checkID = apiclient.IDType(id)
 			cm.checkSubmissionURL = ""
 		} else {
-			cm.Log.Printf(
-				"[WARN] SubmissionUrl check to Check ID: unable to convert %s to int %q\n",
-				check.CID, err)
+			cm.Log.Printf("SubmissionUrl check CID to Check ID: unable to convert %s to int %q\n", check.CID, err)
 		}
-	} else if cm.checkID > 0 {
+	case cm.checkID > 0:
 		cid := fmt.Sprintf("/check/%d", cm.checkID)
-		check, err = cm.apih.FetchCheck(api.CIDType(&cid))
+		check, err = cm.apih.FetchCheck(apiclient.CIDType(&cid))
 		if err != nil {
 			return err
 		}
 		if !check.Active {
-			return fmt.Errorf("[ERROR] Check ID %v is not active", check.CID)
+			return errors.Errorf("error, check %v is not active", check.CID)
 		}
-	} else {
+	default:
+		// new search (check.target != instanceid, instanceid encoded in notes field)
+		searchCriteria := fmt.Sprintf(
+			"(active:1)(type:\"%s\")(tags:%s)", cm.checkType, strings.Join(cm.checkSearchTag, ","))
+		filterCriteria := map[string][]string{"f_notes": {*cm.getNotes()}}
+		checkBundle, err = cm.checkBundleSearch(searchCriteria, filterCriteria)
+		if err != nil {
+			return err
+		}
+
 		if checkBundle == nil {
 			// old search (instanceid as check.target)
 			searchCriteria := fmt.Sprintf(
 				"(active:1)(type:\"%s\")(host:\"%s\")(tags:%s)", cm.checkType, cm.checkTarget, strings.Join(cm.checkSearchTag, ","))
 			checkBundle, err = cm.checkBundleSearch(searchCriteria, map[string][]string{})
-			if err != nil {
-				return err
-			}
-		}
-
-		if checkBundle == nil {
-			// new search (check.target != instanceid, instanceid encoded in notes field)
-			searchCriteria := fmt.Sprintf(
-				"(active:1)(type:\"%s\")(tags:%s)", cm.checkType, strings.Join(cm.checkSearchTag, ","))
-			filterCriteria := map[string][]string{"f_notes": {*cm.getNotes()}}
-			checkBundle, err = cm.checkBundleSearch(searchCriteria, filterCriteria)
 			if err != nil {
 				return err
 			}
@@ -186,18 +183,18 @@ func (cm *CheckManager) initializeTrapURL() error {
 	if checkBundle == nil {
 		if check != nil {
 			cid := check.CheckBundleCID
-			checkBundle, err = cm.apih.FetchCheckBundle(api.CIDType(&cid))
+			checkBundle, err = cm.apih.FetchCheckBundle(apiclient.CIDType(&cid))
 			if err != nil {
 				return err
 			}
 		} else {
-			return fmt.Errorf("[ERROR] Unable to retrieve, find, or create check")
+			return errors.Errorf("error, unable to retrieve, find, or create a check bundle")
 		}
 	}
 
 	if broker == nil {
 		cid := checkBundle.Brokers[0]
-		broker, err = cm.apih.FetchBroker(api.CIDType(&cid))
+		broker, err = cm.apih.FetchBroker(apiclient.CIDType(&cid))
 		if err != nil {
 			return err
 		}
@@ -205,33 +202,39 @@ func (cm *CheckManager) initializeTrapURL() error {
 
 	// retain to facilitate metric management (adding new metrics specifically)
 	cm.checkBundle = checkBundle
-	cm.inventoryMetrics()
+	// check is using metric filters, disable check management
+	if len(cm.checkBundle.MetricFilters) > 0 {
+		cm.enabled = false
+	}
+	if cm.enabled {
+		cm.inventoryMetrics()
+	}
 
 	// determine the trap url to which metrics should be PUT
 	if checkBundle.Type == "httptrap" {
 		if turl, found := checkBundle.Config[config.SubmissionURL]; found {
-			cm.trapURL = api.URLType(turl)
+			cm.trapURL = apiclient.URLType(turl)
 		} else {
 			if cm.Debug {
-				cm.Log.Printf("Missing config.%s %+v", config.SubmissionURL, checkBundle)
+				cm.Log.Printf("missing config.%s %+v", config.SubmissionURL, checkBundle)
 			}
-			return fmt.Errorf("[ERROR] Unable to use check, no %s in config", config.SubmissionURL)
+			return errors.Errorf("error, unable to use check, no %s in config", config.SubmissionURL)
 		}
 	} else {
 		// build a submission_url for non-httptrap checks out of mtev_reverse url
 		if len(checkBundle.ReverseConnectURLs) == 0 {
-			return fmt.Errorf("%s is not an HTTPTRAP check and no reverse connection urls found", checkBundle.Checks[0])
+			return errors.Errorf("error, %s is not an HTTPTRAP check and no reverse connection urls found", checkBundle.Checks[0])
 		}
 		mtevURL := checkBundle.ReverseConnectURLs[0]
 		mtevURL = strings.Replace(mtevURL, "mtev_reverse", "https", 1)
 		mtevURL = strings.Replace(mtevURL, "check", "module/httptrap", 1)
 		if rs, found := checkBundle.Config[config.ReverseSecretKey]; found {
-			cm.trapURL = api.URLType(fmt.Sprintf("%s/%s", mtevURL, rs))
+			cm.trapURL = apiclient.URLType(fmt.Sprintf("%s/%s", mtevURL, rs))
 		} else {
 			if cm.Debug {
-				cm.Log.Printf("Missing config.%s %+v", config.ReverseSecretKey, checkBundle)
+				cm.Log.Printf("missing config.%s %+v", config.ReverseSecretKey, checkBundle)
 			}
-			return fmt.Errorf("[ERROR] Unable to use check, no %s in config", config.ReverseSecretKey)
+			return errors.Errorf("error, unable to use check, no %s in config", config.ReverseSecretKey)
 		}
 	}
 
@@ -261,8 +264,9 @@ func (cm *CheckManager) initializeTrapURL() error {
 }
 
 // Search for a check bundle given a predetermined set of criteria
-func (cm *CheckManager) checkBundleSearch(criteria string, filter map[string][]string) (*api.CheckBundle, error) {
-	search := api.SearchQueryType(criteria)
+func (cm *CheckManager) checkBundleSearch(searchCriteria string, filterCriteria map[string][]string) (*apiclient.CheckBundle, error) {
+	search := apiclient.SearchQueryType(searchCriteria)
+	filter := apiclient.SearchFilterType(filterCriteria)
 	checkBundles, err := cm.apih.SearchCheckBundles(&search, &filter)
 	if err != nil {
 		return nil, err
@@ -283,7 +287,7 @@ func (cm *CheckManager) checkBundleSearch(criteria string, filter map[string][]s
 	}
 
 	if numActive > 1 {
-		return nil, fmt.Errorf("[ERROR] multiple check bundles match criteria %s", criteria)
+		return nil, errors.Errorf("multiple check bundles match criteria - search(%v) filter(%v)", searchCriteria, filterCriteria)
 	}
 
 	bundle := (*checkBundles)[checkID]
@@ -292,7 +296,7 @@ func (cm *CheckManager) checkBundleSearch(criteria string, filter map[string][]s
 }
 
 // Create a new check to receive metrics
-func (cm *CheckManager) createNewCheck() (*api.CheckBundle, *api.Broker, error) {
+func (cm *CheckManager) createNewCheck() (*apiclient.CheckBundle, *apiclient.Broker, error) {
 	checkSecret := string(cm.checkSecret)
 	if checkSecret == "" {
 		secret, err := cm.makeSecret()
@@ -307,19 +311,20 @@ func (cm *CheckManager) createNewCheck() (*api.CheckBundle, *api.Broker, error) 
 		return nil, nil, err
 	}
 
-	chkcfg := &api.CheckBundle{
-		Brokers:     []string{broker.CID},
-		Config:      make(map[config.Key]string),
-		DisplayName: string(cm.checkDisplayName),
-		Metrics:     []api.CheckBundleMetric{},
-		MetricLimit: config.DefaultCheckBundleMetricLimit,
-		Notes:       cm.getNotes(),
-		Period:      60,
-		Status:      statusActive,
-		Tags:        append(cm.checkSearchTag, cm.checkTags...),
-		Target:      string(cm.checkTarget),
-		Timeout:     10,
-		Type:        string(cm.checkType),
+	chkcfg := &apiclient.CheckBundle{
+		Brokers:       []string{broker.CID},
+		Config:        make(map[config.Key]string),
+		DisplayName:   string(cm.checkDisplayName),
+		MetricFilters: [][]string{{"deny", "^$", ""}, {"allow", "^.+$", ""}},
+		MetricLimit:   config.DefaultCheckBundleMetricLimit,
+		Metrics:       []apiclient.CheckBundleMetric{},
+		Notes:         cm.getNotes(),
+		Period:        60,
+		Status:        statusActive,
+		Tags:          append(cm.checkSearchTag, cm.checkTags...),
+		Target:        string(cm.checkTarget),
+		Timeout:       10,
+		Type:          string(cm.checkType),
 	}
 
 	if len(cm.customConfigFields) > 0 {
@@ -339,6 +344,15 @@ func (cm *CheckManager) createNewCheck() (*api.CheckBundle, *api.Broker, error) 
 		chkcfg.Config[config.Secret] = checkSecret
 	}
 
+	// set metric filters if provided
+	if len(cm.checkMetricFilters) > 0 {
+		mf := make([][]string, len(cm.checkMetricFilters))
+		for idx, rule := range cm.checkMetricFilters {
+			mf[idx] = []string{rule.Type, rule.Filter, rule.Comment}
+		}
+		chkcfg.MetricFilters = mf
+	}
+
 	checkBundle, err := cm.apih.CreateCheckBundle(chkcfg)
 	if err != nil {
 		return nil, nil, err
@@ -354,7 +368,9 @@ func (cm *CheckManager) makeSecret() (string, error) {
 	if _, err := rand.Read(x); err != nil {
 		return "", err
 	}
-	hash.Write(x)
+	if _, err := hash.Write(x); err != nil {
+		return "", err
+	}
 	return hex.EncodeToString(hash.Sum(nil))[0:16], nil
 }
 
@@ -364,9 +380,9 @@ func (cm *CheckManager) getNotes() *string {
 }
 
 // FetchCheckBySubmissionURL fetch a check configuration by submission_url
-func (cm *CheckManager) fetchCheckBySubmissionURL(submissionURL api.URLType) (*api.Check, error) {
+func (cm *CheckManager) fetchCheckBySubmissionURL(submissionURL apiclient.URLType) (*apiclient.Check, error) {
 	if string(submissionURL) == "" {
-		return nil, errors.New("[ERROR] Invalid submission URL (blank)")
+		return nil, errors.New("error, invalid submission URL (blank)")
 	}
 
 	u, err := url.Parse(string(submissionURL))
@@ -378,17 +394,17 @@ func (cm *CheckManager) fetchCheckBySubmissionURL(submissionURL api.URLType) (*a
 
 	// does it smell like a valid trap url path
 	if !strings.Contains(u.Path, "/module/httptrap/") {
-		return nil, fmt.Errorf("[ERROR] Invalid submission URL '%s', unrecognized path", submissionURL)
+		return nil, errors.Errorf("error, invalid submission URL '%s', unrecognized path", submissionURL)
 	}
 
 	// extract uuid
 	pathParts := strings.Split(strings.Replace(u.Path, "/module/httptrap/", "", 1), "/")
 	if len(pathParts) != 2 {
-		return nil, fmt.Errorf("[ERROR] Invalid submission URL '%s', UUID not where expected", submissionURL)
+		return nil, errors.Errorf("error, invalid submission URL '%s', UUID not where expected", submissionURL)
 	}
 	uuid := pathParts[0]
 
-	filter := api.SearchFilterType{"f__check_uuid": []string{uuid}}
+	filter := apiclient.SearchFilterType{"f__check_uuid": []string{uuid}}
 
 	checks, err := cm.apih.SearchChecks(nil, &filter)
 	if err != nil {
@@ -396,7 +412,7 @@ func (cm *CheckManager) fetchCheckBySubmissionURL(submissionURL api.URLType) (*a
 	}
 
 	if len(*checks) == 0 {
-		return nil, fmt.Errorf("[ERROR] No checks found with UUID %s", uuid)
+		return nil, errors.Errorf("error, no checks found with UUID %s", uuid)
 	}
 
 	numActive := 0
@@ -405,16 +421,21 @@ func (cm *CheckManager) fetchCheckBySubmissionURL(submissionURL api.URLType) (*a
 	for idx, check := range *checks {
 		if check.Active {
 			numActive++
-			checkID = idx
+			if checkID == -1 {
+				checkID = idx
+			}
 		}
 	}
 
+	if checkID == -1 {
+		return nil, errors.Errorf("error, no active checks found %v", *checks)
+	}
+
 	if numActive > 1 {
-		return nil, fmt.Errorf("[ERROR] Multiple checks with same UUID %s", uuid)
+		return nil, errors.Errorf("error, multiple checks with same UUID %s", uuid)
 	}
 
 	check := (*checks)[checkID]
 
 	return &check, nil
-
 }

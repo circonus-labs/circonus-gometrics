@@ -21,11 +21,7 @@
 
 
 [[constraint]]
-  branch = "master"
-  name = "github.com/circonus-labs/circonusllhist"
-
-[[constraint]]
-  branch = "master"
+  version = "0.5.0"
   name = "github.com/hashicorp/go-retryablehttp"
 
 [[constraint]]

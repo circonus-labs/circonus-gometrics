@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/circonus-labs/circonus-gometrics/api"
+	apiclient "github.com/circonus-labs/go-apiclient"
 )
 
 func fakeBroker() *httptest.Server {
@@ -36,10 +36,10 @@ func TestSubmit(t *testing.T) {
 
 	cm, err := NewCirconusMetrics(cfg)
 	if err != nil {
-		t.Errorf("Expected no error, got '%v'", err)
+		t.Fatalf("unexpected error (%s)", err)
 	}
 
-	newMetrics := make(map[string]*api.CheckBundleMetric)
+	newMetrics := make(map[string]*apiclient.CheckBundleMetric)
 	output := Metrics{"foo": Metric{Type: "n", Value: 1}}
 	// output["foo"] = map[string]interface{}{
 	// 	"_type":  "n",
@@ -59,7 +59,7 @@ func TestTrapCall(t *testing.T) {
 
 	cm, err := NewCirconusMetrics(cfg)
 	if err != nil {
-		t.Errorf("Expected no error, got '%v'", err)
+		t.Fatalf("unexpected error (%s)", err)
 	}
 
 	for !cm.check.IsReady() {
@@ -75,15 +75,15 @@ func TestTrapCall(t *testing.T) {
 
 	str, err := json.Marshal(output)
 	if err != nil {
-		t.Errorf("Expected no error, got '%v'", err)
+		t.Fatalf("unexpected error (%s)", err)
 	}
 
 	numStats, err := cm.trapCall(str)
 	if err != nil {
-		t.Errorf("Expected no error, got '%v'", err)
+		t.Fatalf("unexpected error (%s)", err)
 	}
 
 	if numStats != 1 {
-		t.Errorf("Expected 1, got %d", numStats)
+		t.Fatalf("Expected 1, got %d", numStats)
 	}
 }

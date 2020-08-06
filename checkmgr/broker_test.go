@@ -18,18 +18,18 @@ import (
 	"testing"
 	"time"
 
-	"github.com/circonus-labs/circonus-gometrics/api"
+	apiclient "github.com/circonus-labs/go-apiclient"
 )
 
 var (
-	invalidBroker = api.Broker{
+	invalidBroker = apiclient.Broker{
 		CID:       "/broker/1",
 		Longitude: nil,
 		Latitude:  nil,
 		Name:      "test broker",
 		Tags:      []string{},
 		Type:      "foo",
-		Details: []api.BrokerDetail{
+		Details: []apiclient.BrokerDetail{
 			{
 				CN:           "testbroker.example.com",
 				ExternalHost: &[]string{"testbroker.example.com"}[0],
@@ -45,14 +45,14 @@ var (
 		},
 	}
 
-	noIPorHostBroker = api.Broker{
+	noIPorHostBroker = apiclient.Broker{
 		CID:       "/broker/2",
 		Longitude: nil,
 		Latitude:  nil,
 		Name:      "no ip or external host broker",
 		Tags:      []string{},
 		Type:      "enterprise",
-		Details: []api.BrokerDetail{
+		Details: []apiclient.BrokerDetail{
 			{
 				CN:           "foobar",
 				ExternalHost: nil,
@@ -68,14 +68,14 @@ var (
 		},
 	}
 
-	validBroker = api.Broker{
+	validBroker = apiclient.Broker{
 		CID:       "/broker/2",
 		Longitude: nil,
 		Latitude:  nil,
 		Name:      "test broker",
 		Tags:      []string{},
 		Type:      "enterprise",
-		Details: []api.BrokerDetail{
+		Details: []apiclient.BrokerDetail{
 			{
 				CN:           "testbroker.example.com",
 				ExternalHost: nil,
@@ -91,14 +91,14 @@ var (
 		},
 	}
 
-	validBrokerNonEnterprise = api.Broker{
+	validBrokerNonEnterprise = apiclient.Broker{
 		CID:       "/broker/3",
 		Longitude: nil,
 		Latitude:  nil,
 		Name:      "test broker",
 		Tags:      []string{},
 		Type:      "foo",
-		Details: []api.BrokerDetail{
+		Details: []apiclient.BrokerDetail{
 			{
 				CN:           "testbroker.example.com",
 				ExternalHost: nil,
@@ -149,13 +149,14 @@ func testBrokerServer() *httptest.Server {
 		case "/broker":
 			switch r.Method {
 			case "GET": // search or filter
-				var c []api.Broker
-				if strings.Contains(r.URL.String(), "f__tags_has=no%3Abroker") {
-					c = []api.Broker{}
-				} else if strings.Contains(r.URL.String(), "f__tags_has=multi%3Abroker") {
-					c = []api.Broker{invalidBroker, invalidBroker}
-				} else {
-					c = []api.Broker{validBroker, validBrokerNonEnterprise}
+				var c []apiclient.Broker
+				switch {
+				case strings.Contains(r.URL.String(), "f__tags_has=no%3Abroker"):
+					c = []apiclient.Broker{}
+				case strings.Contains(r.URL.String(), "f__tags_has=multi%3Abroker"):
+					c = []apiclient.Broker{invalidBroker, invalidBroker}
+				default:
+					c = []apiclient.Broker{validBroker, validBrokerNonEnterprise}
 				}
 				ret, err := json.Marshal(c)
 				if err != nil {
@@ -178,7 +179,7 @@ func testBrokerServer() *httptest.Server {
 }
 
 func TestBrokerSupportsCheckType(t *testing.T) {
-	detail := &api.BrokerDetail{
+	detail := &apiclient.BrokerDetail{
 		Modules: []string{"httptrap"},
 	}
 
@@ -205,7 +206,7 @@ func TestGetBrokerCN(t *testing.T) {
 
 	t.Log("URL with IP")
 	{
-		submissionURL := api.URLType("http://127.0.0.1:43191/blah/blah/blah")
+		submissionURL := apiclient.URLType("http://127.0.0.1:43191/blah/blah/blah")
 		cm := CheckManager{}
 
 		_, err := cm.getBrokerCN(&validBroker, submissionURL)
@@ -216,7 +217,7 @@ func TestGetBrokerCN(t *testing.T) {
 
 	t.Log("URL with FQDN")
 	{
-		submissionURL := api.URLType("http://test.example.com:43191/blah/blah/blah")
+		submissionURL := apiclient.URLType("http://test.example.com:43191/blah/blah/blah")
 		cm := CheckManager{}
 
 		_, err := cm.getBrokerCN(&validBroker, submissionURL)
@@ -227,17 +228,15 @@ func TestGetBrokerCN(t *testing.T) {
 
 	t.Log("URL with invalid IP")
 	{
-		submissionURL := api.URLType("http://127.0.0.2:43191/blah/blah/blah")
+		submissionURL := apiclient.URLType("http://127.0.0.2:43191/blah/blah/blah")
 		cm := CheckManager{}
-
-		expectedError := errors.New("[ERROR] Unable to match URL host (127.0.0.2:43191) to Broker")
 
 		_, err := cm.getBrokerCN(&validBroker, submissionURL)
 		if err == nil {
-			t.Fatal("Expected error")
+			t.Fatal("expected error")
 		}
-		if err.Error() != expectedError.Error() {
-			t.Fatalf("Expected %v got '%v'", expectedError, err)
+		if err.Error() != "error, unable to match URL host (127.0.0.2:43191) to Broker" {
+			t.Fatalf("unexpected error (%s)", err)
 		}
 	}
 }
@@ -273,12 +272,12 @@ func TestSelectBroker(t *testing.T) {
 			checkType:             "httptrap",
 			brokerMaxResponseTime: time.Duration(time.Millisecond * 500),
 		}
-		ac := &api.Config{
+		ac := &apiclient.Config{
 			TokenApp: "abcd",
 			TokenKey: "1234",
 			URL:      server.URL,
 		}
-		apih, err := api.New(ac)
+		apih, err := apiclient.New(ac)
 		if err != nil {
 			t.Errorf("Expected no error, got '%v'", err)
 		}
@@ -295,14 +294,14 @@ func TestSelectBroker(t *testing.T) {
 		cm := &CheckManager{
 			checkType:             "httptrap",
 			brokerMaxResponseTime: time.Duration(time.Millisecond * 500),
-			brokerSelectTag:       api.TagType([]string{"no:broker"}),
+			brokerSelectTag:       apiclient.TagType([]string{"no:broker"}),
 		}
-		ac := &api.Config{
+		ac := &apiclient.Config{
 			TokenApp: "abcd",
 			TokenKey: "1234",
 			URL:      server.URL,
 		}
-		apih, err := api.New(ac)
+		apih, err := apiclient.New(ac)
 		if err != nil {
 			t.Errorf("Expected no error, got '%v'", err)
 		}
@@ -324,14 +323,14 @@ func TestSelectBroker(t *testing.T) {
 		cm := &CheckManager{
 			checkType:             "httptrap",
 			brokerMaxResponseTime: time.Duration(time.Millisecond * 500),
-			brokerSelectTag:       api.TagType([]string{"multi:broker"}),
+			brokerSelectTag:       apiclient.TagType([]string{"multi:broker"}),
 		}
-		ac := &api.Config{
+		ac := &apiclient.Config{
 			TokenApp: "abcd",
 			TokenKey: "1234",
 			URL:      server.URL,
 		}
-		apih, err := api.NewAPI(ac)
+		apih, err := apiclient.NewAPI(ac)
 		if err != nil {
 			t.Errorf("Expected no error, got '%v'", err)
 		}
@@ -357,11 +356,11 @@ func TestIsValidBroker(t *testing.T) {
 		brokerMaxResponseTime: time.Duration(time.Millisecond * 50),
 	}
 
-	broker := api.Broker{
+	broker := apiclient.Broker{
 		CID:  "/broker/2",
 		Name: "test broker",
 		Type: "enterprise",
-		Details: []api.BrokerDetail{
+		Details: []apiclient.BrokerDetail{
 			{
 				CN:           "testbroker.example.com",
 				ExternalHost: nil,
@@ -409,11 +408,11 @@ func TestIsValidBrokerTimeout(t *testing.T) {
 		brokerMaxResponseTime: time.Duration(time.Millisecond * 50),
 	}
 
-	broker := api.Broker{
+	broker := apiclient.Broker{
 		CID:  "/broker/2",
 		Name: "test broker",
 		Type: "enterprise",
-		Details: []api.BrokerDetail{
+		Details: []apiclient.BrokerDetail{
 			{
 				CN:           "testbroker.example.com",
 				ExternalHost: nil,
@@ -483,23 +482,21 @@ func TestGetBroker(t *testing.T) {
 	t.Log("invalid custom broker")
 	{
 		cm := &CheckManager{}
-		ac := &api.Config{
+		ac := &apiclient.Config{
 			TokenApp: "abcd",
 			TokenKey: "1234",
 			URL:      server.URL,
 		}
-		apih, err := api.NewAPI(ac)
+		apih, err := apiclient.NewAPI(ac)
 		if err != nil {
-			t.Errorf("Expected no error, got '%v'", err)
+			t.Fatalf("unexpected error (%s)", err)
 		}
 		cm.apih = apih
 		cm.brokerID = 1
 
-		expectedError := errors.New("[ERROR] designated broker 1 [test broker] is invalid (not active, does not support required check type, or connectivity issue)")
-
 		_, err = cm.getBroker()
-		if err == nil || err.Error() != expectedError.Error() {
-			t.Errorf("Expected an '%#v' error, got '%#v'", expectedError, err)
+		if err == nil || err.Error() != "error, designated broker 1 [test broker] is invalid (not active, does not support required check type, or connectivity issue)" {
+			t.Fatalf("unexpected error (%s)", err)
 		}
 	}
 
@@ -510,22 +507,22 @@ func TestGetBroker(t *testing.T) {
 			checkType:             "httptrap",
 			brokerMaxResponseTime: time.Duration(time.Millisecond * 500),
 		}
-		ac := &api.Config{
+		ac := &apiclient.Config{
 			TokenApp: "abcd",
 			TokenKey: "1234",
 			URL:      server.URL,
 		}
 
-		apih, err := api.NewAPI(ac)
+		apih, err := apiclient.NewAPI(ac)
 		if err != nil {
-			t.Errorf("Expected no error, got '%v'", err)
+			t.Fatalf("unexpected error (%s)", err)
 		}
 		cm.apih = apih
 		cm.brokerID = 2
 
 		_, err = cm.getBroker()
 		if err != nil {
-			t.Errorf("Expected no error, got '%v'", err)
+			t.Fatalf("unexpected error (%s)", err)
 		}
 	}
 

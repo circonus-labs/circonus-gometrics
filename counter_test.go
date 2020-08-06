@@ -36,26 +36,36 @@ func TestSet(t *testing.T) {
 	}
 }
 
-func TestGetCounterTest(t *testing.T) {
-	t.Log("Testing counter.GetCounterTest")
+func TestSetWithTags(t *testing.T) {
+	t.Log("Testing counter.SetWithTags")
 
 	cm := &CirconusMetrics{counters: make(map[string]uint64)}
 
-	cm.Set("foo", 10)
+	metricName := "foo"
+	tags := Tags{{"foo", "bar"}, {"baz", "qux"}}
+	streamTagMetricName := cm.MetricNameWithStreamTags("foo", tags)
 
-	val, err := cm.GetCounterTest("foo")
-	if err != nil {
-		t.Errorf("Expected no error %v", err)
+	cm.SetWithTags(metricName, tags, 30)
+
+	val, ok := cm.counters[streamTagMetricName]
+	if !ok {
+		t.Fatalf("%s with %v tags not found (%s) (%#v)", metricName, tags, streamTagMetricName, cm.counters)
 	}
+
+	if val != 30 {
+		t.Fatalf("expected 30 got (%d)", val)
+	}
+
+	cm.SetWithTags(metricName, tags, 10)
+
+	val, ok = cm.counters[streamTagMetricName]
+	if !ok {
+		t.Fatalf("%s with %v tags not found (%s) (%#v)", metricName, tags, streamTagMetricName, cm.counters)
+	}
+
 	if val != 10 {
-		t.Errorf("Expected 10 got %v", val)
+		t.Fatalf("expected 10 got (%d)", val)
 	}
-
-	_, err = cm.GetCounterTest("bar")
-	if err == nil {
-		t.Error("Expected error")
-	}
-
 }
 
 func TestIncrement(t *testing.T) {
@@ -72,6 +82,27 @@ func TestIncrement(t *testing.T) {
 
 	if val != 1 {
 		t.Errorf("Expected 1, found %d", val)
+	}
+}
+
+func TestIncrementWithTags(t *testing.T) {
+	t.Log("Testing counter.IncrementWithTags")
+
+	cm := &CirconusMetrics{counters: make(map[string]uint64)}
+
+	metricName := "foo"
+	tags := Tags{{"foo", "bar"}, {"baz", "qux"}}
+	streamTagMetricName := cm.MetricNameWithStreamTags("foo", tags)
+
+	cm.IncrementWithTags(metricName, tags)
+
+	val, ok := cm.counters[streamTagMetricName]
+	if !ok {
+		t.Fatalf("%s with %v tags not found (%s) (%#v)", metricName, tags, streamTagMetricName, cm.counters)
+	}
+
+	if val != 1 {
+		t.Fatalf("expected 1 got (%d)", val)
 	}
 }
 
@@ -92,20 +123,74 @@ func TestIncrementByValue(t *testing.T) {
 	}
 }
 
+func TestIncrementByValueWithTags(t *testing.T) {
+	t.Log("Testing counter.IncrementByValueWithTags")
+
+	cm := &CirconusMetrics{counters: make(map[string]uint64)}
+
+	metricName := "foo"
+	tags := Tags{{"foo", "bar"}, {"baz", "qux"}}
+	streamTagMetricName := cm.MetricNameWithStreamTags("foo", tags)
+
+	cm.IncrementByValueWithTags(metricName, tags, 10)
+
+	val, ok := cm.counters[streamTagMetricName]
+	if !ok {
+		t.Fatalf("%s with %v tags not found (%s) (%#v)", metricName, tags, streamTagMetricName, cm.counters)
+	}
+
+	if val != 10 {
+		t.Fatalf("expected 10 got (%d)", val)
+	}
+}
+
 func TestAdd(t *testing.T) {
 	t.Log("Testing counter.Add")
 
 	cm := &CirconusMetrics{counters: make(map[string]uint64)}
 
-	cm.Add("foo", 5)
+	cm.Set("foo", 2)
+	cm.Add("foo", 3)
 
 	val, ok := cm.counters["foo"]
 	if !ok {
-		t.Errorf("Expected to find foo")
+		t.Fatal("Expected to find foo")
 	}
 
 	if val != 5 {
-		t.Errorf("Expected 1, found %d", val)
+		t.Fatalf("Expected 1, found %d", val)
+	}
+}
+
+func TestAddWithTags(t *testing.T) {
+	t.Log("Testing counter.AddWithTags")
+
+	cm := &CirconusMetrics{counters: make(map[string]uint64)}
+
+	metricName := "foo"
+	tags := Tags{{"foo", "bar"}, {"baz", "qux"}}
+	streamTagMetricName := cm.MetricNameWithStreamTags("foo", tags)
+
+	cm.SetWithTags(metricName, tags, 30)
+
+	val, ok := cm.counters[streamTagMetricName]
+	if !ok {
+		t.Fatalf("%s with %v tags not found (%s) (%#v)", metricName, tags, streamTagMetricName, cm.counters)
+	}
+
+	if val != 30 {
+		t.Fatalf("expected 30, got %d", val)
+	}
+
+	cm.AddWithTags(metricName, tags, 1)
+
+	val, ok = cm.counters[streamTagMetricName]
+	if !ok {
+		t.Fatalf("%s with %v tags not found (%s) (%#v)", metricName, tags, streamTagMetricName, cm.counters)
+	}
+
+	if val != 31 {
+		t.Fatalf("expected 31, got %d", val)
 	}
 }
 
@@ -137,6 +222,38 @@ func TestRemoveCounter(t *testing.T) {
 	}
 }
 
+func TestRemoveCounterWithTags(t *testing.T) {
+	t.Log("Testing counter.RemoveCounterWithTags")
+
+	cm := &CirconusMetrics{counters: make(map[string]uint64)}
+
+	metricName := "foo"
+	tags := Tags{{"foo", "bar"}, {"baz", "qux"}}
+	streamTagMetricName := cm.MetricNameWithStreamTags("foo", tags)
+
+	cm.IncrementWithTags(metricName, tags)
+
+	val, ok := cm.counters[streamTagMetricName]
+	if !ok {
+		t.Fatalf("%s with %v tags not found (%s) (%#v)", metricName, tags, streamTagMetricName, cm.counters)
+	}
+
+	if val != 1 {
+		t.Fatalf("expected 1 got (%d)", val)
+	}
+
+	cm.RemoveCounterWithTags(metricName, tags)
+
+	val, ok = cm.counters[streamTagMetricName]
+	if ok {
+		t.Fatalf("expected NOT to find %s", streamTagMetricName)
+	}
+
+	if val != 0 {
+		t.Fatalf("expected 0 got (%d)", val)
+	}
+}
+
 func TestSetCounterFunc(t *testing.T) {
 	t.Log("Testing counter.SetCounterFunc")
 
@@ -155,6 +272,31 @@ func TestSetCounterFunc(t *testing.T) {
 
 	if val() != 1 {
 		t.Errorf("Expected 1, found %d", val())
+	}
+}
+
+func TestSetCounterFuncWithTags(t *testing.T) {
+	t.Log("Testing counter.SetCounterFuncWithTags")
+
+	cf := func() uint64 {
+		return 1
+	}
+
+	cm := &CirconusMetrics{counterFuncs: make(map[string]func() uint64)}
+
+	metricName := "foo"
+	tags := Tags{{"foo", "bar"}, {"baz", "qux"}}
+	streamTagMetricName := cm.MetricNameWithStreamTags("foo", tags)
+
+	cm.SetCounterFuncWithTags(metricName, tags, cf)
+
+	val, ok := cm.counterFuncs[streamTagMetricName]
+	if !ok {
+		t.Fatalf("%s with %v tags not found (%s) (%#v)", metricName, tags, streamTagMetricName, cm.counterFuncs)
+	}
+
+	if val() != 1 {
+		t.Fatalf("expected 1 got (%d)", val())
 	}
 }
 
@@ -187,6 +329,65 @@ func TestRemoveCounterFunc(t *testing.T) {
 
 	if val != nil {
 		t.Errorf("Expected nil, found %v", val())
+	}
+
+}
+
+func TestRemoveCounterFuncWithTags(t *testing.T) {
+	t.Log("Testing counter.RemoveCounterFuncWithTags")
+
+	cf := func() uint64 {
+		return 1
+	}
+
+	cm := &CirconusMetrics{counterFuncs: make(map[string]func() uint64)}
+
+	metricName := "foo"
+	tags := Tags{{"foo", "bar"}, {"baz", "qux"}}
+	streamTagMetricName := cm.MetricNameWithStreamTags("foo", tags)
+
+	cm.SetCounterFuncWithTags(metricName, tags, cf)
+
+	val, ok := cm.counterFuncs[streamTagMetricName]
+	if !ok {
+		t.Fatalf("%s with %v tags not found (%s) (%#v)", metricName, tags, streamTagMetricName, cm.counterFuncs)
+	}
+
+	if val() != 1 {
+		t.Fatalf("expected 1 got (%d)", val())
+	}
+
+	cm.RemoveCounterFuncWithTags(metricName, tags)
+
+	val, ok = cm.counterFuncs[streamTagMetricName]
+	if ok {
+		t.Fatalf("expected NOT to find (%s)", streamTagMetricName)
+	}
+
+	if val != nil {
+		t.Fatalf("expected nil got (%v)", val())
+	}
+
+}
+
+func TestGetCounterTest(t *testing.T) {
+	t.Log("Testing counter.GetCounterTest")
+
+	cm := &CirconusMetrics{counters: make(map[string]uint64)}
+
+	cm.Set("foo", 10)
+
+	val, err := cm.GetCounterTest("foo")
+	if err != nil {
+		t.Errorf("Expected no error %v", err)
+	}
+	if val != 10 {
+		t.Errorf("Expected 10 got %v", val)
+	}
+
+	_, err = cm.GetCounterTest("bar")
+	if err == nil {
+		t.Error("Expected error")
 	}
 
 }

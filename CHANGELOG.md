@@ -1,50 +1,87 @@
-# v2.2.4
+# v3.1.0
 
-* fix: worksheet.graphs is a required attribute. worksheet.smart_queries is an optional attribute.
+* upd: do not force tag values to lowercase
 
-# v2.2.3
+# v3.0.2
 
-* upd: remove go.{mod,dep} as cgm being v2 causes more issues than it solves at this point. will re-add after `go mod` becomes more common and adding `v2` to all internal import statements won't cause additional issues.
+* add: method to flush metrics without resetting  (`FlushMetricsNoReset()`)
 
-# v2.2.2
+# v3.0.1
 
-* upd: add go.mod and go.sum
+* upd: dependencies
+* fix: send empty array for `check_bundle.metrics`, api errors on null now
 
-# v2.2.1
+# v3.0.0
 
-* fix: if submission url host is 'api.circonus.com' do not use private CA in TLSConfig
+* upd: stricter linting
+* upd: dependencies
+* upd: api submodule is deprecated (use github.com/circonus-labs/go-apiclient or older v2 branch of circonus-gometrics)
 
-# v2.2.0
+# v3.0.0-beta.4
 
-* fix: do not reset counter|gauge|text funcs after each snapshot (only on explicit call to Reset)
-* upd: dashboards - optional widget attributes - which are structs - should be pointers for correct omission in json sent to api
-* fix: dashboards - remove `omitempty` from required attributes
-* fix: graphs - remove `omitempty` from required attributes
-* fix: worksheets - correct attribute name, remove `omitempty` from required attributes
-* fix: handle case where a broker has no external host or ip set
+* fix: verify at least one active check found when searching for checks
+* upd: broker test IP and external host for match against submission url host
 
-# v2.1.2
+# v3.0.0-beta.3
 
-* upd: breaking change in upstream repo
-* upd: upstream deps
+* upd: go-apiclient for graph overlay attribute type fixes
 
-# v2.1.1
+# v3.0.0-beta.2
 
-* dep dependencies
-* fix two instances of shadowed variables
-* fix several documentation typos
-* simplify (gofmt -s)
-* remove an inefficient use of regexp.MatchString
+* fix: submit for breaking change in dependency patch release
+* upd: dependencies
 
-# v2.1.0
+# v3.0.0-beta.1
 
-* Add unix socket capability for SubmissionURL `http+unix://...`
-* Add `RecordCountForValue` function to histograms
+* upd: merge tag helper methods, support logging invalid tags
+* upd: allow manually formatted and base64 encoded tags
+* upd: allow tag values to have embedded colons
 
-# v2.0.0
+# v3.0.0-beta
 
-* gauges as `interface{}`
-   * change: `GeTestGauge(string) (string,error)` ->  `GeTestGauge(string) (interface{},error)`
-   * add: `AddGauge(string, interface{})` to add a delta value to an existing gauge
-* prom output candidate
-* Add `CHANGELOG.md` to repository
+* add: log deprecation notice on api calls
+* upd: dependency circonusllhist v0.1.2, go-apiclient v0.5.3
+* upd: `snapHistograms()` method to use the histogram `Copy()` if `resetHistograms` is false, otherwise uses `CopyAndReset()`
+
+# v3.0.0-alpha.5
+
+* add: allow any log package with a `Printf` to be used
+* upd: circonus-labs/go-apiclient v0.5.2 (for generic log support)
+* upd: ensure only `Printf` is used for logging
+* upd: migrate to errors package (`errors.Wrap` et al.)
+* upd: error and log messages, remove explicit log level classifications from logging messages
+* upd: OBSOLETE github.com/circonus-labs/v3/circonus-gometrics/api will be REMOVED --- USE **github.com/circonus-labs/go-apiclient**
+
+# v3.0.0-alpha.4
+
+* add: missing SetHistogramDurationWithTags
+* upd: go-apiclient v0.5.1
+* fix: remove cgm v2 dependency from DEPRECATED api package
+* upd: retryablehttp v0.5.0
+
+# v3.0.0-alpha.3
+
+* add: RecordDuration, RecordDurationWithTags, SetHistogramDuration
+
+# v3.0.0-alpha.2
+
+* upd: circllhist v0.1.2
+
+# v3.0.0-alpha.1
+
+* fix: enable check management for add tags test
+* fix: api.circonus.com hostname (accidentally changed during switch to apiclient)
+
+# v3.0.0-alpha
+
+* add: helper functions for metrics `*WithTags` e.g. `TimingWithTags(metricName,tagList,val)`
+* upd: default new checks to use metric_filters
+* add: metric_filters support
+* upd: dependencies (circonusllhist v0.1.0)
+* upd: change histograms from type 'n' to type 'h' in submissions
+* upd: DEPRECATED github.com/circonus-labs/v3/circonus-gometrics/api
+* upd: switch to using github.com/circonus-labs/go-apiclient
+* upd: merge other metric tag functions into tags
+* add: helper methods for handling tags (for new stream tags syntax and old check_bundle.metrics.metric.tags)
+* upd: merge other metric output functions into metric_output
+* upd: merge util into metric_output (methods in util are specifically for working with metric outputs)
