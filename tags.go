@@ -105,7 +105,7 @@ func (m *CirconusMetrics) EncodeMetricTags(tags Tags) []string {
 	uniqueTags := make(map[string]bool)
 	for _, t := range tags {
 		tc := strings.Map(removeSpaces, strings.ToLower(t.Category))
-		tv := strings.Map(removeSpaces, strings.ToLower(t.Value))
+		tv := strings.Map(removeSpaces, t.Value)
 		if tc == "" || tv == "" {
 			m.Log.Printf("invalid tag (%s)", t)
 			continue // invalid tag, skip it
