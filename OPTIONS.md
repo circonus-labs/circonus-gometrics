@@ -1,6 +1,7 @@
-## Circonus gometrics options
+# Circonus gometrics options
 
-### Example defaults
+## Example defaults
+
 ```go
 package main
 
@@ -11,7 +12,7 @@ import (
     "os"
     "path"
 
-    cgm "github.com/circonus-labs/circonus-gometrics"
+    cgm "github.com/circonus-labs/circonus-gometrics/v3"
 )
 
 func main() {
@@ -56,11 +57,12 @@ func main() {
     cfg.CheckManager.Broker.TLSConfig = nil
 
     // create a new cgm instance and start sending metrics...
-    // see the complete example in the main README.    
+    // see the complete example in the main README.
 }
 ```
 
 ## Options
+
 | Option | Default | Description |
 | ------ | ------- | ----------- |
 | General ||
@@ -94,11 +96,11 @@ func main() {
 | `cfg.CheckManager.Broker.MaxResponseTime` | "500ms" | Maximum amount time to wait for a broker connection test to be considered valid. (if latency is > the broker will be considered invalid and not available for selection.) |
 | `cfg.CheckManager.Broker.TLSConfig` | nil | Custom tls.Config to use when communicating with Circonus Broker |
 
-## Notes:
+## Notes
 
 * All options are *strings* with the following exceptions:
-   * `cfg.Log` - an instance of [`log.Logger`](https://golang.org/pkg/log/#Logger) or something else (e.g. [logrus](https://github.com/Sirupsen/logrus)) which can be used to satisfy the interface requirements.
-   * `cfg.Debug` - a boolean true|false.
+  * `cfg.Log` - an instance of [`log.Logger`](https://golang.org/pkg/log/#Logger) or something else (e.g. [logrus](https://github.com/Sirupsen/logrus)) which can be used to satisfy the interface requirements.
+  * `cfg.Debug` - a boolean true|false.
 * At a minimum, one of either `API.TokenKey` or `Check.SubmissionURL` is **required** for cgm to function.
 * Check management can be disabled by providing a `Check.SubmissionURL` without an `API.TokenKey`. Note: the supplied URL needs to be http or the broker needs to be running with a cert which can be verified. Otherwise, the `API.TokenKey` will be required to retrieve the correct CA certificate to validate the broker's cert for the SSL connection.
 * A note on `Check.InstanceID`, the instance id is used to consistently identify a check. The display name can be changed in the UI. The hostname may be ephemeral. For metric continuity, the instance id is used to locate existing checks. Since the check.target is never actually used by an httptrap check it is more decorative than functional, a valid FQDN is not required for an httptrap check.target. But, using instance id as the target can pollute the Host list in the UI with host:application specific entries.

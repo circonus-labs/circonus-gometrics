@@ -97,7 +97,7 @@ import (
     "syscall"
     "time"
 
-    cgm "github.com/circonus-labs/circonus-gometrics"
+    cgm "github.com/circonus-labs/circonus-gometrics/v3"
 )
 
 func main() {
@@ -211,7 +211,7 @@ import (
     "os"
     "fmt"
     "net/http"
-    cgm "github.com/circonus-labs/circonus-gometrics"
+    cgm "github.com/circonus-labs/circonus-gometrics/v3"
 )
 
 func main() {
