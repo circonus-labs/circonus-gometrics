@@ -1,3 +1,7 @@
+# v3.1.1
+
+* fix: quoting on error message in test
+
 # v3.1.0
 
 * upd: do not force tag values to lowercase
