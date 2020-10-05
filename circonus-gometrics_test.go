@@ -134,7 +134,7 @@ func TestNew(t *testing.T) {
 		cfg := &Config{
 			Interval: "thirty seconds",
 		}
-		expectedError := errors.New("parsing flush interval: time: invalid duration thirty seconds")
+		expectedError := errors.New(`parsing flush interval: time: invalid duration "thirty seconds"`)
 		_, err := New(cfg)
 		if err == nil {
 			t.Fatal("expected error")
