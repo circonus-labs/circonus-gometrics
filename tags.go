@@ -49,7 +49,7 @@ func (m *CirconusMetrics) MetricNameWithStreamTags(metric string, tags Tags) str
 		return metric
 	}
 
-	taglist := m.EncodeMetricStreamTags(tags)
+	taglist := m.EncodeMetricStreamTags(metric, tags)
 	if taglist != "" {
 		return metric + "|ST[" + taglist + "]"
 	}
@@ -60,12 +60,12 @@ func (m *CirconusMetrics) MetricNameWithStreamTags(metric string, tags Tags) str
 // EncodeMetricStreamTags encodes Tags into a string suitable for use with
 // stream tags. Tags directly embedded into metric names using the
 // `metric_name|ST[<tags>]` syntax.
-func (m *CirconusMetrics) EncodeMetricStreamTags(tags Tags) string {
+func (m *CirconusMetrics) EncodeMetricStreamTags(metricName string, tags Tags) string {
 	if len(tags) == 0 {
 		return ""
 	}
 
-	tmpTags := m.EncodeMetricTags(tags)
+	tmpTags := m.EncodeMetricTags(metricName, tags)
 	if len(tmpTags) == 0 {
 		return ""
 	}
@@ -74,7 +74,7 @@ func (m *CirconusMetrics) EncodeMetricStreamTags(tags Tags) string {
 	for i, tag := range tmpTags {
 		tagParts := strings.SplitN(tag, ":", 2)
 		if len(tagParts) != 2 {
-			m.Log.Printf("invalid tag (%s)", tag)
+			m.Log.Printf("%s has invalid tag (%s)", metricName, tag)
 			continue // invalid tag, skip it
 		}
 		encodeFmt := `b"%s"`
@@ -84,7 +84,7 @@ func (m *CirconusMetrics) EncodeMetricStreamTags(tags Tags) string {
 		if !strings.HasPrefix(tc, encodedSig) {
 			tc = fmt.Sprintf(encodeFmt, base64.StdEncoding.EncodeToString([]byte(tc)))
 		}
-		if !strings.HasPrefix(tv, encodedSig) {
+		if !strings.HasPrefix(tv, encodedSig) && tv != "" {
 			tv = fmt.Sprintf(encodeFmt, base64.StdEncoding.EncodeToString([]byte(tv)))
 		}
 		tagList[i] = tc + ":" + tv
@@ -97,7 +97,7 @@ func (m *CirconusMetrics) EncodeMetricStreamTags(tags Tags) string {
 // check_bundle.metircs.metric.tags needs. This helper is intended to work
 // with legacy check bundle metrics. Tags directly on named metrics are being
 // deprecated in favor of stream tags.
-func (m *CirconusMetrics) EncodeMetricTags(tags Tags) []string {
+func (m *CirconusMetrics) EncodeMetricTags(metricName string, tags Tags) []string {
 	if len(tags) == 0 {
 		return []string{}
 	}
@@ -105,12 +105,15 @@ func (m *CirconusMetrics) EncodeMetricTags(tags Tags) []string {
 	uniqueTags := make(map[string]bool)
 	for _, t := range tags {
 		tc := strings.Map(removeSpaces, strings.ToLower(t.Category))
-		tv := strings.Map(removeSpaces, t.Value)
-		if tc == "" || tv == "" {
-			m.Log.Printf("invalid tag (%s)", t)
-			continue // invalid tag, skip it
+		tv := strings.TrimSpace(t.Value)
+		if tc == "" {
+			m.Log.Printf("%s has invalid tag (%#v)", metricName, t)
+			continue
 		}
-		tag := tc + ":" + tv
+		tag := tc + ":"
+		if tv != "" {
+			tag += tv
+		}
 		uniqueTags[tag] = true
 	}
 	tagList := make([]string, len(uniqueTags))

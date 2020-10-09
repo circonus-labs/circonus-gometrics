@@ -29,7 +29,7 @@ func TestEncodeMetricTags(t *testing.T) {
 	}
 
 	cm := CirconusMetrics{}
-	tl := cm.EncodeMetricTags(inputTags)
+	tl := cm.EncodeMetricTags("test", inputTags)
 	if len(tl) != len(expectTags) {
 		t.Fatalf("expected %d tags, got %d", len(expectTags), len(tl))
 	}
@@ -45,32 +45,35 @@ func TestEncodeMetricStreamTags(t *testing.T) {
 	inputTags := Tags{
 		{"cat1", "val1"},
 		{"cat1", "val2"},
-		{"cat 1", "val2"}, // should have space removed and then be deduplicated
 		{"cat2", "val2"},
 		{"cat2", "val1"}, // should be sorted above previous one
-		{"cat2", "val1"}, // duplicate should be omitted
-		{"cat3", "compound:val"},
 		{"cat3", fmt.Sprintf(`b"%s"`, base64.StdEncoding.EncodeToString([]byte("bar")))}, // manually base64 encoded and formatted (e.g. `b"base64encodedstr"`), do not double encode
+		{"cat3", "compound:val"},
+		{"cat4", ""},
+		{"cat 1", "val2"}, // should have space removed and then be deduplicated
+		{"cat2", "val1"},  // duplicate should be omitted
 	}
 	expectTags := Tags{
 		{"cat1", "val1"},
 		{"cat1", "val2"},
 		{"cat2", "val1"},
 		{"cat2", "val2"},
+		{"cat3", "bar"},
 		{"cat3", "compound:val"},
-		{"cat3", "foo"},
+		{"cat4", ""},
 	}
 
 	t.Logf("tags: %v\n", inputTags)
 	// expect ts to be in format b"b64cat":b"b64val",...
 	cm := CirconusMetrics{}
-	ts := cm.EncodeMetricStreamTags(inputTags)
+	ts := cm.EncodeMetricStreamTags("test", inputTags)
 	tl := strings.Split(ts, ",")
 	if len(tl) != len(expectTags) {
 		t.Fatalf("expected %d tags, got %d", len(expectTags), len(tl))
 	}
-	rx := regexp.MustCompile(`^b"(?P<cat>[^"]+)":b"(?P<val>[^"]+)"$`)
+	rx := regexp.MustCompile(`^b"(?P<cat>[^"]+)":(b"(?P<val>[^"]+)")?$`)
 	for id, tag := range tl {
+		// t.Logf("%d = %s -- %s", id, tag, inputTags[id])
 		matches := rx.FindStringSubmatch(string(tag))
 		if len(matches) < 2 {
 			t.Fatalf("tag did not match (%s)", tag)
@@ -85,6 +88,7 @@ func TestEncodeMetricStreamTags(t *testing.T) {
 			t.Fatalf("category: named match not found '%s'", cat)
 		} else if cat == "" {
 			t.Fatalf("category: invalid (empty) '%s'", cat)
+		} else {
 			if dcat, err := base64.StdEncoding.DecodeString(cat); err != nil {
 				t.Fatalf("category: error decoding base64 '%s' (%s)", cat, err)
 			} else if string(dcat) != expectTags[id].Category {
@@ -94,8 +98,10 @@ func TestEncodeMetricStreamTags(t *testing.T) {
 
 		if val, found := result["val"]; !found {
 			t.Fatalf("value: named match not found '%s'", val)
-		} else if val == "" {
-			t.Fatalf("value: invalid (empty) '%s'", val)
+			// category only tags are acceptable with streamtags
+			// } else if val == "" && t.cat != "emptyok" {
+			// 	t.Fatalf("value: invalid (empty) '%s'", val)
+		} else if val != "" {
 			if dval, err := base64.StdEncoding.DecodeString(val); err != nil {
 				t.Fatalf("value: error decoding base64 '%s' (%s)", val, err)
 			} else if string(dval) != expectTags[id].Value {
