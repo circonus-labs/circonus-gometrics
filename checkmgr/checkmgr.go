@@ -492,12 +492,37 @@ func (cm *CheckManager) GetSubmissionURL() (*Trap, error) {
 				return nil, errors.Wrap(err, "get submission url")
 			}
 		}
+
 		t := &tls.Config{
-			RootCAs: cm.certPool,
+			RootCAs:    cm.certPool,
+			MinVersion: tls.VersionTLS12,
 		}
+
 		if cm.trapCN != "" {
-			t.ServerName = string(cm.trapCN)
+			t = &tls.Config{
+				MinVersion: tls.VersionTLS12,
+				ServerName: string(cm.trapCN),
+				// go1.15 see VerifyConnection below - until CN added to SAN in broker certs
+				// NOTE: InsecureSkipVerify:true does NOT disable VerifyConnection()
+				InsecureSkipVerify: true, //nolint:gosec
+				VerifyConnection: func(cs tls.ConnectionState) error {
+					commonName := cs.PeerCertificates[0].Subject.CommonName
+					if commonName != cs.ServerName {
+						return fmt.Errorf("invalid certificate name %q, expected %q", commonName, cs.ServerName)
+					}
+					opts := x509.VerifyOptions{
+						Roots:         cm.certPool,
+						Intermediates: x509.NewCertPool(),
+					}
+					for _, cert := range cs.PeerCertificates[1:] {
+						opts.Intermediates.AddCert(cert)
+					}
+					_, err := cs.PeerCertificates[0].Verify(opts)
+					return err
+				},
+			}
 		}
+
 		trap.TLS = t
 	}
 
