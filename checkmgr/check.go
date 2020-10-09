@@ -211,7 +211,7 @@ func (cm *CheckManager) initializeTrapURL() error {
 	}
 
 	// determine the trap url to which metrics should be PUT
-	if checkBundle.Type == "httptrap" {
+	if strings.HasPrefix(checkBundle.Type, "httptrap") {
 		if turl, found := checkBundle.Config[config.SubmissionURL]; found {
 			cm.trapURL = apiclient.URLType(turl)
 		} else {
