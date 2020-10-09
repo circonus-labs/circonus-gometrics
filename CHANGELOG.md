@@ -1,3 +1,7 @@
+# v3.1.2
+
+* fix: identify httptrap with subtype for submission url
+
 # v3.1.1
 
 * fix: quoting on error message in test
