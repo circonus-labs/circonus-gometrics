@@ -1,3 +1,8 @@
+# v3.2.0
+
+* add: accept category only tags
+* fix: tls config for self-signed certs (go1.15)
+
 # v3.1.2
 
 * fix: identify httptrap with subtype for submission url
