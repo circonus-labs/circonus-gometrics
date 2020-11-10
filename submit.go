@@ -135,7 +135,7 @@ func (m *CirconusMetrics) trapCall(payload []byte) (int, error) {
 	// retryablehttp only groks log or no log
 	// but, outputs everything as [DEBUG] messages
 	if m.Debug {
-		client.Logger = m.Log.(*log.Logger)
+		client.Logger = m.Log
 	} else {
 		client.Logger = log.New(ioutil.Discard, "", log.LstdFlags)
 	}
