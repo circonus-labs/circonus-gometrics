@@ -1,3 +1,7 @@
+# v3.2.1
+
+* fix: internal log interface satisfies rh log interface no need to cast to log.Logger any longer
+
 # v3.2.0
 
 * add: accept category only tags
