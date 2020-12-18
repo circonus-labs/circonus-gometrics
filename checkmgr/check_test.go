@@ -494,8 +494,8 @@ func TestInitializeTrapURL(t *testing.T) {
 		if len(cm.checkBundle.MetricFilters) == 0 {
 			t.Fatalf("expected metric_filters (%#v)", cm.checkBundle)
 		}
-		if cm.enabled {
-			t.Fatalf("expected check management to be disabled after check created with metric_filters")
+		if cm.manageMetrics {
+			t.Fatalf("expected check metric management to be disabled after check created with metric_filters")
 		}
 	}
 
@@ -521,8 +521,8 @@ func TestInitializeTrapURL(t *testing.T) {
 		if len(cm.checkBundle.MetricFilters) != 1 || cm.checkBundle.MetricFilters[0][1] != metricFilterRx {
 			t.Fatalf("expected custom metric_filters (%s) (%#v)", metricFilterRx, cm.checkBundle.MetricFilters)
 		}
-		if cm.enabled {
-			t.Fatalf("expected check management to be disabled after check created with metric_filters")
+		if cm.manageMetrics {
+			t.Fatalf("expected check metric management to be disabled after check created with metric_filters")
 		}
 	}
 

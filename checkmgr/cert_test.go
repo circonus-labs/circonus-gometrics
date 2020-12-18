@@ -7,6 +7,8 @@ package checkmgr
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -67,6 +69,7 @@ func TestFetchCert(t *testing.T) {
 
 	cm := &CheckManager{
 		enabled: true,
+		Log:     log.New(ioutil.Discard, "", log.LstdFlags),
 	}
 	ac := &apiclient.Config{
 		TokenApp: "abcd",

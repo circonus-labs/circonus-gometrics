@@ -202,13 +202,6 @@ func (cm *CheckManager) initializeTrapURL() error {
 
 	// retain to facilitate metric management (adding new metrics specifically)
 	cm.checkBundle = checkBundle
-	// check is using metric filters, disable check management
-	if len(cm.checkBundle.MetricFilters) > 0 {
-		cm.enabled = false
-	}
-	if cm.enabled {
-		cm.inventoryMetrics()
-	}
 
 	// determine the trap url to which metrics should be PUT
 	if strings.HasPrefix(checkBundle.Type, "httptrap") {
@@ -258,6 +251,14 @@ func (cm *CheckManager) initializeTrapURL() error {
 		}
 	}
 
+	// check is using metric filters, disable check management
+	cm.manageMetrics = true
+	if len(cm.checkBundle.MetricFilters) > 0 {
+		cm.manageMetrics = false
+	}
+	if cm.manageMetrics {
+		cm.inventoryMetrics()
+	}
 	cm.trapLastUpdate = time.Now()
 
 	return nil
