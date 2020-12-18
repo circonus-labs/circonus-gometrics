@@ -13,7 +13,7 @@ import (
 
 func TestIsMetricActive(t *testing.T) {
 
-	cm := &CheckManager{enabled: true}
+	cm := &CheckManager{manageMetrics: true}
 
 	cm.availableMetrics = map[string]bool{
 		"foo": true,
@@ -43,7 +43,7 @@ func TestIsMetricActive(t *testing.T) {
 }
 
 func TestActivateMetric(t *testing.T) {
-	cm := &CheckManager{enabled: true}
+	cm := &CheckManager{manageMetrics: true}
 	cm.checkBundle = &apiclient.CheckBundle{}
 	cm.checkBundle.Metrics = []apiclient.CheckBundleMetric{
 		{
@@ -152,7 +152,7 @@ func TestInventoryMetrics(t *testing.T) {
 }
 
 func TestAddMetricTags(t *testing.T) {
-	cm := &CheckManager{enabled: true}
+	cm := &CheckManager{manageMetrics: true}
 	cm.checkBundle = &apiclient.CheckBundle{}
 	cm.metricTags = make(map[string][]string)
 
