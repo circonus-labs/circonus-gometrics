@@ -163,10 +163,11 @@ type BrokerCNType string
 
 // CheckManager settings
 type CheckManager struct {
-	enabled bool
-	Log     Logger
-	Debug   bool
-	apih    *apiclient.API
+	enabled       bool
+	manageMetrics bool
+	Log           Logger
+	Debug         bool
+	apih          *apiclient.API
 
 	initialized   bool
 	initializedmu sync.RWMutex
