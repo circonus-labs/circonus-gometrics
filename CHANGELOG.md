@@ -1,3 +1,10 @@
+# v3.2.2
+
+* upd: add debug log when fetching cert from api
+* fix: update internal cert copy for fallback
+* upd: use manageMetrics to get check metric management
+* add: manageMetrics state for non-metric filter checks
+
 # v3.2.1
 
 * fix: internal log interface satisfies rh log interface no need to cast to log.Logger any longer
