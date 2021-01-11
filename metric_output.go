@@ -25,6 +25,8 @@ func (m *CirconusMetrics) packageMetrics() (map[string]*apiclient.CheckBundleMet
 		m.Log.Printf("packaging metrics\n")
 	}
 
+	ts := makeTimestamp(time.Now())
+
 	counters, gauges, histograms, text := m.snapshot()
 	newMetrics := make(map[string]*apiclient.CheckBundleMetric)
 	output := make(Metrics, len(counters)+len(gauges)+len(histograms)+len(text))
@@ -39,7 +41,7 @@ func (m *CirconusMetrics) packageMetrics() (map[string]*apiclient.CheckBundleMet
 			}
 		}
 		if send {
-			output[name] = Metric{Type: "L", Value: value}
+			output[name] = Metric{Type: "L", Value: value, Timestamp: ts}
 		}
 	}
 
@@ -54,7 +56,7 @@ func (m *CirconusMetrics) packageMetrics() (map[string]*apiclient.CheckBundleMet
 			}
 		}
 		if send {
-			output[name] = Metric{Type: m.getGaugeType(value), Value: value}
+			output[name] = Metric{Type: m.getGaugeType(value), Value: value, Timestamp: ts}
 		}
 	}
 
@@ -69,7 +71,7 @@ func (m *CirconusMetrics) packageMetrics() (map[string]*apiclient.CheckBundleMet
 			}
 		}
 		if send {
-			output[name] = Metric{Type: "h", Value: value.DecStrings()}
+			output[name] = Metric{Type: "h", Value: value.DecStrings()} // histograms do NOT get timestamps
 		}
 	}
 
@@ -84,7 +86,7 @@ func (m *CirconusMetrics) packageMetrics() (map[string]*apiclient.CheckBundleMet
 			}
 		}
 		if send {
-			output[name] = Metric{Type: "s", Value: value}
+			output[name] = Metric{Type: "s", Value: value, Timestamp: ts}
 		}
 	}
 
@@ -343,4 +345,9 @@ func (m *CirconusMetrics) snapText() map[string]string {
 	}
 
 	return t
+}
+
+// makeTimestamp returns timestamp in ms units for _ts metric value
+func makeTimestamp(ts time.Time) uint64 {
+	return uint64(ts.UTC().UnixNano() / (int64(time.Millisecond) / int64(time.Nanosecond)))
 }
