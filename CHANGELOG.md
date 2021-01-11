@@ -1,3 +1,7 @@
+# v3.3.0
+
+* upd: add timestamps to metric output
+
 # v3.2.2
 
 * upd: add debug log when fetching cert from api
