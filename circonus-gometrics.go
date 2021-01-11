@@ -53,8 +53,9 @@ type Logger interface {
 
 // Metric defines an individual metric
 type Metric struct {
-	Type  string      `json:"_type"`
-	Value interface{} `json:"_value"`
+	Type      string      `json:"_type"`
+	Value     interface{} `json:"_value"`
+	Timestamp uint64      `json:"_ts,omitempty"`
 }
 
 // Metrics holds host metrics
