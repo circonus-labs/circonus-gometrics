@@ -255,48 +255,34 @@ func (m *CirconusMetrics) snapshot() (
 	map[string]*circonusllhist.Histogram, // histograms
 	map[string]string) { // text
 
-	m.hm.Lock()
-	m.cm.Lock()
-	m.cfm.Lock()
-	m.gm.Lock()
-	m.gfm.Lock()
-	m.tm.Lock()
-	m.tfm.Lock()
+	var h map[string]*circonusllhist.Histogram
+	var c map[string]uint64
+	var g map[string]interface{}
+	var t map[string]string
 
 	var wg sync.WaitGroup
 
-	h := make(map[string]*circonusllhist.Histogram, len(m.histograms))
 	wg.Add(1)
 	go func() {
-		m.snapHistograms(h)
-		m.hm.Unlock()
+		h = m.snapHistograms()
 		wg.Done()
 	}()
 
-	c := make(map[string]uint64, len(m.counters)+len(m.counterFuncs))
 	wg.Add(1)
 	go func() {
-		m.snapCounters(c)
-		m.cm.Unlock()
-		m.cfm.Unlock()
+		c = m.snapCounters()
 		wg.Done()
 	}()
 
-	g := make(map[string]interface{}, len(m.gauges)+len(m.gaugeFuncs))
 	wg.Add(1)
 	go func() {
-		m.snapGauges(g)
-		m.gm.Unlock()
-		m.gfm.Unlock()
+		g = m.snapGauges()
 		wg.Done()
 	}()
 
-	t := make(map[string]string, len(m.text)+len(m.textFuncs))
 	wg.Add(1)
 	go func() {
-		m.snapText(t)
-		m.tm.Unlock()
-		m.tfm.Unlock()
+		t = m.snapText()
 		wg.Done()
 	}()
 
@@ -305,7 +291,12 @@ func (m *CirconusMetrics) snapshot() (
 	return c, g, h, t
 }
 
-func (m *CirconusMetrics) snapCounters(c map[string]uint64) {
+func (m *CirconusMetrics) snapCounters() map[string]uint64 {
+	m.cm.Lock()
+	m.cfm.Lock()
+
+	c := make(map[string]uint64, len(m.counters)+len(m.counterFuncs))
+
 	for n, v := range m.counters {
 		c[n] = v
 	}
@@ -316,9 +307,19 @@ func (m *CirconusMetrics) snapCounters(c map[string]uint64) {
 	for n, f := range m.counterFuncs {
 		c[n] = f()
 	}
+
+	m.cm.Unlock()
+	m.cfm.Unlock()
+
+	return c
 }
 
-func (m *CirconusMetrics) snapGauges(g map[string]interface{}) {
+func (m *CirconusMetrics) snapGauges() map[string]interface{} {
+	m.gm.Lock()
+	m.gfm.Lock()
+
+	g := make(map[string]interface{}, len(m.gauges)+len(m.gaugeFuncs))
+
 	for n, v := range m.gauges {
 		g[n] = v
 	}
@@ -329,9 +330,18 @@ func (m *CirconusMetrics) snapGauges(g map[string]interface{}) {
 	for n, f := range m.gaugeFuncs {
 		g[n] = f()
 	}
+
+	m.gm.Unlock()
+	m.gfm.Unlock()
+
+	return g
 }
 
-func (m *CirconusMetrics) snapHistograms(h map[string]*circonusllhist.Histogram) {
+func (m *CirconusMetrics) snapHistograms() map[string]*circonusllhist.Histogram {
+	m.hm.Lock()
+
+	h := make(map[string]*circonusllhist.Histogram, len(m.histograms))
+
 	for n, hist := range m.histograms {
 		hist.rw.Lock()
 		if m.resetHistograms {
@@ -345,9 +355,18 @@ func (m *CirconusMetrics) snapHistograms(h map[string]*circonusllhist.Histogram)
 	if m.resetHistograms && len(h) > 0 {
 		m.histograms = make(map[string]*Histogram)
 	}
+
+	m.hm.Unlock()
+
+	return h
 }
 
-func (m *CirconusMetrics) snapText(t map[string]string) {
+func (m *CirconusMetrics) snapText() map[string]string {
+	m.tm.Lock()
+	m.tfm.Lock()
+
+	t := make(map[string]string, len(m.text)+len(m.textFuncs))
+
 	for n, v := range m.text {
 		t[n] = v
 	}
@@ -358,6 +377,11 @@ func (m *CirconusMetrics) snapText(t map[string]string) {
 	for n, f := range m.textFuncs {
 		t[n] = f()
 	}
+
+	m.tm.Unlock()
+	m.tfm.Unlock()
+
+	return t
 }
 
 // makeTimestamp returns timestamp in ms units for _ts metric value

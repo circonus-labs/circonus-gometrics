@@ -1,3 +1,7 @@
+# v3.3.2
+
+* fix: put locking in snapshot handlers
+
 # v3.3.1
 
 * add: concurrent snapshot
