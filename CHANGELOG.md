@@ -1,3 +1,7 @@
+# v3.3.1
+
+* add: concurrent snapshot
+
 # v3.3.0
 
 * upd: add timestamps to metric output
