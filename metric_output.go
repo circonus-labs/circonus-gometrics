@@ -32,8 +32,12 @@ func (m *CirconusMetrics) packageMetrics() (map[string]*apiclient.CheckBundleMet
 	counters, gauges, histograms, text := m.snapshot()
 	m.custm.Lock()
 	output := make(Metrics, len(counters)+len(gauges)+len(histograms)+len(text)+len(m.custom))
-	for mn, mv := range m.custom {
-		output[mn] = mv
+	if len(m.custom) > 0 {
+		// add and reset any custom metrics
+		for mn, mv := range m.custom {
+			output[mn] = mv
+		}
+		m.custom = make(map[string]Metric)
 	}
 	m.custm.Unlock()
 	for name, value := range counters {
