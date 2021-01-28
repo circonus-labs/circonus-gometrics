@@ -28,9 +28,14 @@ func (m *CirconusMetrics) packageMetrics() (map[string]*apiclient.CheckBundleMet
 
 	ts := makeTimestamp(time.Now())
 
-	counters, gauges, histograms, text := m.snapshot()
 	newMetrics := make(map[string]*apiclient.CheckBundleMetric)
-	output := make(Metrics, len(counters)+len(gauges)+len(histograms)+len(text))
+	counters, gauges, histograms, text := m.snapshot()
+	m.custm.Lock()
+	output := make(Metrics, len(counters)+len(gauges)+len(histograms)+len(text)+len(m.custom))
+	for mn, mv := range m.custom {
+		output[mn] = mv
+	}
+	m.custm.Unlock()
 	for name, value := range counters {
 		send := m.check.IsMetricActive(name)
 		if !send && m.check.ActivateMetric(name) {

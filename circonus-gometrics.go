@@ -30,10 +30,13 @@
 package circonusgometrics
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
+	"regexp"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -43,6 +46,43 @@ import (
 
 const (
 	defaultFlushInterval = "10s" // 10 * time.Second
+
+	// MetricTypeInt32 reconnoiter
+	MetricTypeInt32 = "i"
+
+	// MetricTypeUint32 reconnoiter
+	MetricTypeUint32 = "I"
+
+	// MetricTypeInt64 reconnoiter
+	MetricTypeInt64 = "l"
+
+	// MetricTypeUint64 reconnoiter
+	MetricTypeUint64 = "L"
+
+	// MetricTypeFloat64 reconnoiter
+	MetricTypeFloat64 = "n"
+
+	// MetricTypeString reconnoiter
+	MetricTypeString = "s"
+
+	// MetricTypeHistogram reconnoiter
+	MetricTypeHistogram = "h"
+
+	// MetricTypeCumulativeHistogram reconnoiter
+	MetricTypeCumulativeHistogram = "H"
+)
+
+var (
+	metricTypeRx = regexp.MustCompile(`^[` + strings.Join([]string{
+		MetricTypeInt32,
+		MetricTypeUint32,
+		MetricTypeInt64,
+		MetricTypeUint64,
+		MetricTypeFloat64,
+		MetricTypeString,
+		MetricTypeHistogram,
+		MetricTypeCumulativeHistogram,
+	}, "") + `]$`)
 )
 
 // Logger facilitates use of any logger supporting the required methods
@@ -120,6 +160,9 @@ type CirconusMetrics struct {
 
 	textFuncs map[string]func() string
 	tfm       sync.Mutex
+
+	custom map[string]Metric
+	custm  sync.Mutex
 }
 
 // NewCirconusMetrics returns a CirconusMetrics instance
@@ -142,6 +185,7 @@ func New(cfg *Config) (*CirconusMetrics, error) {
 		histograms:   make(map[string]*Histogram),
 		text:         make(map[string]string),
 		textFuncs:    make(map[string]func() string),
+		custom:       make(map[string]Metric),
 		lastMetrics:  &prevMetrics{},
 	}
 
@@ -246,4 +290,17 @@ func (m *CirconusMetrics) Start() {
 // Ready returns true or false indicating if the check is ready to accept metrics
 func (m *CirconusMetrics) Ready() bool {
 	return m.check.IsReady()
+}
+
+// Custom adds a user defined metric
+func (m *CirconusMetrics) Custom(metricName string, metric Metric) error {
+	if !metricTypeRx.MatchString(metric.Type) {
+		return fmt.Errorf("unrecognized circonus metric type (%s)", metric.Type)
+	}
+
+	m.custm.Lock()
+	m.custom[metricName] = metric
+	m.custm.Unlock()
+
+	return nil
 }
