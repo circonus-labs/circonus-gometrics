@@ -1,3 +1,7 @@
+# v3.3.3
+
+* add: custom metric support
+
 # v3.3.2
 
 * fix: put locking in snapshot handlers
