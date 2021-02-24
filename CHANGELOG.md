@@ -1,3 +1,7 @@
+# v3.3.4
+
+* upd: dependencies (cgm,circonusllhst,retryablehttp)
+
 # v3.3.3
 
 * add: custom metric support
