@@ -1,3 +1,10 @@
+# v3.4.0
+
+* fix: service tag file path
+* fix: lint issues
+* add: lint workflow
+* upd: dependencies (go-apiclient,circonusllhst)
+
 # v3.3.4
 
 * upd: dependencies (cgm,circonusllhst,retryablehttp)
