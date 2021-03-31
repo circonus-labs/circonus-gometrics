@@ -8,14 +8,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/circonus-labs/circonusllhist"
+	"github.com/openhistogram/circonusllhist"
 	"github.com/pkg/errors"
 )
 
 // Histogram measures the distribution of a stream of values.
 type Histogram struct {
-	name string
 	hist *circonusllhist.Histogram
+	name string
 	rw   sync.RWMutex
 }
 

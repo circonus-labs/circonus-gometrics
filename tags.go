@@ -96,7 +96,7 @@ func (m *CirconusMetrics) EncodeMetricStreamTags(metricName string, tags Tags) s
 // EncodeMetricTags encodes Tags into an array of strings. The format
 // check_bundle.metircs.metric.tags needs. This helper is intended to work
 // with legacy check bundle metrics. Tags directly on named metrics are being
-// deprecated in favor of stream tags.
+// removed in favor of stream tags.
 func (m *CirconusMetrics) EncodeMetricTags(metricName string, tags Tags) []string {
 	if len(tags) == 0 {
 		return []string{}

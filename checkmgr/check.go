@@ -134,7 +134,7 @@ func (cm *CheckManager) initializeTrapURL() error {
 		// unless the new submission url can be fetched with the API (which is no
 		// longer possible using the original submission url)
 		var id int
-		id, err = strconv.Atoi(strings.Replace(check.CID, "/check/", "", -1))
+		id, err = strconv.Atoi(strings.ReplaceAll(check.CID, "/check/", ""))
 		if err == nil {
 			cm.checkID = apiclient.IDType(id)
 			cm.checkSubmissionURL = ""

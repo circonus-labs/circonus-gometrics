@@ -93,8 +93,8 @@ type Logger interface {
 
 // Metric defines an individual metric
 type Metric struct {
-	Type      string      `json:"_type"`
 	Value     interface{} `json:"_value"`
+	Type      string      `json:"_type"`
 	Timestamp uint64      `json:"_ts,omitempty"`
 }
 
@@ -104,65 +104,56 @@ type Metrics map[string]Metric
 // Config options for circonus-gometrics
 type Config struct {
 	Log             Logger
-	Debug           bool
 	ResetCounters   string // reset/delete counters on flush (default true)
 	ResetGauges     string // reset/delete gauges on flush (default true)
 	ResetHistograms string // reset/delete histograms on flush (default true)
 	ResetText       string // reset/delete text on flush (default true)
+	// how frequenly to submit metrics to Circonus, default 10 seconds.
+	// Set to 0 to disable automatic flushes and call Flush manually.
+	Interval string
 
 	// API, Check and Broker configuration options
 	CheckManager checkmgr.Config
 
-	// how frequenly to submit metrics to Circonus, default 10 seconds.
-	// Set to 0 to disable automatic flushes and call Flush manually.
-	Interval string
+	Debug bool
 }
 
 type prevMetrics struct {
 	metrics   *Metrics
-	metricsmu sync.Mutex
 	ts        time.Time
+	metricsmu sync.Mutex
 }
 
 // CirconusMetrics state
 type CirconusMetrics struct {
-	Log   Logger
-	Debug bool
-
+	Log             Logger
+	lastMetrics     *prevMetrics
+	check           *checkmgr.CheckManager
+	gauges          map[string]interface{}
+	histograms      map[string]*Histogram
+	custom          map[string]Metric
+	text            map[string]string
+	textFuncs       map[string]func() string
+	counterFuncs    map[string]func() uint64
+	gaugeFuncs      map[string]func() int64
+	counters        map[string]uint64
+	flushInterval   time.Duration
+	flushmu         sync.Mutex
+	packagingmu     sync.Mutex
+	cm              sync.Mutex
+	cfm             sync.Mutex
+	gm              sync.Mutex
+	gfm             sync.Mutex
+	hm              sync.Mutex
+	tm              sync.Mutex
+	tfm             sync.Mutex
+	custm           sync.Mutex
+	flushing        bool
+	Debug           bool
 	resetCounters   bool
 	resetGauges     bool
 	resetHistograms bool
 	resetText       bool
-	flushInterval   time.Duration
-	flushing        bool
-	flushmu         sync.Mutex
-	packagingmu     sync.Mutex
-	check           *checkmgr.CheckManager
-	lastMetrics     *prevMetrics
-
-	counters map[string]uint64
-	cm       sync.Mutex
-
-	counterFuncs map[string]func() uint64
-	cfm          sync.Mutex
-
-	gauges map[string]interface{}
-	gm     sync.Mutex
-
-	gaugeFuncs map[string]func() int64
-	gfm        sync.Mutex
-
-	histograms map[string]*Histogram
-	hm         sync.Mutex
-
-	text map[string]string
-	tm   sync.Mutex
-
-	textFuncs map[string]func() string
-	tfm       sync.Mutex
-
-	custom map[string]Metric
-	custm  sync.Mutex
 }
 
 // NewCirconusMetrics returns a CirconusMetrics instance
