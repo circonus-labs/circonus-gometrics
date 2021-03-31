@@ -84,7 +84,7 @@ func TestEncodeMetricStreamTags(t *testing.T) {
 				result[name] = matches[i]
 			}
 		}
-		if cat, found := result["cat"]; !found {
+		if cat, found := result["cat"]; !found { //nolint:gocritic
 			t.Fatalf("category: named match not found '%s'", cat)
 		} else if cat == "" {
 			t.Fatalf("category: invalid (empty) '%s'", cat)

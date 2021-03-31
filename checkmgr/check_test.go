@@ -114,7 +114,7 @@ func testCheckServer() *httptest.Server {
 		case "/check_bundle":
 			switch r.Method {
 			case "GET": // search
-				//fmt.Println(r.URL.String())
+				//  fmt.Println(r.URL.String())
 				switch {
 				case strings.HasPrefix(r.URL.String(), "/check_bundle?f_notes=") && strings.Contains(r.URL.String(), "found_notes"):
 					r := []apiclient.CheckBundle{testCheckBundle}
@@ -147,7 +147,7 @@ func testCheckServer() *httptest.Server {
 				}
 
 				var bundle apiclient.CheckBundle
-				if err := json.Unmarshal(cfg, &bundle); err != nil {
+				if err = json.Unmarshal(cfg, &bundle); err != nil {
 					panic(err)
 				}
 				bundle.CID = testCheckBundle.CID

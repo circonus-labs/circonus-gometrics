@@ -151,7 +151,7 @@ func testCMServer() *httptest.Server {
 				}
 
 				var bundle apiclient.CheckBundle
-				if err := json.Unmarshal(cfg, &bundle); err != nil {
+				if err = json.Unmarshal(cfg, &bundle); err != nil {
 					panic(err)
 				}
 				bundle.CID = testCheckBundle.CID
@@ -415,9 +415,11 @@ func TestNewCheckManager(t *testing.T) {
 
 		// quick request to make sure the trap.TLS is the one passed and not the default
 		client := &http.Client{Transport: &http.Transport{TLSClientConfig: trap.TLS}}
-		if _, err := client.Get(trap.URL.String()); err != nil {
+		resp, err := client.Get(trap.URL.String()) //nolint:noctx
+		if err != nil {
 			t.Fatalf("expected no error, got (%s)", err)
 		}
+		resp.Body.Close()
 
 		t.Log("test ResetTrap")
 		{

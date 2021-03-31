@@ -12,8 +12,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/circonus-labs/circonusllhist"
 	"github.com/circonus-labs/go-apiclient"
+	"github.com/openhistogram/circonusllhist"
 	"github.com/pkg/errors"
 )
 

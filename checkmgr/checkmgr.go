@@ -13,7 +13,7 @@ import (
 	"log"
 	"net/url"
 	"os"
-	"path"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -97,24 +97,26 @@ type CheckConfig struct {
 	// in the UI) **only relevant when check management is enabled**
 	// e.g. 5m, 30m, 1h, etc.
 	MaxURLAge string
+	// Type of check to use (default: httptrap)
+	Type string
 	// force metric activation - if a metric has been disabled via the UI
 	// the default behavior is to *not* re-activate the metric; this setting
 	// overrides the behavior and will re-activate the metric when it is
 	// encountered. "(true|false)", default "false"
 	// NOTE: ONLY applies to checks without metric_filters
 	ForceMetricActivation string
+	// Custom check config fields (default: none)
+	CustomConfigFields map[string]string
 	// MetricFilters list of regular expression filters defining what metrics
 	// will be automatically enabled. These are evaluated in order and the first
 	// match stops evaluation. Default []MetricFilter{{"deny","^$",""},{"allow","^.+$",""}}
 	MetricFilters []MetricFilter
-	// Type of check to use (default: httptrap)
-	Type string
-	// Custom check config fields (default: none)
-	CustomConfigFields map[string]string
 }
 
 // BrokerConfig options for broker
 type BrokerConfig struct {
+	// TLS configuration to use when communicating within broker
+	TLSConfig *tls.Config
 	// a specific broker id (numeric portion of cid)
 	ID string
 	// one or more tags used to select 1-n brokers from which to select
@@ -123,21 +125,18 @@ type BrokerConfig struct {
 	// for a broker to be considered viable it must respond to a
 	// connection attempt within this amount of time e.g. 200ms, 2s, 1m
 	MaxResponseTime string
-	// TLS configuration to use when communicating within broker
-	TLSConfig *tls.Config
 }
 
 // Config options
 type Config struct {
-	Log   Logger
-	Debug bool
-
+	Log Logger
 	// Circonus API config
 	API apiclient.Config
-	// Check specific configuration options
-	Check CheckConfig
 	// Broker specific configuration options
 	Broker BrokerConfig
+	// Check specific configuration options
+	Check CheckConfig
+	Debug bool
 }
 
 // CheckTypeType check type
@@ -163,60 +162,51 @@ type BrokerCNType string
 
 // CheckManager settings
 type CheckManager struct {
-	enabled       bool
-	manageMetrics bool
-	Log           Logger
-	Debug         bool
-	apih          *apiclient.API
-
-	initialized   bool
-	initializedmu sync.RWMutex
-
-	// check
-	checkType             CheckTypeType
-	checkID               apiclient.IDType
-	checkInstanceID       CheckInstanceIDType
-	checkTarget           CheckTargetType
-	checkSearchTag        apiclient.TagType
-	checkSecret           CheckSecretType
-	checkTags             apiclient.TagType
-	checkMetricFilters    []MetricFilter
-	customConfigFields    map[string]string
-	checkSubmissionURL    apiclient.URLType
-	checkDisplayName      CheckDisplayNameType
-	forceMetricActivation bool
-	forceCheckUpdate      bool
-
-	// metric tags
-	metricTags map[string][]string
-	mtmu       sync.Mutex
-
-	// broker
-	brokerID              apiclient.IDType
-	brokerSelectTag       apiclient.TagType
-	brokerMaxResponseTime time.Duration
-	brokerTLS             *tls.Config
-
-	// state
-	checkBundle        *apiclient.CheckBundle
-	cbmu               sync.Mutex
-	availableMetrics   map[string]bool
-	availableMetricsmu sync.Mutex
-	trapURL            apiclient.URLType
-	trapCN             BrokerCNType
-	trapLastUpdate     time.Time
-	trapMaxURLAge      time.Duration
-	trapmu             sync.Mutex
-	certPool           *x509.CertPool
-	sockRx             *regexp.Regexp
+	metricTags            map[string][]string    // metric tags
+	customConfigFields    map[string]string      // check
+	availableMetrics      map[string]bool        // state
+	apih                  *apiclient.API         // general
+	checkBundle           *apiclient.CheckBundle // state
+	brokerTLS             *tls.Config            // broker
+	certPool              *x509.CertPool         // state
+	sockRx                *regexp.Regexp         // state
+	Log                   Logger                 // general
+	trapLastUpdate        time.Time              // state
+	checkType             CheckTypeType          // check
+	checkInstanceID       CheckInstanceIDType    // check
+	checkTarget           CheckTargetType        // check
+	checkSecret           CheckSecretType        // check
+	checkSubmissionURL    apiclient.URLType      // check
+	checkDisplayName      CheckDisplayNameType   // check
+	trapURL               apiclient.URLType      // state
+	trapCN                BrokerCNType           // state
+	checkMetricFilters    []MetricFilter         // check
+	checkTags             apiclient.TagType      // check
+	brokerSelectTag       apiclient.TagType      // broker
+	checkSearchTag        apiclient.TagType      // check
+	brokerMaxResponseTime time.Duration          // broker
+	trapMaxURLAge         time.Duration          // state
+	brokerID              apiclient.IDType       // broker
+	checkID               apiclient.IDType       // check
+	initializedmu         sync.RWMutex           // general
+	cbmu                  sync.Mutex             // state
+	trapmu                sync.Mutex             // state
+	mtmu                  sync.Mutex             // metric tags
+	availableMetricsmu    sync.Mutex             // state
+	enabled               bool                   // general
+	manageMetrics         bool                   // general
+	Debug                 bool                   // general
+	initialized           bool                   // general
+	forceMetricActivation bool                   // check
+	forceCheckUpdate      bool                   // check
 }
 
 // Trap config
 type Trap struct {
 	URL           *url.URL
 	TLS           *tls.Config
-	IsSocket      bool
 	SockTransport *httpunix.Transport
+	IsSocket      bool
 }
 
 // NewCheckManager returns a new check manager
@@ -304,7 +294,7 @@ func New(cfg *Config) (*CheckManager, error) {
 	}
 	cm.forceMetricActivation = fm
 
-	_, an := path.Split(os.Args[0])
+	_, an := filepath.Split(os.Args[0])
 	hn, err := os.Hostname()
 	if err != nil {
 		hn = "unknown"
@@ -322,11 +312,11 @@ func New(cfg *Config) (*CheckManager, error) {
 	if cfg.Check.SearchTag == "" {
 		cm.checkSearchTag = []string{fmt.Sprintf("service:%s", an)}
 	} else {
-		cm.checkSearchTag = strings.Split(strings.Replace(cfg.Check.SearchTag, " ", "", -1), ",")
+		cm.checkSearchTag = strings.Split(strings.ReplaceAll(cfg.Check.SearchTag, " ", ""), ",")
 	}
 
 	if cfg.Check.Tags != "" {
-		cm.checkTags = strings.Split(strings.Replace(cfg.Check.Tags, " ", "", -1), ",")
+		cm.checkTags = strings.Split(strings.ReplaceAll(cfg.Check.Tags, " ", ""), ",")
 	}
 
 	if len(cfg.Check.MetricFilters) > 0 {
@@ -362,7 +352,7 @@ func New(cfg *Config) (*CheckManager, error) {
 	cm.brokerID = apiclient.IDType(id)
 
 	if cfg.Broker.SelectTag != "" {
-		cm.brokerSelectTag = strings.Split(strings.Replace(cfg.Broker.SelectTag, " ", "", -1), ",")
+		cm.brokerSelectTag = strings.Split(strings.ReplaceAll(cfg.Broker.SelectTag, " ", ""), ",")
 	}
 
 	dur = cfg.Broker.MaxResponseTime

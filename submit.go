@@ -88,7 +88,7 @@ func (m *CirconusMetrics) trapCall(payload []byte) (int, error) {
 		if resp.StatusCode == 0 || resp.StatusCode >= 500 {
 			body, readErr := ioutil.ReadAll(resp.Body)
 			if readErr != nil {
-				lastHTTPError = fmt.Errorf("- last HTTP error: %d %+v", resp.StatusCode, readErr)
+				lastHTTPError = fmt.Errorf("- last HTTP error: %d %w", resp.StatusCode, readErr)
 			} else {
 				lastHTTPError = fmt.Errorf("- last HTTP error: %d %s", resp.StatusCode, string(body))
 			}
@@ -149,14 +149,14 @@ func (m *CirconusMetrics) trapCall(payload []byte) (int, error) {
 	resp, err := client.Do(req)
 	if err != nil {
 		if lastHTTPError != nil {
-			return 0, fmt.Errorf("submitting: %+v %+v", err, lastHTTPError)
+			return 0, fmt.Errorf("submitting: %w previous: %s", err, lastHTTPError)
 		}
 		if attempts == client.RetryMax {
-			if err := m.check.RefreshTrap(); err != nil {
-				return 0, errors.Wrap(err, "refreshing trap")
+			if err = m.check.RefreshTrap(); err != nil {
+				return 0, fmt.Errorf("refreshing trap: %w", err)
 			}
 		}
-		return 0, errors.Wrap(err, "trap call")
+		return 0, fmt.Errorf("trap call: %w", err)
 	}
 
 	defer resp.Body.Close()
