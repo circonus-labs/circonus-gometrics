@@ -1,3 +1,8 @@
+# v3.4.1
+
+* add: `DumpMetrics` config option, log payload sent to broker for debugging
+* upd: dependencies
+
 # v3.4.0
 
 * fix: service tag file path
