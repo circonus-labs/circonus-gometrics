@@ -115,7 +115,8 @@ type Config struct {
 	// API, Check and Broker configuration options
 	CheckManager checkmgr.Config
 
-	Debug bool
+	Debug       bool
+	DumpMetrics bool
 }
 
 type prevMetrics struct {
@@ -150,6 +151,7 @@ type CirconusMetrics struct {
 	custm           sync.Mutex
 	flushing        bool
 	Debug           bool
+	DumpMetrics     bool
 	resetCounters   bool
 	resetGauges     bool
 	resetHistograms bool
@@ -183,9 +185,10 @@ func New(cfg *Config) (*CirconusMetrics, error) {
 	// Logging
 	{
 		cm.Debug = cfg.Debug
+		cm.DumpMetrics = cfg.DumpMetrics
 		cm.Log = cfg.Log
 
-		if cm.Debug && cm.Log == nil {
+		if (cm.Debug || cm.DumpMetrics) && cm.Log == nil {
 			cm.Log = log.New(os.Stderr, "", log.LstdFlags)
 		}
 		if cm.Log == nil {

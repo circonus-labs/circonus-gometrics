@@ -50,8 +50,13 @@ func (m *CirconusMetrics) submit(output Metrics, newMetrics map[string]*apiclien
 		numStats = len(output)
 	}
 
-	if m.Debug {
-		m.Log.Printf("%d stats sent\n", numStats)
+	if m.Debug || m.DumpMetrics {
+		if m.DumpMetrics {
+			m.Log.Printf("payload: %s", string(str))
+		}
+		if m.Debug {
+			m.Log.Printf("%d stats received by broker", numStats)
+		}
 	}
 }
 
