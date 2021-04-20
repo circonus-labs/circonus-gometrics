@@ -135,8 +135,9 @@ type Config struct {
 	// Broker specific configuration options
 	Broker BrokerConfig
 	// Check specific configuration options
-	Check CheckConfig
-	Debug bool
+	Check      CheckConfig
+	SerialInit bool // serial initialization (not background)
+	Debug      bool
 }
 
 // CheckTypeType check type
@@ -196,6 +197,7 @@ type CheckManager struct {
 	enabled               bool                   // general
 	manageMetrics         bool                   // general
 	Debug                 bool                   // general
+	serialInit            bool                   // general
 	initialized           bool                   // general
 	forceMetricActivation bool                   // check
 	forceCheckUpdate      bool                   // check
@@ -232,6 +234,8 @@ func New(cfg *Config) (*CheckManager, error) {
 	if cm.Log == nil {
 		cm.Log = log.New(ioutil.Discard, "", log.LstdFlags)
 	}
+
+	cm.serialInit = cfg.SerialInit
 
 	{
 		rx := regexp.MustCompile(`^http\+unix://(?P<sockfile>.+)/write/(?P<id>.+)$`)
@@ -376,19 +380,19 @@ func New(cfg *Config) (*CheckManager, error) {
 }
 
 // Initialize for sending metrics
-func (cm *CheckManager) Initialize() {
+func (cm *CheckManager) Initialize() error {
 
-	// if not managing the check, quicker initialization
-	if !cm.enabled {
+	// if not managing the check, quicker initialization or if user desires serialized init
+	if !cm.enabled || cm.serialInit {
 		err := cm.initializeTrapURL()
-		if err == nil {
-			cm.initializedmu.Lock()
-			cm.initialized = true
-			cm.initializedmu.Unlock()
-		} else {
-			cm.Log.Printf("error initializing trap %s", err.Error())
+		if err != nil {
+			return fmt.Errorf("error initializing trap %w", err)
+			// cm.Log.Printf("error initializing trap %s", err.Error())
 		}
-		return
+		cm.initializedmu.Lock()
+		cm.initialized = true
+		cm.initializedmu.Unlock()
+		return nil
 	}
 
 	// background initialization when we have to reach out to the api
@@ -404,6 +408,8 @@ func (cm *CheckManager) Initialize() {
 		}
 		cm.apih.DisableExponentialBackoff()
 	}()
+
+	return nil // we can't return an error from a go function after the fact
 }
 
 // IsReady reflects if the check has been initialied and metrics can be sent to Circonus
@@ -542,4 +548,20 @@ func (cm *CheckManager) RefreshTrap() error {
 	}
 
 	return nil
+}
+
+func (cm *CheckManager) BrokerTLSConfig() *tls.Config {
+	if cm.brokerTLS != nil {
+		return cm.brokerTLS
+	}
+	t, err := cm.GetSubmissionURL()
+	if err != nil {
+		cm.Log.Printf("error fetching broker tls config: %s", err)
+		return nil
+	}
+	return t.TLS
+}
+
+func (cm *CheckManager) GetCheckBundle() *apiclient.CheckBundle {
+	return cm.checkBundle
 }
