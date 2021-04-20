@@ -53,6 +53,11 @@ func (cm *CheckManager) loadCACert() error {
 		return nil
 	}
 
+	if cm.brokerTLS != nil {
+		cm.certPool = cm.brokerTLS.RootCAs
+		return nil
+	}
+
 	cm.certPool = x509.NewCertPool()
 
 	var cert []byte
