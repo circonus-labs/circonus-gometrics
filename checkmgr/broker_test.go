@@ -209,7 +209,7 @@ func TestGetBrokerCN(t *testing.T) {
 		submissionURL := apiclient.URLType("http://127.0.0.1:43191/blah/blah/blah")
 		cm := CheckManager{}
 
-		_, err := cm.getBrokerCN(&validBroker, submissionURL)
+		_, _, err := cm.getBrokerCN(&validBroker, submissionURL)
 		if err != nil {
 			t.Fatalf("Expected no error, got %+v", err)
 		}
@@ -220,7 +220,7 @@ func TestGetBrokerCN(t *testing.T) {
 		submissionURL := apiclient.URLType("http://test.example.com:43191/blah/blah/blah")
 		cm := CheckManager{}
 
-		_, err := cm.getBrokerCN(&validBroker, submissionURL)
+		_, _, err := cm.getBrokerCN(&validBroker, submissionURL)
 		if err != nil {
 			t.Fatalf("Expected no error, got %+v", err)
 		}
@@ -231,7 +231,7 @@ func TestGetBrokerCN(t *testing.T) {
 		submissionURL := apiclient.URLType("http://127.0.0.2:43191/blah/blah/blah")
 		cm := CheckManager{}
 
-		_, err := cm.getBrokerCN(&validBroker, submissionURL)
+		_, _, err := cm.getBrokerCN(&validBroker, submissionURL)
 		if err == nil {
 			t.Fatal("expected error")
 		}

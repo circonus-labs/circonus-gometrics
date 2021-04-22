@@ -233,11 +233,12 @@ func (cm *CheckManager) initializeTrapURL() error {
 
 	// used when sending as "ServerName" get around certs not having IP SANS
 	// (cert created with server name as CN but IP used in trap url)
-	cn, err := cm.getBrokerCN(broker, cm.trapURL)
+	cn, cnList, err := cm.getBrokerCN(broker, cm.trapURL)
 	if err != nil {
 		return err
 	}
 	cm.trapCN = BrokerCNType(cn)
+	cm.trapCNList = cnList
 
 	if cm.enabled {
 		u, err := url.Parse(string(cm.trapURL))

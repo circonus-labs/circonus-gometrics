@@ -181,6 +181,7 @@ type CheckManager struct {
 	checkDisplayName      CheckDisplayNameType   // check
 	trapURL               apiclient.URLType      // state
 	trapCN                BrokerCNType           // state
+	trapCNList            string                 // state
 	checkMetricFilters    []MetricFilter         // check
 	checkTags             apiclient.TagType      // check
 	brokerSelectTag       apiclient.TagType      // broker
@@ -504,7 +505,8 @@ func (cm *CheckManager) GetSubmissionURL() (*Trap, error) {
 				InsecureSkipVerify: true, //nolint:gosec
 				VerifyConnection: func(cs tls.ConnectionState) error {
 					commonName := cs.PeerCertificates[0].Subject.CommonName
-					if commonName != cs.ServerName {
+					// if commonName != cs.ServerName {
+					if !strings.Contains(cm.trapCNList, commonName) {
 						return fmt.Errorf("invalid certificate name %q, expected %q", commonName, cs.ServerName)
 					}
 					opts := x509.VerifyOptions{
