@@ -78,12 +78,12 @@ func TestTrapCall(t *testing.T) {
 		t.Fatalf("unexpected error (%s)", err)
 	}
 
-	numStats, err := cm.trapCall(str)
+	result, err := cm.trapCall(str)
 	if err != nil {
 		t.Fatalf("unexpected error (%s)", err)
 	}
 
-	if numStats != 1 {
-		t.Fatalf("Expected 1, got %d", numStats)
+	if result.Stats != 1 {
+		t.Fatalf("Expected 1, got %#v", result)
 	}
 }

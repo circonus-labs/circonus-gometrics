@@ -21,6 +21,19 @@ import (
 	"github.com/pkg/errors"
 )
 
+type trapResult struct {
+	Error    string `json:"error,omitempty"`
+	Filtered uint64 `json:"filtered,omitempty"`
+	Stats    uint64 `json:"stats"`
+}
+
+func (tr *trapResult) String() string {
+	ret := fmt.Sprintf("stats: %d, filtered: %d", tr.Stats, tr.Filtered)
+	if tr.Error != "" {
+		ret += ", error: " + tr.Error
+	}
+	return ret
+}
 func (m *CirconusMetrics) submit(output Metrics, newMetrics map[string]*apiclient.CheckBundleMetric) {
 
 	// if there is nowhere to send metrics to, just return.
@@ -38,7 +51,7 @@ func (m *CirconusMetrics) submit(output Metrics, newMetrics map[string]*apiclien
 		return
 	}
 
-	numStats, err := m.trapCall(str)
+	result, err := m.trapCall(str)
 	if err != nil {
 		m.Log.Printf("error sending metrics - %s\n", err)
 		return
@@ -46,8 +59,9 @@ func (m *CirconusMetrics) submit(output Metrics, newMetrics map[string]*apiclien
 
 	// OK response from circonus-agent does not
 	// indicate how many metrics were received
-	if numStats == -1 {
-		numStats = len(output)
+	if result.Error == "agent" {
+		result.Stats = uint64(len(output))
+		result.Error = ""
 	}
 
 	if m.Debug || m.DumpMetrics {
@@ -55,22 +69,22 @@ func (m *CirconusMetrics) submit(output Metrics, newMetrics map[string]*apiclien
 			m.Log.Printf("payload: %s", string(str))
 		}
 		if m.Debug {
-			m.Log.Printf("%d stats received by broker", numStats)
+			m.Log.Printf("broker result: %s", result.String())
 		}
 	}
 }
 
-func (m *CirconusMetrics) trapCall(payload []byte) (int, error) {
+func (m *CirconusMetrics) trapCall(payload []byte) (*trapResult, error) {
 	trap, err := m.check.GetSubmissionURL()
 	if err != nil {
-		return 0, errors.Wrap(err, "trap call")
+		return nil, errors.Wrap(err, "trap call")
 	}
 
 	dataReader := bytes.NewReader(payload)
 
 	req, err := retryablehttp.NewRequest("PUT", trap.URL.String(), dataReader)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("Accept", "application/json")
@@ -132,7 +146,7 @@ func (m *CirconusMetrics) trapCall(payload []byte) (int, error) {
 		m.Log.Printf("using socket transport\n")
 		client.HTTPClient.Transport = trap.SockTransport
 	default:
-		return 0, errors.Errorf("unknown scheme (%s), skipping submission", trap.URL.Scheme)
+		return nil, errors.Errorf("unknown scheme (%s), skipping submission", trap.URL.Scheme)
 	}
 	client.RetryWaitMin = 1 * time.Second
 	client.RetryWaitMax = 5 * time.Second
@@ -154,14 +168,14 @@ func (m *CirconusMetrics) trapCall(payload []byte) (int, error) {
 	resp, err := client.Do(req)
 	if err != nil {
 		if lastHTTPError != nil {
-			return 0, fmt.Errorf("submitting: %w previous: %s", err, lastHTTPError)
+			return nil, fmt.Errorf("submitting: %w previous: %s", err, lastHTTPError)
 		}
 		if attempts == client.RetryMax {
 			if err = m.check.RefreshTrap(); err != nil {
-				return 0, fmt.Errorf("refreshing trap: %w", err)
+				return nil, fmt.Errorf("refreshing trap: %w", err)
 			}
 		}
-		return 0, fmt.Errorf("trap call: %w", err)
+		return nil, fmt.Errorf("trap call: %w", err)
 	}
 
 	defer resp.Body.Close()
@@ -169,7 +183,7 @@ func (m *CirconusMetrics) trapCall(payload []byte) (int, error) {
 	// no content - expected result from
 	// circonus-agent when metrics accepted
 	if resp.StatusCode == http.StatusNoContent {
-		return -1, nil
+		return &trapResult{Stats: 0, Filtered: 0, Error: "agent"}, nil
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
@@ -177,20 +191,13 @@ func (m *CirconusMetrics) trapCall(payload []byte) (int, error) {
 		m.Log.Printf("error reading body, proceeding - %s\n", err)
 	}
 
-	var response map[string]interface{}
-	if err := json.Unmarshal(body, &response); err != nil {
+	var result trapResult
+	if err := json.Unmarshal(body, &result); err != nil {
 		m.Log.Printf("error parsing body, proceeding - %s (%s)\n", err, body)
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return 0, errors.New("bad response code: " + strconv.Itoa(resp.StatusCode))
+		return nil, errors.New("bad response code: " + strconv.Itoa(resp.StatusCode))
 	}
-	switch v := response["stats"].(type) {
-	case float64:
-		return int(v), nil
-	case int:
-		return v, nil
-	default:
-	}
-	return 0, errors.New("error, bad response data type (not numeric)")
+	return &result, nil
 }
