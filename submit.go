@@ -9,6 +9,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net"
@@ -88,6 +89,10 @@ func (m *CirconusMetrics) trapCall(payload []byte) (*trapResult, error) {
 	}
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("Accept", "application/json")
+	req.Header.Set("Connection", "close")
+	req.Header.Set("User-Agent", "cgm")
+	req.Header.Set("Content-Length", strconv.Itoa(len(payload)))
+	req.Close = true
 
 	// keep last HTTP error in the event of retry failure
 	var lastHTTPError error
@@ -121,24 +126,28 @@ func (m *CirconusMetrics) trapCall(payload []byte) (*trapResult, error) {
 	case trap.URL.Scheme == "https":
 		client.HTTPClient.Transport = &http.Transport{
 			Proxy: http.ProxyFromEnvironment,
-			Dial: (&net.Dialer{
-				Timeout:   30 * time.Second,
-				KeepAlive: 30 * time.Second,
-			}).Dial,
+			DialContext: (&net.Dialer{
+				Timeout:       10 * time.Second,
+				KeepAlive:     3 * time.Second,
+				FallbackDelay: -1 * time.Millisecond,
+			}).DialContext,
 			TLSHandshakeTimeout: 10 * time.Second,
 			TLSClientConfig:     trap.TLS,
 			DisableKeepAlives:   true,
+			MaxIdleConns:        1,
 			MaxIdleConnsPerHost: -1,
 			DisableCompression:  false,
 		}
 	case trap.URL.Scheme == "http":
 		client.HTTPClient.Transport = &http.Transport{
 			Proxy: http.ProxyFromEnvironment,
-			Dial: (&net.Dialer{
-				Timeout:   30 * time.Second,
-				KeepAlive: 30 * time.Second,
-			}).Dial,
+			DialContext: (&net.Dialer{
+				Timeout:       10 * time.Second,
+				KeepAlive:     3 * time.Second,
+				FallbackDelay: -1 * time.Millisecond,
+			}).DialContext,
 			DisableKeepAlives:   true,
+			MaxIdleConns:        1,
 			MaxIdleConnsPerHost: -1,
 			DisableCompression:  false,
 		}
@@ -146,7 +155,7 @@ func (m *CirconusMetrics) trapCall(payload []byte) (*trapResult, error) {
 		m.Log.Printf("using socket transport\n")
 		client.HTTPClient.Transport = trap.SockTransport
 	default:
-		return nil, errors.Errorf("unknown scheme (%s), skipping submission", trap.URL.Scheme)
+		return nil, fmt.Errorf("unknown scheme (%s), skipping submission", trap.URL.Scheme)
 	}
 	client.RetryWaitMin = 1 * time.Second
 	client.RetryWaitMax = 5 * time.Second
@@ -166,6 +175,9 @@ func (m *CirconusMetrics) trapCall(payload []byte) (*trapResult, error) {
 	}
 
 	resp, err := client.Do(req)
+	if resp != nil {
+		defer resp.Body.Close()
+	}
 	if err != nil {
 		if lastHTTPError != nil {
 			return nil, fmt.Errorf("submitting: %w previous: %s", err, lastHTTPError)
@@ -178,26 +190,25 @@ func (m *CirconusMetrics) trapCall(payload []byte) (*trapResult, error) {
 		return nil, fmt.Errorf("trap call: %w", err)
 	}
 
-	defer resp.Body.Close()
-
 	// no content - expected result from
 	// circonus-agent when metrics accepted
 	if resp.StatusCode == http.StatusNoContent {
+		_, _ = io.Copy(ioutil.Discard, resp.Body)
 		return &trapResult{Stats: 0, Filtered: 0, Error: "agent"}, nil
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		m.Log.Printf("error reading body, proceeding - %s\n", err)
+		return nil, fmt.Errorf("error reading body: %w", err)
 	}
 
 	var result trapResult
 	if err := json.Unmarshal(body, &result); err != nil {
-		m.Log.Printf("error parsing body, proceeding - %s (%s)\n", err, body)
+		return nil, fmt.Errorf("error parsing body: %w (%s)", err, body)
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, errors.New("bad response code: " + strconv.Itoa(resp.StatusCode))
+		return nil, fmt.Errorf("bad response code: %d (%s)", resp.StatusCode, string(body))
 	}
 	return &result, nil
 }
