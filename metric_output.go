@@ -22,9 +22,9 @@ func (m *CirconusMetrics) packageMetrics() (map[string]*apiclient.CheckBundleMet
 	m.packagingmu.Lock()
 	defer m.packagingmu.Unlock()
 
-	if m.Debug {
-		m.Log.Printf("packaging metrics\n")
-	}
+	// if m.Debug {
+	// 	m.Log.Printf("packaging metrics\n")
+	// }
 
 	ts := makeTimestamp(time.Now())
 
@@ -216,9 +216,9 @@ func (m *CirconusMetrics) Flush() {
 
 	if len(output) > 0 {
 		m.submit(output, newMetrics)
-	} else if m.Debug {
+	} /* else if m.Debug {
 		m.Log.Printf("no metrics to send, skipping\n")
-	}
+	}*/
 
 	m.flushmu.Lock()
 	m.flushing = false

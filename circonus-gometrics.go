@@ -30,6 +30,7 @@
 package circonusgometrics
 
 import (
+	"crypto/tls"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -41,6 +42,7 @@ import (
 	"time"
 
 	"github.com/circonus-labs/circonus-gometrics/v3/checkmgr"
+	"github.com/circonus-labs/go-apiclient"
 	"github.com/pkg/errors"
 )
 
@@ -260,8 +262,10 @@ func New(cfg *Config) (*CirconusMetrics, error) {
 		cm.check = check
 	}
 
-	// start background initialization
-	cm.check.Initialize()
+	// start initialization (serialized or background)
+	if err := cm.check.Initialize(); err != nil {
+		return nil, err
+	}
 
 	// if automatic flush is enabled, start it.
 	// NOTE: submit will jettison metrics until initialization has completed.
@@ -297,4 +301,13 @@ func (m *CirconusMetrics) Custom(metricName string, metric Metric) error {
 	m.custm.Unlock()
 
 	return nil
+}
+
+// GetBrokerTLSConfig returns the tls.Config for the broker
+func (m *CirconusMetrics) GetBrokerTLSConfig() *tls.Config {
+	return m.check.BrokerTLSConfig()
+}
+
+func (m *CirconusMetrics) GetCheckBundle() *apiclient.CheckBundle {
+	return m.check.GetCheckBundle()
 }

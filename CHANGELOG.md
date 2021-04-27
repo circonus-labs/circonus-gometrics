@@ -1,3 +1,13 @@
+# v3.4.2
+
+* upd: dependency (go-apiclient)
+* upd: clean up/normalize http client for httptrap requests
+* add: output full response from broker stats, filtered, and error if applicable in debug message
+* add: ability to send to clustered brokers behind LB which are not using a cert for a single CN
+* add: `SerialInit` option to initialize check serially
+* add: `GetBrokerTLSConfig` to retrieve broker tls configuration
+* add: `GetCheckBundle` for caching
+
 # v3.4.1
 
 * add: `DumpMetrics` config option, log payload sent to broker for debugging
