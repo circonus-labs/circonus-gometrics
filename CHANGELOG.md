@@ -1,3 +1,8 @@
+# v3.4.4
+
+* add: setting submission timestamp
+* add: support timestamps on histograms with SerializeB64
+
 # v3.4.3
 
 * add: submit duration to results
