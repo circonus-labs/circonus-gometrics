@@ -23,9 +23,10 @@ import (
 )
 
 type trapResult struct {
-	Error    string `json:"error,omitempty"`
-	Filtered uint64 `json:"filtered,omitempty"`
-	Stats    uint64 `json:"stats"`
+	Error    string        `json:"error,omitempty"`
+	Duration time.Duration // doesn't come from broker
+	Filtered uint64        `json:"filtered,omitempty"`
+	Stats    uint64        `json:"stats"`
 }
 
 func (tr *trapResult) String() string {
@@ -70,7 +71,17 @@ func (m *CirconusMetrics) submit(output Metrics, newMetrics map[string]*apiclien
 			m.Log.Printf("payload: %s", string(str))
 		}
 		if m.Debug {
-			m.Log.Printf("broker result: %s", result.String())
+			msg := "broker result --"
+			if result.Error != "" {
+				if result.Error == "agent" {
+					msg += " agent does not provide response metrics"
+				} else {
+					msg += fmt.Sprintf(" error: %s", result.Error)
+				}
+			} else {
+				msg += fmt.Sprintf(" stats: %d, filtered: %d", result.Stats, result.Filtered)
+			}
+			m.Log.Printf(msg+" duration: %s", result.Duration.String())
 		}
 	}
 }
@@ -82,6 +93,8 @@ func (m *CirconusMetrics) trapCall(payload []byte) (*trapResult, error) {
 	}
 
 	dataReader := bytes.NewReader(payload)
+
+	reqStart := time.Now()
 
 	req, err := retryablehttp.NewRequest("PUT", trap.URL.String(), dataReader)
 	if err != nil {
@@ -169,8 +182,18 @@ func (m *CirconusMetrics) trapCall(payload []byte) (*trapResult, error) {
 	}
 	client.CheckRetry = retryPolicy
 
+	client.ResponseLogHook = func(logger retryablehttp.Logger, r *http.Response) {
+		if r.StatusCode != http.StatusOK {
+			logger.Printf("non-200 response (%s): %s", r.Request.URL.String(), r.Status)
+		}
+	}
+
 	attempts := -1
 	client.RequestLogHook = func(logger retryablehttp.Logger, req *http.Request, retryNumber int) {
+		if retryNumber > 0 {
+			reqStart = time.Now()
+			logger.Printf("retrying (%s), retry %d", req.URL.String(), retryNumber)
+		}
 		attempts = retryNumber
 	}
 
@@ -180,7 +203,7 @@ func (m *CirconusMetrics) trapCall(payload []byte) (*trapResult, error) {
 	}
 	if err != nil {
 		if lastHTTPError != nil {
-			return nil, fmt.Errorf("submitting: %w previous: %s", err, lastHTTPError)
+			return nil, fmt.Errorf("submitting: %w previous: %s attempts: %d", err, lastHTTPError, attempts)
 		}
 		if attempts == client.RetryMax {
 			if err = m.check.RefreshTrap(); err != nil {
@@ -190,11 +213,13 @@ func (m *CirconusMetrics) trapCall(payload []byte) (*trapResult, error) {
 		return nil, fmt.Errorf("trap call: %w", err)
 	}
 
+	dur := time.Since(reqStart)
+
 	// no content - expected result from
 	// circonus-agent when metrics accepted
 	if resp.StatusCode == http.StatusNoContent {
 		_, _ = io.Copy(ioutil.Discard, resp.Body)
-		return &trapResult{Stats: 0, Filtered: 0, Error: "agent"}, nil
+		return &trapResult{Stats: 0, Filtered: 0, Error: "agent", Duration: dur}, nil
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
@@ -202,13 +227,15 @@ func (m *CirconusMetrics) trapCall(payload []byte) (*trapResult, error) {
 		return nil, fmt.Errorf("error reading body: %w", err)
 	}
 
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("bad response code: %d (%s)", resp.StatusCode, string(body))
+	}
+
 	var result trapResult
 	if err := json.Unmarshal(body, &result); err != nil {
 		return nil, fmt.Errorf("error parsing body: %w (%s)", err, body)
 	}
 
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("bad response code: %d (%s)", resp.StatusCode, string(body))
-	}
+	result.Duration = dur
 	return &result, nil
 }
