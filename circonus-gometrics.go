@@ -140,6 +140,7 @@ type CirconusMetrics struct {
 	counterFuncs    map[string]func() uint64
 	gaugeFuncs      map[string]func() int64
 	counters        map[string]uint64
+	submitTimestamp *time.Time
 	flushInterval   time.Duration
 	flushmu         sync.Mutex
 	packagingmu     sync.Mutex
@@ -310,4 +311,10 @@ func (m *CirconusMetrics) GetBrokerTLSConfig() *tls.Config {
 
 func (m *CirconusMetrics) GetCheckBundle() *apiclient.CheckBundle {
 	return m.check.GetCheckBundle()
+}
+
+func (m *CirconusMetrics) SetSubmitTimestamp(ts time.Time) {
+	m.packagingmu.Lock()
+	defer m.packagingmu.Unlock()
+	m.submitTimestamp = &ts
 }
