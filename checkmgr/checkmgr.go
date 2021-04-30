@@ -129,14 +129,11 @@ type BrokerConfig struct {
 
 // Config options
 type Config struct {
-	Log Logger
-	// Circonus API config
-	API apiclient.Config
-	// Broker specific configuration options
-	Broker BrokerConfig
-	// Check specific configuration options
-	Check      CheckConfig
-	SerialInit bool // serial initialization (not background)
+	Log        Logger
+	Broker     BrokerConfig     // Broker specific configuration options
+	Check      CheckConfig      // Check specific configuration options
+	API        apiclient.Config // Circonus API config
+	SerialInit bool             // serial initialization (not background)
 	Debug      bool
 }
 
