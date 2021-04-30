@@ -26,7 +26,13 @@ func (m *CirconusMetrics) packageMetrics() (map[string]*apiclient.CheckBundleMet
 	// 	m.Log.Printf("packaging metrics\n")
 	// }
 
-	ts := makeTimestamp(time.Now())
+	var ts uint64
+	if m.submitTimestamp == nil {
+		ts = makeTimestamp(time.Now())
+	} else {
+		ts = makeTimestamp(*m.submitTimestamp)
+		m.Log.Printf("setting custom timestamp %v -> %v (UTC ms)", *m.submitTimestamp, ts)
+	}
 
 	newMetrics := make(map[string]*apiclient.CheckBundleMetric)
 	counters, gauges, histograms, text := m.snapshot()
@@ -81,7 +87,13 @@ func (m *CirconusMetrics) packageMetrics() (map[string]*apiclient.CheckBundleMet
 			}
 		}
 		if send {
-			output[name] = Metric{Type: "h", Value: value.DecStrings()} // histograms do NOT get timestamps
+			buf := bytes.NewBuffer([]byte{})
+			if err := value.SerializeB64(buf); err != nil {
+				m.Log.Printf("[ERR] serializing histogram %s: %s", name, err)
+			} else {
+				output[name] = Metric{Type: "h", Value: buf.String(), Timestamp: ts} // histograms b64 serialized support timestamps
+			}
+			// output[name] = Metric{Type: "h", Value: value.DecStrings()} // histograms do NOT get timestamps
 		}
 	}
 
@@ -104,6 +116,8 @@ func (m *CirconusMetrics) packageMetrics() (map[string]*apiclient.CheckBundleMet
 	defer m.lastMetrics.metricsmu.Unlock()
 	m.lastMetrics.metrics = &output
 	m.lastMetrics.ts = time.Now()
+	// reset the submission timestamp
+	m.submitTimestamp = nil
 
 	return newMetrics, output
 }
