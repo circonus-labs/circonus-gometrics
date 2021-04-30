@@ -1,3 +1,9 @@
+# v3.4.3
+
+* add: submit duration to results
+* add: more per req logging on submit failures
+* upd: optimize struct layout/size chkmgr
+
 # v3.4.2
 
 * upd: dependency (go-apiclient)
