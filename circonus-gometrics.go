@@ -122,9 +122,9 @@ type Config struct {
 }
 
 type prevMetrics struct {
-	metrics   *Metrics
 	ts        time.Time
 	metricsmu sync.Mutex
+	metrics   *Metrics
 }
 
 // CirconusMetrics state

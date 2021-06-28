@@ -1,3 +1,9 @@
+# v3.4.5
+
+* upd: set metric ts only when submit timestamp set by caller
+* upd: dependencies
+* fix: lint struct field alignment
+
 # v3.4.4
 
 * add: setting submission timestamp

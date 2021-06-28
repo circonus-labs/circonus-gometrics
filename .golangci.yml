@@ -47,6 +47,8 @@ linters-settings:
     # enable:
     #   - atomicalign
     enable-all: true
+    disable:
+      - fieldalignment
     # disable:
     #   - shadow
     # disable-all: false

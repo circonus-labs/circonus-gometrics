@@ -27,9 +27,13 @@ func (m *CirconusMetrics) packageMetrics() (map[string]*apiclient.CheckBundleMet
 	// }
 
 	var ts uint64
-	if m.submitTimestamp == nil {
-		ts = makeTimestamp(time.Now())
-	} else {
+	// always submitting a timestamp forces the broker to treat the check as though
+	// it is "async" which doesn't work well for "group" checks with multiple submitters
+	// e.g. circonus-agent with a group statsd check
+	// if m.submitTimestamp == nil {
+	// 	ts = makeTimestamp(time.Now())
+	// } else {
+	if m.submitTimestamp != nil {
 		ts = makeTimestamp(*m.submitTimestamp)
 		m.Log.Printf("setting custom timestamp %v -> %v (UTC ms)", *m.submitTimestamp, ts)
 	}
@@ -57,7 +61,11 @@ func (m *CirconusMetrics) packageMetrics() (map[string]*apiclient.CheckBundleMet
 			}
 		}
 		if send {
-			output[name] = Metric{Type: "L", Value: value, Timestamp: ts}
+			metric := Metric{Type: "L", Value: value}
+			if ts > 0 {
+				metric.Timestamp = ts
+			}
+			output[name] = metric
 		}
 	}
 
@@ -72,7 +80,11 @@ func (m *CirconusMetrics) packageMetrics() (map[string]*apiclient.CheckBundleMet
 			}
 		}
 		if send {
-			output[name] = Metric{Type: m.getGaugeType(value), Value: value, Timestamp: ts}
+			metric := Metric{Type: m.getGaugeType(value), Value: value}
+			if ts > 0 {
+				metric.Timestamp = ts
+			}
+			output[name] = metric
 		}
 	}
 
@@ -91,7 +103,12 @@ func (m *CirconusMetrics) packageMetrics() (map[string]*apiclient.CheckBundleMet
 			if err := value.SerializeB64(buf); err != nil {
 				m.Log.Printf("[ERR] serializing histogram %s: %s", name, err)
 			} else {
-				output[name] = Metric{Type: "h", Value: buf.String(), Timestamp: ts} // histograms b64 serialized support timestamps
+				// histograms b64 serialized support timestamps
+				metric := Metric{Type: "h", Value: buf.String()}
+				if ts > 0 {
+					metric.Timestamp = ts
+				}
+				output[name] = metric
 			}
 			// output[name] = Metric{Type: "h", Value: value.DecStrings()} // histograms do NOT get timestamps
 		}
@@ -108,7 +125,11 @@ func (m *CirconusMetrics) packageMetrics() (map[string]*apiclient.CheckBundleMet
 			}
 		}
 		if send {
-			output[name] = Metric{Type: "s", Value: value, Timestamp: ts}
+			metric := Metric{Type: "s", Value: value}
+			if ts > 0 {
+				metric.Timestamp = ts
+			}
+			output[name] = metric
 		}
 	}
 
