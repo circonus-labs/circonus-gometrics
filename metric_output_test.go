@@ -9,6 +9,10 @@ import (
 	"testing"
 )
 
+func testHistResult() string {
+	return "AAEeAQAB"
+}
+
 func TestFlush(t *testing.T) {
 	server := testServer()
 	defer server.Close()
@@ -236,11 +240,8 @@ func TestFlushMetricsNoReset(t *testing.T) {
 		if m.Type != "h" {
 			t.Fatalf("'Type' not correct %v", m)
 		}
-		if len(m.Value.([]string)) != 1 {
-			t.Fatal("expected 1 value")
-		}
-		if m.Value.([]string)[0] != "H[3.0e+01]=1" {
-			t.Fatalf("'Value' not correct %v", m)
+		if m.Value.(string) != testHistResult() {
+			t.Fatalf("expected '%s' - got %v", testHistResult(), m.Value)
 		}
 
 		metrics = cm.FlushMetricsNoReset()
@@ -255,11 +256,8 @@ func TestFlushMetricsNoReset(t *testing.T) {
 		if m.Type != "h" {
 			t.Fatalf("'Type' not correct %v", m)
 		}
-		if len(m.Value.([]string)) != 1 {
-			t.Fatal("expected 1 value")
-		}
-		if m.Value.([]string)[0] != "H[3.0e+01]=1" {
-			t.Fatalf("'Value' not correct %v", m)
+		if m.Value.(string) != testHistResult() {
+			t.Fatalf("expected '%s' - got %v", testHistResult(), m.Value)
 		}
 	}
 
@@ -413,11 +411,8 @@ func TestFlushMetrics(t *testing.T) {
 		if m.Type != "h" {
 			t.Fatalf("'Type' not correct %v", m)
 		}
-		if len(m.Value.([]string)) != 1 {
-			t.Fatal("expected 1 value")
-		}
-		if m.Value.([]string)[0] != "H[3.0e+01]=1" {
-			t.Fatalf("'Value' not correct %v", m)
+		if m.Value.(string) != testHistResult() {
+			t.Fatalf("expected '%s' - got %v", testHistResult(), m.Value)
 		}
 	}
 
@@ -567,11 +562,8 @@ func TestPromOutput(t *testing.T) {
 		if m.Type != "h" {
 			t.Fatalf("'Type' not correct %v", m)
 		}
-		if len(m.Value.([]string)) != 1 {
-			t.Fatal("expected 1 value")
-		}
-		if m.Value.([]string)[0] != "H[3.0e+01]=1" {
-			t.Fatalf("'Value' not correct %v", m)
+		if m.Value.(string) != testHistResult() {
+			t.Fatalf("expected '%s' - got %v", testHistResult(), m.Value)
 		}
 
 		b, err := cm.PromOutput()

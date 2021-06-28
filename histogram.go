@@ -14,9 +14,9 @@ import (
 
 // Histogram measures the distribution of a stream of values.
 type Histogram struct {
+	rw   sync.RWMutex
 	hist *circonusllhist.Histogram
 	name string
-	rw   sync.RWMutex
 }
 
 // TimingWithTags adds a value to a histogram metric with tags
