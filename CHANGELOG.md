@@ -1,3 +1,7 @@
+# v3.4.6
+
+* upd: more stringent tag limit enforcement
+
 # v3.4.5
 
 * upd: set metric ts only when submit timestamp set by caller
