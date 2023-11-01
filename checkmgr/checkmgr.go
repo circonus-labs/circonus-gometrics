@@ -410,7 +410,7 @@ func (cm *CheckManager) Initialize() error {
 	return nil // we can't return an error from a go function after the fact
 }
 
-// IsReady reflects if the check has been initialied and metrics can be sent to Circonus
+// IsReady reflects if the check has been initialized and metrics can be sent to Circonus
 func (cm *CheckManager) IsReady() bool {
 	cm.initializedmu.RLock()
 	defer cm.initializedmu.RUnlock()
