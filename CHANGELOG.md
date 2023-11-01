@@ -1,3 +1,9 @@
+# v3.4.7
+
+* fix: refresh check periodically to account for changes to enterprise broker clusters behind load balancers
+* chore(lint): struct alignment
+* chore(lint): typo
+
 # v3.4.6
 
 * upd: more stringent tag limit enforcement
