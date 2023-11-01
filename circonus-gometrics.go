@@ -6,27 +6,27 @@
 // of counters, gauges and histograms and allows you to publish them to
 // Circonus
 //
-// Counters
+// # Counters
 //
 // A counter is a monotonically-increasing, unsigned, 64-bit integer used to
 // represent the number of times an event has occurred. By tracking the deltas
 // between measurements of a counter over intervals of time, an aggregation
 // layer can derive rates, acceleration, etc.
 //
-// Gauges
+// # Gauges
 //
 // A gauge returns instantaneous measurements of something using signed, 64-bit
 // integers. This value does not need to be monotonic.
 //
-// Histograms
+// # Histograms
 //
 // A histogram tracks the distribution of a stream of values (e.g. the number of
 // seconds it takes to handle requests).  Circonus can calculate complex
 // analytics on these.
 //
-// Reporting
+// # Reporting
 //
-// A period push to a Circonus httptrap is confgurable.
+// A period push to a Circonus httptrap is configurable.
 package circonusgometrics
 
 import (
@@ -110,7 +110,7 @@ type Config struct {
 	ResetGauges     string // reset/delete gauges on flush (default true)
 	ResetHistograms string // reset/delete histograms on flush (default true)
 	ResetText       string // reset/delete text on flush (default true)
-	// how frequenly to submit metrics to Circonus, default 10 seconds.
+	// how frequently to submit metrics to Circonus, default 10 seconds.
 	// Set to 0 to disable automatic flushes and call Flush manually.
 	Interval string
 
@@ -123,8 +123,8 @@ type Config struct {
 
 type prevMetrics struct {
 	ts        time.Time
-	metricsmu sync.Mutex
 	metrics   *Metrics
+	metricsmu sync.Mutex
 }
 
 // CirconusMetrics state
@@ -141,6 +141,7 @@ type CirconusMetrics struct {
 	gaugeFuncs      map[string]func() int64
 	counters        map[string]uint64
 	submitTimestamp *time.Time
+	lastRefresh     time.Time
 	flushInterval   time.Duration
 	flushmu         sync.Mutex
 	packagingmu     sync.Mutex
@@ -267,6 +268,7 @@ func New(cfg *Config) (*CirconusMetrics, error) {
 	if err := cm.check.Initialize(); err != nil {
 		return nil, err
 	}
+	cm.lastRefresh = time.Now()
 
 	// if automatic flush is enabled, start it.
 	// NOTE: submit will jettison metrics until initialization has completed.
