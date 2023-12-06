@@ -4,7 +4,7 @@ on:
     tags:
       - v*
     branches:
-      - master
+      - v3
   pull_request:
 jobs:
   golangci:
@@ -15,5 +15,5 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v2
         with:
-          version: v1.38
+          version: latest
           args: --timeout=5m
