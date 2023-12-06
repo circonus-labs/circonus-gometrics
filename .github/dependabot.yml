@@ -1,0 +1,13 @@
+version: 2
+updates:
+  - package-ecosystem: "gomod"
+    target-branch: "v3"
+    directory: "/"
+    schedule:
+      interval: "daily"
+
+  - package-ecosystem: "github-actions"
+    target-branch: "v3"
+    directory: "/"
+    schedule:
+      interval: "daily"
