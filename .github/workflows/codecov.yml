@@ -3,6 +3,8 @@ name: Test and coverage
 on:
   pull_request:
     branches: ['v3']
+  push:
+    branches: ['v3']
 
 jobs:
   build:
